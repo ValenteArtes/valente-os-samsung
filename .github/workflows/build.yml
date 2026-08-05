@@ -48,7 +48,7 @@ jobs:
             -dname "CN=ValenteArtes, O=ValenteArtes, C=BR" 2>/dev/null
           $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign \
             --ks /tmp/valente.keystore \
-            --ks-alias valente \
+            --ks-key-alias valente \
             --ks-pass pass:valente2024 \
             --key-pass pass:valente2024 \
             --out $SIGNED \
@@ -60,3 +60,4 @@ jobs:
           name: ValenteOS-Samsung-APK
           path: ValenteOS_Samsung_v1.0.apk
           retention-days: 30
+
