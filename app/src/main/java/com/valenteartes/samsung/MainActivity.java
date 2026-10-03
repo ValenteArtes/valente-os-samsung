@@ -24,11 +24,20 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.graphics.Color;
+import java.io.File;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
-    private static final String VALENTE_URL = "https://calculadora-3d-valente-artes.netlify.app/";
+
+    // v2 — HTML SIMPLIFICADO (ES5), igual ao Positivo: o WebView deste tablet
+    // trava no app completo (fica preso na capa / não responde ao toque).
+    // Prioridade: sdcard (atualizações OTA sem reinstalar) → asset (sempre
+    // disponível) → se nada funcionar, tenta de novo o asset após 10s.
+    private static final String SDCARD_URL = "file:///sdcard/ValenteOS_Terminal.html";
+    private static final String ASSET_URL  = "file:///android_asset/ValenteOS_Terminal.html";
+    // URL do app completo — só usada no escape de admin (ver sairModoKiosk).
+    private static final String VALENTE_URL_COMPLETO = "https://calculadora-3d-valente-artes.netlify.app/";
     private static final String ADMIN_PIN   = "3699";
 
     // Contador de toques no canto superior direito para acionar menu admin
@@ -61,10 +70,12 @@ public class MainActivity extends Activity {
         s.setLoadsImagesAutomatically(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setAllowFileAccessFromFileURLs(true);
+        s.setAllowUniversalAccessFromFileURLs(true);
         // Android 7+ suporta TLS 1.2 nativamente no WebView — sem necessidade de NativeBridge
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
-        // Bridge para impressao
+        // Bridge para impressao (ValenteOS_Terminal.html chama SamsungBridge.imprimirHTML/imprimirPagina)
         webView.addJavascriptInterface(new PrintBridge(this, webView), "SamsungBridge");
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -88,15 +99,23 @@ public class MainActivity extends Activity {
         });
 
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                // Ativar modo tablet automaticamente ao carregar
-                injetarModoTablet();
-            }
+            private boolean triedSdcard = false;
+            private boolean triedAsset  = false;
+
             @Override
             public void onReceivedError(WebView view, int code, String desc, String failingUrl) {
-                // Retry apos 10s em caso de erro de rede
-                new Handler().postDelayed(() -> webView.loadUrl(VALENTE_URL), 10000);
+                if (failingUrl == null) return;
+                if (failingUrl.contains("sdcard") && !triedAsset) {
+                    // sdcard falhou (nao montado ainda?) -> usar asset embutido no APK
+                    triedAsset = true;
+                    view.loadUrl(ASSET_URL);
+                } else if (failingUrl.contains("android_asset")) {
+                    // asset falhou (nao deveria acontecer) -> tenta de novo apos 10s
+                    new Handler().postDelayed(() -> webView.loadUrl(ASSET_URL), 10000);
+                } else {
+                    // falhou carregando o app completo (escape de admin) -> volta pro terminal
+                    new Handler().postDelayed(() -> webView.loadUrl(ASSET_URL), 10000);
+                }
             }
         });
 
@@ -109,21 +128,15 @@ public class MainActivity extends Activity {
         });
 
         setContentView(webView);
-        webView.loadUrl(VALENTE_URL);
-    }
 
-    private void injetarModoTablet() {
-        String js = "javascript:(function(){" +
-            "try{" +
-            "  localStorage.setItem('valente_modo_tablet','true');" +
-            "  if(typeof configurarModoTablet==='function' && !document.getElementById('overlay-operador')){}"+
-            "  if(typeof abrirModoOperador==='function'){" +
-            "    var ov=document.getElementById('overlay-operador');" +
-            "    if(!ov || ov.style.display==='none') abrirModoOperador();" +
-            "  }" +
-            "}catch(e){}" +
-            "})()";
-        webView.loadUrl(js);
+        // Verificar sdcard primeiro (permite atualizacoes sem reinstalar APK)
+        File sdcardFile = new File("/sdcard/ValenteOS_Terminal.html");
+        File mntFile    = new File("/mnt/sdcard/ValenteOS_Terminal.html");
+        if (sdcardFile.exists() || mntFile.exists()) {
+            webView.loadUrl(SDCARD_URL);
+        } else {
+            webView.loadUrl(ASSET_URL);
+        }
     }
 
     private void detectarToquesAdmin(MotionEvent event) {
@@ -157,7 +170,7 @@ public class MainActivity extends Activity {
 
         new AlertDialog.Builder(this)
             .setTitle("Modo Admin")
-            .setMessage("Digite o PIN para acessar o painel administrativo:")
+            .setMessage("Digite o PIN para acessar o sistema completo:")
             .setView(input)
             .setPositiveButton("Entrar", (d, w) -> {
                 String pin = input.getText().toString().trim();
@@ -172,17 +185,13 @@ public class MainActivity extends Activity {
     }
 
     private void sairModoKiosk() {
-        // Remove modo tablet e vai para o painel de admin completo
-        String js = "javascript:(function(){" +
-            "try{" +
-            "  localStorage.removeItem('valente_modo_tablet');" +
-            "  var ov=document.getElementById('overlay-operador');" +
-            "  if(ov) ov.style.display='none';" +
-            "  if(typeof loadAll==='function') loadAll();" +
-            "}catch(e){}" +
-            "})()";
-        webView.loadUrl(js);
-        Toast.makeText(this, "Modo Admin ativado", Toast.LENGTH_SHORT).show();
+        // v2 — não há mais "overlay-operador"/"loadAll" no terminal simplificado.
+        // O escape de admin agora carrega o app completo de verdade (ciente de
+        // que ele pode não funcionar bem no WebView deste tablet — é só pra
+        // configuração pontual, não pro uso diário). Reiniciar o app volta
+        // pro terminal simplificado normalmente.
+        webView.loadUrl(VALENTE_URL_COMPLETO);
+        Toast.makeText(this, "Sistema completo (admin) — reinicie o app pra voltar ao terminal", Toast.LENGTH_LONG).show();
     }
 
     private void registrarComoLauncher() {

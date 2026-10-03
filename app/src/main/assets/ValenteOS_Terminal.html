@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Valente OS — Terminal</title>
+<style>
+* { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  width: 100%; height: 100%;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── HEADER ─── */
+.header {
+  background: #1e293b;
+  padding: 10px 16px;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+  border-bottom: 1px solid #334155;
+  -webkit-flex-shrink: 0; flex-shrink: 0;
+}
+.header-logo { font-weight: 700; font-size: 1rem; color: #f97316; }
+.header-user { font-size: 0.8rem; color: #94a3b8; }
+.header-btn {
+  background: transparent; border: 1px solid #475569;
+  color: #94a3b8; padding: 6px 14px; border-radius: 6px;
+  font-size: 0.8rem; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-btn:active { background: #334155; }
+
+/* ─── CENTRO DE CAPACITAÇÃO (prefixo trein-, nunca colide com o resto) ─── */
+.trein-identificacao, .trein-inicio, .trein-aula { max-width: 640px; margin: 0 auto; }
+.trein-header {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+  -webkit-box-align: flex-start; -webkit-align-items: flex-start; align-items: flex-start;
+  gap: 12px; margin-bottom: 14px;
+}
+.trein-titulo-principal { font-size: 1.1rem; font-weight: 700; color: #f97316; }
+.trein-logo { font-weight: 700; color: #f97316; margin-bottom: 8px; }
+.hint { color: #94a3b8; font-size: 0.82rem; }
+.trein-progresso-wrap { margin: 12px 0 18px; }
+.trein-progresso-label { font-size: 0.85rem; margin-bottom: 6px; }
+.trein-progresso-barra { height: 12px; background: #1e293b; border-radius: 999px; overflow: hidden; }
+.trein-progresso-fill { height: 100%; background: #f97316; }
+.trein-cards-grid {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap; gap: 12px;
+}
+.trein-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+  padding: 12px; cursor: pointer; min-height: 100px; width: 46%;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; gap: 4px;
+}
+.trein-card:active { background: #334155; }
+.trein-card--bloqueado { opacity: 0.5; }
+.trein-card--concluido { border-color: #22c55e; }
+.trein-card--em_andamento { border-color: #f97316; }
+.trein-card-topo {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+}
+.trein-card-dia { font-size: 0.75rem; font-weight: 700; color: #f97316; text-transform: uppercase; }
+.trein-card-titulo { font-weight: 600; font-size: 0.95rem; }
+.trein-card-sub { font-size: 0.8rem; color: #94a3b8; -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; }
+.trein-card-label { font-size: 0.75rem; color: #64748b; }
+.trein-placeholder { background: #1e293b; border: 1px dashed #334155; border-radius: 10px; padding: 16px; margin: 14px 0; }
+.trein-concluido-msg { color: #22c55e; font-weight: 700; }
+.trein-pergunta-enunciado { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
+.trein-opcoes {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; gap: 8px;
+}
+.trein-opcao-btn {
+  text-align: left; font-size: 0.95rem; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid #334155; background: #1e293b; color: #e2e8f0; cursor: pointer; min-height: 44px;
+}
+.trein-opcao-btn:active { background: #334155; }
+.trein-feedback { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.88rem; }
+.trein-feedback--ok { background: #052e16; color: #22c55e; border: 1px solid #22c55e; }
+.trein-feedback--erro { background: #1a0a0a; color: #ef4444; border: 1px solid #ef4444; }
+.trein-balao-cliente { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.trein-balao-tag { display: block; font-size: 0.65rem; font-weight: 700; color: #f97316; margin-bottom: 4px; }
+.trein-check-item {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; min-height: 44px;
+}
+.trein-check-item input[type="checkbox"] { width: 18px; height: 18px; }
+.trein-ordenar-escolhidos ol { margin: 0 0 12px; padding-left: 20px; }
+.trein-ordenar-acoes { display: -webkit-box; display: -webkit-flex; display: flex; gap: 10px; margin-top: 10px; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.trein-etapa-missao { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
+.trein-missao-titulo { font-weight: 700; color: #f97316; margin-bottom: 8px; }
+.trein-etapa-missao ul { margin: 4px 0 10px; padding-left: 18px; }
+.trein-missao-anotacao { margin-bottom: 10px; }
+.trein-textarea {
+  width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 8px;
+  border: 1px solid #334155; background: #0f172a; color: #e2e8f0; resize: vertical; margin-bottom: 10px;
+}
+.trein-resultado-competencias, .trein-resultado-resumo {
+  background: #1e293b; border: 1px solid #334155; border-radius: 10px; margin: 12px 0; overflow: hidden;
+}
+.trein-resultado-linha {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid #334155; font-size: 0.88rem;
+}
+.trein-resultado-linha:last-child { border-bottom: none; }
+.trein-resultado-classificacao { text-align: center; font-weight: 700; padding: 14px; border-radius: 10px; margin: 12px 0; }
+.trein-resultado-classificacao--liberado { background: #052e16; color: #22c55e; border: 1px solid #22c55e; }
+.trein-resultado-classificacao--funcional_supervisao { background: #2e2608; color: #eab308; border: 1px solid #eab308; }
+.trein-resultado-classificacao--precisa_acompanhamento { background: #1a0a0a; color: #ef4444; border: 1px solid #ef4444; }
+.trein-acoes-trilha-concluida { display: -webkit-box; display: -webkit-flex; display: flex; gap: 10px; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 4px 0 16px; }
+.btn-icon, .btn-primary {
+  padding: 10px 16px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0;
+  font-size: 0.9rem; cursor: pointer; margin: 4px 4px 4px 0; -webkit-tap-highlight-color: transparent;
+}
+.btn-primary { background: #f97316; color: #0f172a; border-color: #f97316; font-weight: 700; }
+.btn-primary[disabled] { opacity: 0.5; }
+
+/* ─── CONTENT ─── */
+.content {
+  -webkit-box-flex: 1; -webkit-flex: 1; flex: 1;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── PIN SCREEN ─── */
+.pin-screen {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  height: 100%;
+  gap: 20px;
+}
+.pin-logo { font-size: 2rem; font-weight: 800; color: #f97316; letter-spacing: -0.5px; }
+.pin-subtitle { color: #64748b; font-size: 0.85rem; }
+
+.pin-display {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  gap: 14px; -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+}
+.pin-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #1e293b; border: 2px solid #475569;
+}
+.pin-dot.on { background: #f97316; border-color: #f97316; }
+.pin-error { color: #f87171; font-size: 0.82rem; min-height: 18px; text-align: center; }
+
+.pin-pad {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap;
+  width: 264px; gap: 10px;
+}
+.pin-btn {
+  width: 78px; height: 72px;
+  background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+  font-size: 1.5rem; font-weight: 600; border-radius: 14px;
+  cursor: pointer; text-align: center;
+  -webkit-tap-highlight-color: rgba(249,115,22,0.15);
+  -webkit-appearance: none;
+}
+.pin-btn:active { background: #334155; }
+.pin-btn.del { font-size: 1.1rem; color: #94a3b8; }
+.pin-btn.vazio { background: transparent; border-color: transparent; cursor: default; }
+
+/* ─── CARDS / INBOX ─── */
+.secao-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: #475569; margin: 18px 0 8px;
+}
+.secao-label:first-child { margin-top: 0; }
+
+.ot-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+  padding: 14px; margin-bottom: 10px; cursor: pointer;
+  -webkit-tap-highlight-color: rgba(249,115,22,0.1);
+}
+.ot-card:active { border-color: #f97316; background: #162032; }
+
+.ot-row {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: flex-start; -webkit-align-items: flex-start; align-items: flex-start;
+  gap: 12px;
+}
+.ot-icone { font-size: 1.4rem; -webkit-flex-shrink: 0; flex-shrink: 0; margin-top: 2px; }
+.ot-titulo { font-weight: 600; font-size: 0.98rem; color: #f1f5f9; }
+.ot-meta { font-size: 0.78rem; color: #64748b; margin-top: 3px; }
+
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700; margin-top: 6px;
+}
+.b-pend  { background: #1e3a5f; color: #93c5fd; }
+.b-exec  { background: #14532d; color: #86efac; }
+.b-paus  { background: #431407; color: #fdba74; }
+.b-bloq  { background: #1c1917; color: #78716c; }
+.b-conc  { background: #052e16; color: #4ade80; }
+
+/* ─── EMPTY STATE ─── */
+.vazio {
+  text-align: center; padding: 60px 20px 40px;
+  color: #475569;
+}
+.vazio-ico { font-size: 3rem; margin-bottom: 12px; }
+.vazio-titulo { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; color: #64748b; }
+.vazio-sub { font-size: 0.82rem; }
+
+/* ─── DETALHE ─── */
+.det-header {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: flex-start; -webkit-align-items: flex-start; align-items: flex-start;
+  gap: 12px; margin-bottom: 16px;
+}
+.det-icone { font-size: 2rem; -webkit-flex-shrink: 0; flex-shrink: 0; }
+.det-titulo { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; line-height: 1.3; }
+.det-codigo { font-size: 0.78rem; color: #64748b; margin-top: 4px; }
+
+.card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+  padding: 14px; margin-bottom: 12px;
+}
+.card-label {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px;
+}
+.qtd-num {
+  font-size: 2.6rem; font-weight: 800; color: #f97316;
+  display: inline-block; line-height: 1;
+}
+.qtd-unit { font-size: 0.85rem; color: #64748b; margin-left: 6px; }
+.qtd-sub { margin-top: 6px; font-size: 0.8rem; color: #64748b; }
+
+.instrucoes {
+  font-size: 0.88rem; color: #cbd5e1; line-height: 1.65;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+.foto-img {
+  width: 100%; border-radius: 10px;
+  display: block; margin-top: 6px;
+}
+.foto-check {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: flex-start; -webkit-align-items: flex-start; align-items: flex-start;
+  gap: 10px; margin-top: 10px;
+}
+.foto-check input[type=checkbox] {
+  width: 22px; height: 22px; margin-top: 1px; -webkit-flex-shrink: 0; flex-shrink: 0;
+}
+.foto-check label { font-size: 0.82rem; color: #94a3b8; cursor: pointer; }
+
+.check-item {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: flex-start; -webkit-align-items: flex-start; align-items: flex-start;
+  gap: 12px; padding: 11px 10px; border-radius: 8px;
+  cursor: pointer; margin-bottom: 6px; background: #0f172a;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-item.ok { background: #042f14; }
+.check-box {
+  width: 26px; height: 26px; border-radius: 6px; border: 2px solid #475569;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  -webkit-flex-shrink: 0; flex-shrink: 0;
+  font-size: 15px; font-weight: 700; color: white;
+}
+.check-item.ok .check-box { background: #16a34a; border-color: #16a34a; }
+.check-txt { font-size: 0.88rem; color: #cbd5e1; padding-top: 3px; line-height: 1.4; }
+.check-item.ok .check-txt { color: #475569; text-decoration: line-through; }
+.check-obrig { color: #f87171; }
+
+/* ─── BOTÕES AÇÃO ─── */
+.acoes { padding: 4px 0 20px; }
+.btn {
+  display: block; width: 100%; padding: 17px 16px;
+  border-radius: 12px; border: none;
+  font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  margin-bottom: 10px; text-align: center;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.15);
+  -webkit-appearance: none;
+}
+.btn:active { opacity: 0.72; }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.btn-ini  { background: #16a34a; color: #fff; }
+.btn-conc { background: #2563eb; color: #fff; }
+.btn-paus { background: #d97706; color: #fff; }
+.btn-ret  { background: #7c3aed; color: #fff; }
+.btn-vol  { background: transparent; border: 1px solid #334155; color: #94a3b8; }
+.btn-ref  { background: #1e293b; border: 1px solid #334155; color: #94a3b8; }
+
+/* ─── LOADING ─── */
+.loading {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  height: 180px; gap: 14px; color: #475569; font-size: 0.88rem;
+}
+.spin {
+  width: 32px; height: 32px;
+  border: 3px solid #334155; border-top-color: #f97316; border-radius: 50%;
+  -webkit-animation: giro 0.8s linear infinite;
+  animation: giro 0.8s linear infinite;
+}
+@-webkit-keyframes giro { to { -webkit-transform: rotate(360deg); } }
+@keyframes giro { to { transform: rotate(360deg); } }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed; bottom: 18px; left: 50%;
+  -webkit-transform: translateX(-50%); transform: translateX(-50%);
+  background: #1e293b; border: 1px solid #475569;
+  color: #e2e8f0; padding: 9px 20px; border-radius: 8px;
+  font-size: 0.88rem; z-index: 999;
+  opacity: 0; pointer-events: none;
+  white-space: nowrap;
+  -webkit-transition: opacity 0.25s; transition: opacity 0.25s;
+  max-width: 90%;
+}
+#toast.show { opacity: 1; }
+#toast.err  { border-color: #f87171; color: #fca5a5; }
+
+/* ─── AUTO-REFRESH BAR ─── */
+.refresh-bar {
+  font-size: 0.72rem; color: #475569; text-align: center;
+  padding: 6px 0 0; margin-top: -4px;
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="treinoApp" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0f172a;color:#e2e8f0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:500;padding:16px;box-sizing:border-box;"></div>
+<div id="toast"></div>
+
+<script>
+/* =================================================================
+   VALENTE OS — TERMINAL ES5 (SAMSUNG GT-P7500)
+   ES5 puro por segurança — o WebView deste tablet trava com o app
+   completo (fica preso na capa). Imprime fichas de OT via SamsungBridge.
+   Usa Supabase REST API via XMLHttpRequest puro
+   ================================================================= */
+
+var SUPABASE_URL = 'https://qdqmtjkoufplssgabwzm.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkcW10amtvdWZwbHNzZ2Fid3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTc4NjgsImV4cCI6MjA5NzgzMzg2OH0.gfjYEJ0VpovrXMffqwKhVuVVFonK1CW9Tvu3le-um6M';
+
+/* ── Estado global ── */
+var S = {
+  view:          'pin',   /* 'pin' | 'inbox' | 'detalhe' */
+  colaborador:   null,
+  pinDigits:     [],
+  pinErro:       false,
+  ots:           [],
+  ot:            null,
+  tipo:          null,
+  peca:          null,
+  checklist:     [],
+  fotoOk:        false,
+  timer:         null,
+  timerSecs:     0,
+};
+
+/* ─────────────────────────────────────────
+   HTTP — XMLHttpRequest ES5
+───────────────────────────────────────── */
+function xhr(method, table, qs, body, cb) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : '');
+
+  /* ── Bridge nativa: resolve TLS 1.2 no Android 4.x ── */
+  if (window.NativeBridge) {
+    var cbId = 'cb' + Date.now() + Math.floor(Math.random()*9999);
+    window['__nb_' + cbId] = function(httpStatus, responseText) {
+      var ok = httpStatus >= 200 && httpStatus < 300;
+      var data = null;
+      try { if (responseText) data = JSON.parse(responseText); } catch(e) {}
+      if (ok) {
+        cb(null, data);
+      } else {
+        var msg = httpStatus === 0 ? 'Sem conexão' : ('Erro HTTP ' + httpStatus);
+        if (data && data.message) msg = data.message;
+        cb(new Error(msg), null);
+      }
+    };
+    NativeBridge.request(
+      method, url, SUPABASE_KEY,
+      body !== null ? JSON.stringify(body) : '',
+      cbId
+    );
+    return;
+  }
+
+  /* ── Fallback: XMLHttpRequest padrão ── */
+  var req = new XMLHttpRequest();
+  req.open(method, url, true);
+  req.setRequestHeader('apikey', SUPABASE_KEY);
+  req.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+  req.setRequestHeader('Accept', 'application/json');
+  if (body !== null) {
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.setRequestHeader('Prefer', 'return=minimal');
+  }
+  req.onreadystatechange = function() {
+    if (req.readyState !== 4) return;
+    var ok = req.status >= 200 && req.status < 300;
+    var data = null;
+    try { if (req.responseText) data = JSON.parse(req.responseText); } catch(e) {}
+    if (ok) {
+      cb(null, data);
+    } else {
+      var msg = 'Erro HTTP ' + req.status;
+      if (data && data.message) msg = data.message;
+      cb(new Error(msg), null);
+    }
+  };
+  req.onerror = function() { cb(new Error('Sem conexão'), null); };
+  req.send(body !== null ? JSON.stringify(body) : null);
+}
+
+function sbGet(t, qs, cb)      { xhr('GET',   t, qs, null, cb); }
+function sbPatch(t, qs, b, cb) { xhr('PATCH', t, qs, b,    cb); }
+function sbPost(t, b, cb)      { xhr('POST',  t, null, b,  cb); }
+
+/* ─────────────────────────────────────────
+   UTILITÁRIOS
+───────────────────────────────────────── */
+var STATUS_LABEL = {
+  pendente: 'Pendente', aceita: 'Aceita',
+  iniciada: 'Em execução', em_andamento: 'Em andamento', retomada: 'Retomada',
+  pausada: 'Pausada', bloqueada: 'Bloqueada', desbloqueada: 'Desbloqueada',
+  concluida: 'Concluída', cancelada: 'Cancelada'
+};
+
+function statusBadge(s) {
+  var c = 'b-pend';
+  if (s === 'iniciada' || s === 'em_andamento' || s === 'retomada') c = 'b-exec';
+  else if (s === 'pausada') c = 'b-paus';
+  else if (s === 'bloqueada' || s === 'desbloqueada') c = 'b-bloq';
+  else if (s === 'concluida') c = 'b-conc';
+  return '<span class="badge ' + c + '">' + (STATUS_LABEL[s] || s) + '</span>';
+}
+
+function isExec(s) { return s === 'iniciada' || s === 'em_andamento' || s === 'retomada'; }
+function isPend(s) { return s === 'pendente' || s === 'aceita'; }
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+var _toastT = null;
+function toast(msg, err) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (err ? ' err' : '');
+  if (_toastT) clearTimeout(_toastT);
+  _toastT = setTimeout(function() { el.className = ''; }, 2600);
+}
+
+/* ─────────────────────────────────────────
+   AUTO-REFRESH (contador regressivo)
+───────────────────────────────────────── */
+function pararTimer() {
+  if (S.timer) { clearInterval(S.timer); S.timer = null; }
+}
+
+function iniciarTimer() {
+  pararTimer();
+  S.timerSecs = 60;
+  S.timer = setInterval(function() {
+    S.timerSecs--;
+    var bar = document.getElementById('refreshBar');
+    if (bar) bar.textContent = 'Atualiza em ' + S.timerSecs + 's';
+    if (S.timerSecs <= 0) {
+      S.timerSecs = 60;
+      if (S.view === 'inbox') carregarOTs(true);
+    }
+  }, 1000);
+}
+
+/* ─────────────────────────────────────────
+   RENDER PRINCIPAL
+───────────────────────────────────────── */
+function render() {
+  var app = document.getElementById('app');
+  if (S.view === 'pin') {
+    renderPin(app);
+    return;
+  }
+  var nome = S.colaborador ? S.colaborador.nome.split(' ')[0] : '';
+  var header = '<div class="header">' +
+    '<div class="header-logo">⚙️ Valente OS</div>' +
+    '<div class="header-user">👤 ' + esc(nome) + '</div>' +
+    '<button class="header-btn" onclick="abrirTreinamento()">🎓 Capacitação</button>' +
+    '<button class="header-btn" onclick="sair()">Sair</button>' +
+    '</div>';
+  app.innerHTML = header + '<div class="content" id="cont"></div>';
+  if (S.view === 'inbox') renderInbox();
+  else if (S.view === 'detalhe') renderDetalhe();
+}
+
+/* ─────────────────────────────────────────
+   CENTRO DE CAPACITAÇÃO (treino-engine-es5.js)
+───────────────────────────────────────── */
+function abrirTreinamento() {
+  if (typeof TreinoAbrir !== 'function') { toast('Treinamento indisponível neste terminal.', true); return; }
+  TreinoAbrir(S.colaborador, function() {
+    /* ao fechar, volta pra tela em que estava (inbox por padrão) */
+    render();
+  });
+}
+
+/* ─────────────────────────────────────────
+   VIEW: PIN
+───────────────────────────────────────── */
+function renderPin(app) {
+  var dots = '';
+  for (var i = 0; i < 4; i++) {
+    dots += '<div class="pin-dot' + (i < S.pinDigits.length ? ' on' : '') + '"></div>';
+  }
+  app.innerHTML =
+    '<div class="pin-screen">' +
+    '<div class="pin-logo">🏭 Valente OS</div>' +
+    '<div class="pin-subtitle">Terminal do Colaborador</div>' +
+    '<div class="pin-display">' + dots + '</div>' +
+    '<div class="pin-error">' + (S.pinErro ? (S.pinErroMsg || 'PIN incorreto.') : '&nbsp;') + '</div>' +
+    '<div class="pin-pad">' +
+    '<button class="pin-btn" onclick="dPin(1)">1</button>' +
+    '<button class="pin-btn" onclick="dPin(2)">2</button>' +
+    '<button class="pin-btn" onclick="dPin(3)">3</button>' +
+    '<button class="pin-btn" onclick="dPin(4)">4</button>' +
+    '<button class="pin-btn" onclick="dPin(5)">5</button>' +
+    '<button class="pin-btn" onclick="dPin(6)">6</button>' +
+    '<button class="pin-btn" onclick="dPin(7)">7</button>' +
+    '<button class="pin-btn" onclick="dPin(8)">8</button>' +
+    '<button class="pin-btn" onclick="dPin(9)">9</button>' +
+    '<button class="pin-btn vazio"></button>' +
+    '<button class="pin-btn" onclick="dPin(0)">0</button>' +
+    '<button class="pin-btn del" onclick="delPin()">⌫</button>' +
+    '</div></div>';
+}
+
+function dPin(n) {
+  if (S.pinDigits.length >= 4) return;
+  S.pinDigits.push(n);
+  S.pinErro = false;
+  if (S.pinDigits.length === 4) {
+    var pin = S.pinDigits.join('');
+    renderPin(document.getElementById('app')); /* mostra 4 pontos preenchidos */
+    autenticar(pin);
+  } else {
+    renderPin(document.getElementById('app'));
+  }
+}
+
+function delPin() {
+  S.pinDigits.pop();
+  S.pinErro = false;
+  renderPin(document.getElementById('app'));
+}
+
+function autenticar(pin) {
+  sbGet('funcionarios',
+    'pin=eq.' + encodeURIComponent(pin) + '&select=id,nome,cargo,estacao_padrao_id',
+    function(err, data) {
+      if (err || !data || !data.length) {
+        S.pinDigits = [];
+        S.pinErro = true;
+        S.pinErroMsg = err ? ('Erro: ' + err.message) : 'PIN incorreto.';
+        renderPin(document.getElementById('app'));
+        return;
+      }
+      S.colaborador = data[0];
+      S.pinDigits = []; S.pinErro = false;
+      S.view = 'inbox';
+      render();
+      carregarOTs(false);
+    }
+  );
+}
+
+/* ─────────────────────────────────────────
+   VIEW: INBOX (lista de OTs)
+───────────────────────────────────────── */
+function renderInbox() {
+  var cont = document.getElementById('cont');
+  if (!cont) return;
+  cont.innerHTML = '<div class="loading"><div class="spin"></div>Carregando tarefas…</div>';
+}
+
+function carregarOTs(silencioso) {
+  var cont = document.getElementById('cont');
+  if (!silencioso && cont) {
+    cont.innerHTML = '<div class="loading"><div class="spin"></div>Carregando tarefas…</div>';
+  }
+
+  var params =
+    'status=not.in.' + encodeURIComponent('(concluida,cancelada)') +
+    '&select=id,codigo_publico,titulo,status,quantidade,tipo_ot_id,' +
+    'responsavel_id,quantidade_concluida,ordem_execucao' +
+    '&order=ordem_execucao';
+
+  sbGet('ordens_trabalho', params, function(err, data) {
+    cont = document.getElementById('cont');
+    if (!cont) return;
+
+    if (err) {
+      cont.innerHTML =
+        '<div class="vazio"><div class="vazio-ico">⚠️</div>' +
+        '<div class="vazio-titulo">Sem conexão</div>' +
+        '<div class="vazio-sub">' + esc(err.message) + '</div></div>' +
+        '<button class="btn btn-ref" onclick="carregarOTs(false)" style="margin-top:12px">🔄 Tentar novamente</button>';
+      return;
+    }
+
+    var ots = data || [];
+    S.ots = ots;
+    var colabId = S.colaborador ? S.colaborador.id : null;
+
+    var exec = [], paus = [], disp = [];
+    for (var i = 0; i < ots.length; i++) {
+      var o = ots[i];
+      if (isExec(o.status) && o.responsavel_id === colabId) {
+        exec.push(o);
+      } else if (o.status === 'pausada' && o.responsavel_id === colabId) {
+        paus.push(o);
+      } else if (isPend(o.status) || (o.status === 'pausada' && !o.responsavel_id)) {
+        disp.push(o);
+      }
+    }
+
+    var html = '';
+
+    function cardHtml(ot) {
+      var conc = ot.quantidade_concluida || 0;
+      var total = ot.quantidade || 0;
+      var meta = (conc > 0 ? conc + '/' + total + ' · ' : '') + (ot.codigo_publico || '');
+      return '<div class="ot-card" onclick="abrirDetalhe(\'' + ot.id + '\')">' +
+        '<div class="ot-row">' +
+        '<div class="ot-icone">📋</div>' +
+        '<div style="flex:1;-webkit-flex:1">' +
+        '<div class="ot-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
+        '<div class="ot-meta">' + esc(meta) + '</div>' +
+        statusBadge(ot.status) +
+        '</div></div></div>';
+    }
+
+    if (!exec.length && !paus.length && !disp.length) {
+      html = '<div class="vazio"><div class="vazio-ico">☀️</div>' +
+        '<div class="vazio-titulo">Sem tarefas no momento</div>' +
+        '<div class="vazio-sub">Aguarde novas ordens ou avise o supervisor.</div></div>';
+    } else {
+      if (exec.length) {
+        html += '<div class="secao-label">🔧 Em execução</div>';
+        for (var j = 0; j < exec.length; j++) html += cardHtml(exec[j]);
+      }
+      if (paus.length) {
+        html += '<div class="secao-label">⏸ Pausadas</div>';
+        for (var j = 0; j < paus.length; j++) html += cardHtml(paus[j]);
+      }
+      if (disp.length) {
+        html += '<div class="secao-label">📋 Disponíveis</div>';
+        for (var j = 0; j < disp.length; j++) html += cardHtml(disp[j]);
+      }
+    }
+
+    html += '<div class="refresh-bar" id="refreshBar">Atualiza em 60s</div>';
+    cont.innerHTML = html;
+    iniciarTimer();
+  });
+}
+
+/* ─────────────────────────────────────────
+   VIEW: DETALHE DA OT
+───────────────────────────────────────── */
+function abrirDetalhe(otId) {
+  pararTimer();
+  S.view = 'detalhe';
+  S.ot = null; S.tipo = null; S.peca = null;
+  S.checklist = []; S.fotoOk = false;
+  render();
+
+  /* 1. Buscar OT */
+  sbGet('ordens_trabalho',
+    'id=eq.' + otId +
+    '&select=id,codigo_publico,titulo,instrucoes,quantidade,status,' +
+    'tipo_ot_id,peca_id,pedido_id,plano_id,inicio_real,responsavel_id,' +
+    'quantidade_concluida,quantidade_perdida_acumulada,ordem_execucao',
+    function(err, data) {
+      if (err || !data || !data.length) {
+        var c = document.getElementById('cont');
+        if (c) c.innerHTML = '<div class="vazio"><div>OT não encontrada.</div></div>' +
+          '<button class="btn btn-vol" onclick="voltarInbox()">← Voltar</button>';
+        return;
+      }
+      S.ot = data[0];
+
+      /* 2. Buscar tipo_ot */
+      sbGet('tipos_ot', 'id=eq.' + S.ot.tipo_ot_id + '&select=id,nome,codigo,icone', function(err2, td) {
+        S.tipo = (td && td.length) ? td[0] : null;
+
+        /* 3. Buscar checklist */
+        sbGet('ot_checklist', 'ot_id=eq.' + otId + '&order=ordem&select=id,texto,ordem,obrigatorio,concluido',
+          function(err3, chks) {
+            S.checklist = chks || [];
+
+            /* 4. Buscar peça (se houver) */
+            if (S.ot.peca_id) {
+              sbGet('pecas_proprias',
+                'id=eq.' + S.ot.peca_id + '&select=id,modelo,codigo_publico,foto_base64',
+                function(err4, pd) {
+                  S.peca = (pd && pd.length) ? pd[0] : null;
+                  renderDetalhe();
+                });
+            } else {
+              renderDetalhe();
+            }
+          }
+        );
+      });
+    }
+  );
+}
+
+function renderDetalhe() {
+  var cont = document.getElementById('cont');
+  if (!cont) return;
+
+  if (!S.ot) {
+    cont.innerHTML = '<div class="loading"><div class="spin"></div>Carregando…</div>';
+    return;
+  }
+
+  var ot    = S.ot;
+  var tipo  = S.tipo;
+  var peca  = S.peca;
+  var s     = ot.status;
+  var ico   = (tipo && tipo.icone) ? tipo.icone : '📋';
+
+  var conc  = ot.quantidade_concluida || 0;
+  var perd  = ot.quantidade_perdida_acumulada || 0;
+  var total = ot.quantidade || 0;
+  var falt  = Math.max(0, total - conc - perd);
+
+  /* Foto de referência */
+  var fotoHtml = '';
+  if (peca && peca.foto_base64) {
+    fotoHtml =
+      '<div class="card">' +
+      '<div class="card-label">🖼️ Confira a peça correta</div>' +
+      '<img src="' + peca.foto_base64 + '" alt="peca" class="foto-img">' +
+      '<div class="foto-check">' +
+      '<input type="checkbox" id="chkFoto" onchange="confirmarFoto(this)">' +
+      '<label for="chkFoto">Confirmo que a peça corresponde à foto' +
+      (peca.codigo_publico ? ' (' + esc(peca.codigo_publico) + ')' : '') + '</label>' +
+      '</div></div>';
+  }
+
+  /* Instruções */
+  var instrHtml = '';
+  if (ot.instrucoes) {
+    instrHtml =
+      '<div class="card">' +
+      '<div class="card-label">📝 Instruções</div>' +
+      '<div class="instrucoes">' + esc(ot.instrucoes) + '</div>' +
+      '</div>';
+  }
+
+  /* Checklist */
+  var checkHtml = '';
+  if (S.checklist.length) {
+    var items = '';
+    for (var i = 0; i < S.checklist.length; i++) {
+      var c = S.checklist[i];
+      items +=
+        '<div class="check-item' + (c.concluido ? ' ok' : '') +
+        '" onclick="toggleCheck(\'' + c.id + '\')">' +
+        '<div class="check-box">' + (c.concluido ? '✓' : '') + '</div>' +
+        '<div class="check-txt">' + esc(c.texto) +
+        (c.obrigatorio ? '<span class="check-obrig"> *</span>' : '') +
+        '</div></div>';
+    }
+    checkHtml = '<div class="card"><div class="card-label">✅ Checklist</div>' + items + '</div>';
+  }
+
+  /* Botões de ação */
+  var temFoto  = !!(peca && peca.foto_base64);
+  var btnDis   = (temFoto && !S.fotoOk) ? ' disabled' : '';
+  var botoesHtml = '<div class="acoes">';
+
+  if (isPend(s)) {
+    botoesHtml += '<button class="btn btn-ini" id="btnIni"' + btnDis + ' onclick="acaoOT(\'iniciada\',\'inicio\')">▶ Iniciar Tarefa</button>';
+  }
+  if (isExec(s)) {
+    botoesHtml += '<button class="btn btn-conc" onclick="confirmarConcluir()">✅ Concluir Tarefa</button>';
+    botoesHtml += '<button class="btn btn-paus" onclick="acaoOT(\'pausada\',\'pausa\')">⏸ Pausar</button>';
+  }
+  if (s === 'pausada') {
+    botoesHtml += '<button class="btn btn-ret" onclick="acaoOT(\'retomada\',\'retomada\')">▶ Retomar Tarefa</button>';
+  }
+  botoesHtml += '<button class="btn btn-ref" onclick="imprimirDetalhe()">🖨️ Imprimir ficha</button>';
+  botoesHtml += '<button class="btn btn-vol" onclick="voltarInbox()">← Voltar</button>';
+  botoesHtml += '</div>';
+
+  cont.innerHTML =
+    '<div class="det-header">' +
+    '<div class="det-icone">' + ico + '</div>' +
+    '<div>' +
+    '<div class="det-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
+    '<div class="det-codigo">' + esc(ot.codigo_publico || '—') + ' · ' + statusBadge(s) + '</div>' +
+    '</div></div>' +
+    '<div class="card">' +
+    '<div class="card-label">Quantidade</div>' +
+    '<span class="qtd-num">' + total + '</span><span class="qtd-unit">unidades</span>' +
+    (conc > 0 || perd > 0
+      ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
+      : '') +
+    '</div>' +
+    fotoHtml + instrHtml + checkHtml + botoesHtml;
+}
+
+function confirmarFoto(el) {
+  S.fotoOk = el.checked;
+  var btn = document.getElementById('btnIni');
+  if (btn) btn.disabled = !S.fotoOk;
+}
+
+/* ─────────────────────────────────────────
+   IMPRESSÃO (via PrintBridge/SamsungBridge — android.print.PrintManager)
+───────────────────────────────────────── */
+function imprimirDetalhe() {
+  var ot = S.ot;
+  if (!ot) return;
+  var html =
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+    'body{font-family:Arial,sans-serif;padding:24px;color:#111}' +
+    'h1{font-size:20px;margin:0 0 4px}' +
+    '.cod{color:#555;font-size:13px;margin-bottom:18px}' +
+    'table{width:100%;border-collapse:collapse;margin-top:10px}' +
+    'td{padding:6px 4px;border-bottom:1px solid #ddd;font-size:14px}' +
+    'td:first-child{color:#555;width:40%}' +
+    '</style></head><body>' +
+    '<h1>' + esc(ot.titulo || 'Ordem de Trabalho') + '</h1>' +
+    '<div class="cod">' + esc(ot.codigo_publico || '') + '</div>' +
+    '<table>' +
+    '<tr><td>Status</td><td>' + esc((STATUS_LABEL[ot.status] || ot.status)) + '</td></tr>' +
+    '<tr><td>Quantidade</td><td>' + (ot.quantidade || 0) + '</td></tr>' +
+    '<tr><td>Concluídas</td><td>' + (ot.quantidade_concluida || 0) + '</td></tr>' +
+    '<tr><td>Instruções</td><td>' + esc(ot.instrucoes || '—') + '</td></tr>' +
+    '</table>' +
+    '</body></html>';
+
+  if (window.SamsungBridge && typeof SamsungBridge.imprimirHTML === 'function') {
+    SamsungBridge.imprimirHTML(html, 'OT_' + (ot.codigo_publico || ot.id));
+  } else {
+    var w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); w.print(); }
+    else { toast('Impressão não disponível neste dispositivo.', true); }
+  }
+}
+
+/* ─────────────────────────────────────────
+   AÇÕES
+───────────────────────────────────────── */
+function acaoOT(novoStatus, tipoEvento) {
+  if (!S.ot) return;
+  var ot      = S.ot;
+  var colabId = S.colaborador ? S.colaborador.id : null;
+
+  var payload = { status: novoStatus };
+  if (novoStatus === 'iniciada' && !ot.inicio_real) {
+    payload.inicio_real = new Date().toISOString();
+  }
+  if (novoStatus === 'iniciada' && colabId) {
+    payload.responsavel_id = colabId;
+  }
+
+  /* Desabilitar botões durante o request */
+  var btns = document.querySelectorAll('.btn');
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+
+  sbPatch('ordens_trabalho', 'id=eq.' + ot.id, payload, function(err) {
+    if (err) {
+      toast('Erro: ' + err.message, true);
+      var btns2 = document.querySelectorAll('.btn');
+      for (var i = 0; i < btns2.length; i++) btns2[i].disabled = false;
+      return;
+    }
+
+    /* Atualizar estado local */
+    S.ot.status = novoStatus;
+    if (payload.inicio_real)    S.ot.inicio_real    = payload.inicio_real;
+    if (payload.responsavel_id) S.ot.responsavel_id = payload.responsavel_id;
+
+    /* Registrar evento (best-effort) */
+    var evento = {
+      ot_id:      ot.id,
+      tipo:       novoStatus,
+      descricao:  'Status → ' + novoStatus + (colabId ? ' (terminal)' : ''),
+      estacao_id: null,
+      motivo:     null
+    };
+    sbPost('ot_eventos', evento, function() {});
+
+    var msgs = {
+      iniciada: 'Tarefa iniciada! ▶',
+      pausada:  'Tarefa pausada. ⏸',
+      retomada: 'Tarefa retomada! ▶',
+      concluida:'Tarefa concluída! ✅'
+    };
+    toast(msgs[novoStatus] || 'Atualizado.');
+    renderDetalhe();
+  });
+}
+
+/* ── FECHAMENTO COMPLETO DA OT (igual ao PC) ─────────────────────────── */
+function confirmarConcluir() {
+  for (var i = 0; i < S.checklist.length; i++) {
+    var c = S.checklist[i];
+    if (c.obrigatorio && !c.concluido) {
+      toast('Complete os itens obrigatórios (*) antes de concluir.', true);
+      return;
+    }
+  }
+  var ot = S.ot;
+  if (!ot) return;
+  var qtdPlan = ot.quantidade || 1;
+  var titulo  = ot.titulo || '';
+
+  var overlay = document.createElement('div');
+  overlay.id  = 'fech-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:9999;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0;';
+
+  overlay.innerHTML =
+    '<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:0;max-width:360px;width:92%;margin:auto;">' +
+      /* Header */
+      '<div style="background:#1e293b;border-radius:12px 12px 0 0;padding:16px 20px;">' +
+        '<div style="font-size:.7rem;font-weight:700;color:#94a3b8;letter-spacing:.1em;">FECHAMENTO DA OT</div>' +
+        '<div style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-top:4px;">' + titulo + '</div>' +
+      '</div>' +
+      /* Body */
+      '<div style="padding:20px;">' +
+        /* Como terminou */
+        '<div style="font-size:.75rem;font-weight:700;color:#94a3b8;margin-bottom:10px;letter-spacing:.08em;">COMO TERMINOU?</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">' +
+          '<button class="fech-res" data-res="sucesso"  style="padding:12px 6px;border:2px solid #22c55e;background:#052e16;color:#22c55e;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;"><span>✅</span>Sucesso</button>' +
+          '<button class="fech-res" data-res="parcial"  style="padding:12px 6px;border:2px solid #334155;background:#0f172a;color:#94a3b8;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;"><span>⚠️</span>Parcial</button>' +
+          '<button class="fech-res" data-res="falha"    style="padding:12px 6px;border:2px solid #334155;background:#0f172a;color:#94a3b8;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;"><span>❌</span>Falha</button>' +
+          '<button class="fech-res" data-res="cancelada" style="padding:12px 6px;border:2px solid #334155;background:#0f172a;color:#94a3b8;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;"><span>🚫</span>Cancelada</button>' +
+        '</div>' +
+        /* Quantidade */
+        '<div id="fech-qtd-area" style="margin-bottom:18px;">' +
+          '<div style="font-size:.75rem;font-weight:700;color:#94a3b8;margin-bottom:10px;letter-spacing:.08em;">QUANTIDADE</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">' +
+            '<div><div style="font-size:.7rem;color:#64748b;margin-bottom:4px;">Planejado</div><div style="font-size:1.4rem;font-weight:700;color:#f1f5f9;">' + qtdPlan + '</div></div>' +
+            '<div><div style="font-size:.7rem;color:#22c55e;margin-bottom:4px;">Boa ✓</div><input id="fech-boa" type="number" min="0" max="' + qtdPlan + '" value="' + qtdPlan + '" style="width:100%;padding:8px;font-size:1.1rem;font-weight:700;text-align:center;background:#052e16;color:#22c55e;border:1px solid #22c55e;border-radius:6px;"></div>' +
+            '<div><div style="font-size:.7rem;color:#ef4444;margin-bottom:4px;">Perdida ✗</div><input id="fech-perd" type="number" min="0" max="' + qtdPlan + '" value="0" style="width:100%;padding:8px;font-size:1.1rem;font-weight:700;text-align:center;background:#1a0a0a;color:#ef4444;border:1px solid #ef4444;border-radius:6px;"></div>' +
+          '</div>' +
+        '</div>' +
+        /* Observações */
+        '<div style="margin-bottom:18px;">' +
+          '<div style="font-size:.75rem;font-weight:700;color:#94a3b8;margin-bottom:8px;letter-spacing:.08em;">OBSERVAÇÕES <span style="font-weight:400;font-size:.7rem;">(OPCIONAL)</span></div>' +
+          '<textarea id="fech-obs" rows="3" placeholder="Ex: material diferente, ajuste necessário..." style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;font-size:.9rem;resize:none;box-sizing:border-box;"></textarea>' +
+        '</div>' +
+        /* Botões */
+        '<div style="display:flex;gap:12px;">' +
+          '<button id="fech-cancel" style="flex:1;padding:14px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem;cursor:pointer;">Cancelar</button>' +
+          '<button id="fech-ok"     style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Confirmar Fechamento</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+
+  /* Selecionar resultado */
+  var resultado = 'sucesso';
+  var resBtns = overlay.querySelectorAll('.fech-res');
+  for (var b = 0; b < resBtns.length; b++) {
+    (function(btn) {
+      btn.onclick = function() {
+        resultado = btn.getAttribute('data-res');
+        for (var x = 0; x < resBtns.length; x++) {
+          resBtns[x].style.borderColor = '#334155';
+          resBtns[x].style.background  = '#0f172a';
+          resBtns[x].style.color       = '#94a3b8';
+        }
+        btn.style.borderColor = '#22c55e';
+        btn.style.background  = '#052e16';
+        btn.style.color       = '#22c55e';
+        /* Ajustar campos por resultado */
+        var qtdArea = document.getElementById('fech-qtd-area');
+        var iboa    = document.getElementById('fech-boa');
+        var iperd   = document.getElementById('fech-perd');
+        if (resultado === 'sucesso') {
+          qtdArea.style.display = '';
+          iboa.value = qtdPlan; iboa.readOnly = false;
+          iperd.value = 0;     iperd.readOnly = true;
+        } else if (resultado === 'parcial') {
+          qtdArea.style.display = '';
+          iboa.value = '';  iboa.readOnly = false;
+          iperd.value = ''; iperd.readOnly = false;
+        } else if (resultado === 'falha') {
+          qtdArea.style.display = '';
+          iboa.value = 0;        iboa.readOnly = true;
+          iperd.value = qtdPlan; iperd.readOnly = true;
+        } else {
+          qtdArea.style.display = 'none';
+        }
+      };
+    })(resBtns[b]);
+  }
+
+  document.getElementById('fech-cancel').onclick = function() {
+    document.body.removeChild(overlay);
+  };
+
+  document.getElementById('fech-ok').onclick = function() {
+    var qtdBoa  = parseInt(document.getElementById('fech-boa').value)  || 0;
+    var qtdPerd = parseInt(document.getElementById('fech-perd').value) || 0;
+    var obs     = (document.getElementById('fech-obs').value || '').trim();
+    document.body.removeChild(overlay);
+    fecharOT(resultado, qtdBoa, qtdPerd, obs);
+  };
+}
+
+function fecharOT(resultado, qtdBoa, qtdPerd, obs) {
+  var ot      = S.ot;
+  var colabId = S.colaborador ? S.colaborador.id : null;
+  if (!ot) return;
+
+  var agora       = new Date().toISOString();
+  var h           = new Date().getHours();
+  var turno       = h >= 6 && h < 12 ? 'manha' : h >= 12 && h < 18 ? 'tarde' : 'noite';
+  var novoStatus  = resultado === 'cancelada' ? 'cancelada' : 'concluida';
+
+  var payload = {
+    status:                novoStatus,
+    fechamento_resultado:  resultado,
+    qtd_boa:               novoStatus === 'concluida' ? qtdBoa : 0,
+    qtd_perdida:           novoStatus === 'cancelada' ? 0 : qtdPerd,
+    observacao_fechamento: obs || null,
+    turno:                 turno,
+    fechado_em:            agora,
+    fim_real:              agora
+  };
+
+  if (ot.inicio_real) {
+    var min = Math.round((new Date(agora) - new Date(ot.inicio_real)) / 60000);
+    if (min > 0) { payload.duracao_real_min = min; }
+  }
+  if (!ot.inicio_real) { payload.inicio_real = agora; }
+  if (colabId && !ot.responsavel_id) { payload.responsavel_id = colabId; }
+
+  var btns = document.querySelectorAll('.btn');
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+
+  sbPatch('ordens_trabalho', 'id=eq.' + ot.id, payload, function(err) {
+    if (err) {
+      toast('Erro: ' + err.message, true);
+      var btns2 = document.querySelectorAll('.btn');
+      for (var i = 0; i < btns2.length; i++) btns2[i].disabled = false;
+      return;
+    }
+    S.ot.status = novoStatus;
+
+    var descEvento = 'Fechamento: ' + resultado +
+      ' · Boas: ' + payload.qtd_boa +
+      ' · Perdas: ' + payload.qtd_perdida +
+      (obs ? ' · ' + obs : '') + ' (terminal)';
+    sbPost('ot_eventos', {
+      ot_id:      ot.id,
+      tipo:       novoStatus,
+      descricao:  descEvento,
+      estacao_id: null,
+      motivo:     null
+    }, function() {});
+
+    var msg = resultado === 'sucesso'   ? 'Tarefa concluída com sucesso! ✅' :
+              resultado === 'parcial'   ? 'Fechamento parcial registrado. ⚠️' :
+              resultado === 'falha'     ? 'Falha registrada.' :
+              'Tarefa cancelada.';
+    toast(msg);
+    renderDetalhe();
+  });
+}
+
+function toggleCheck(checkId) {
+  var item = null;
+  for (var i = 0; i < S.checklist.length; i++) {
+    if (S.checklist[i].id === checkId) { item = S.checklist[i]; break; }
+  }
+  if (!item) return;
+  var novo = !item.concluido;
+  sbPatch('ot_checklist', 'id=eq.' + checkId, { concluido: novo }, function(err) {
+    if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+    item.concluido = novo;
+    renderDetalhe();
+  });
+}
+
+/* ─────────────────────────────────────────
+   NAVEGAÇÃO
+───────────────────────────────────────── */
+function voltarInbox() {
+  S.view = 'inbox';
+  S.ot = null; S.tipo = null; S.peca = null;
+  S.checklist = []; S.fotoOk = false;
+  render();
+  carregarOTs(false);
+}
+
+function sair() {
+  pararTimer();
+  S.view = 'pin';
+  S.colaborador = null; S.pinDigits = []; S.pinErro = false;
+  S.ots = []; S.ot = null; S.tipo = null; S.peca = null;
+  S.checklist = []; S.fotoOk = false;
+  render();
+}
+
+/* ─────────────────────────────────────────
+   INIT
+───────────────────────────────────────── */
+render();
+</script>
+<script src="treino-conteudo-es5.js"></script>
+<script src="treino-engine-es5.js"></script>
+</body>
+</html>
