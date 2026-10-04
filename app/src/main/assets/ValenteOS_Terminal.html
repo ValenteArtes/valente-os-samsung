@@ -1006,6 +1006,11 @@ function renderDetalhe() {
       '</div></div>';
   }
 
+  if (!fotoHtml && peca && !peca.foto_base64 && S.pecaViaPlano) {
+    fotoHtml = '<div class="card"><div class="card-label">🖼️ Modelo: ' + esc(peca.modelo || peca.codigo_publico || '') + '</div>' +
+      '<div class="ficha-pend">Esta peça ainda não tem foto de referência cadastrada no sistema. Peça ao supervisor para carregar a foto na ficha da peça.</div></div>';
+  }
+
   /* Instruções */
   var instrHtml = '';
   if (ot.instrucoes) {
