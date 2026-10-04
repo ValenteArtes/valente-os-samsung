@@ -239,6 +239,8 @@ html, body {
 .ficha-pend{color:#fdba74;font-size:0.9rem;margin-bottom:12px}
 .ficha-lbl{font-size:0.78rem;color:#94a3b8;margin-bottom:4px}
 
+.trein-aviso-seq{background:#1e293b;border:1px solid #475569;border-left:4px solid #f97316;color:#e2e8f0;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:0.85rem;line-height:1.4}
+
 /* ─── EMPTY STATE ─── */
 .vazio {
   text-align: center; padding: 60px 20px 40px;
@@ -410,6 +412,8 @@ var S = {
   semFoto:       [],
   pedido:        null,
   coresPeca:     [],
+  pecaViaPlano:  false,
+  pecaOpcoes:    [],
   pedidosLista:  [],
   pecasLista:    [],
   cores:         [],
@@ -911,7 +915,7 @@ function prepararContexto(cb) {
 function abrirDetalhe(otId) {
   pararTimer();
   S.view = 'detalhe';
-  S.ot = null; S.tipo = null; S.peca = null; S.roteiros = []; S.pedido = null;
+  S.ot = null; S.tipo = null; S.peca = null; S.roteiros = []; S.pedido = null; S.pecaViaPlano = false;
   S.checklist = []; S.fotoOk = false;
   render();
 
@@ -939,22 +943,24 @@ function abrirDetalhe(otId) {
           function(err3, chks) {
             S.checklist = chks || [];
 
-            /* 4. Buscar peça (se houver) */
-            if (S.ot.peca_id) {
-              sbGet('pecas_proprias',
-                'id=eq.' + S.ot.peca_id + '&select=id,modelo,codigo_publico,foto_base64,preco,roteiro_id',
-                function(err4, pd) {
-                  S.peca = (pd && pd.length) ? pd[0] : null;
-                  if (S.tipo && S.tipo.codigo === 'completar_ficha') {
-                    sbGet('roteiros', 'ativo=eq.true&order=nome&select=id,codigo_publico,nome', function(e5, rs) {
-                      S.roteiros = rs || [];
-                      carregarPedidoEDetalhe();
-                    });
-                  } else { carregarPedidoEDetalhe(); }
-                });
-            } else {
-              carregarPedidoEDetalhe();
-            }
+            /* 4. Buscar peça (direta ou via plano/OP) */
+            resolverPecaId(function(pid) {
+              if (pid) {
+                sbGet('pecas_proprias',
+                  'id=eq.' + pid + '&select=id,modelo,codigo_publico,foto_base64,preco,roteiro_id',
+                  function(err4, pd) {
+                    S.peca = (pd && pd.length) ? pd[0] : null;
+                    if (S.tipo && S.tipo.codigo === 'completar_ficha') {
+                      sbGet('roteiros', 'ativo=eq.true&order=nome&select=id,codigo_publico,nome', function(e5, rs) {
+                        S.roteiros = rs || [];
+                        carregarPedidoEDetalhe();
+                      });
+                    } else { carregarPedidoEDetalhe(); }
+                  });
+              } else {
+                carregarPedidoEDetalhe();
+              }
+            });
           }
         );
       });
@@ -985,8 +991,8 @@ function renderDetalhe() {
   /* Foto de referência */
   var fotoHtml = '';
   var ehFicha = ehTipoFicha();
-  if (peca && peca.foto_base64 && ehFicha) {
-    fotoHtml = '<div class="card"><div class="card-label">🖼️ Foto da peça</div><img src="' + peca.foto_base64 + '" alt="peca" class="foto-img"></div>';
+  if (peca && peca.foto_base64 && (ehFicha || S.pecaViaPlano)) {
+    fotoHtml = '<div class="card"><div class="card-label">🖼️ Modelo: ' + esc(peca.modelo || peca.codigo_publico || '') + '</div><img src="' + peca.foto_base64 + '" alt="peca" class="foto-img" onclick="ampliarFoto(this.src)"><div class="ot-meta">Toque na imagem para ampliar.</div>' + ((S.pecaOpcoes || []).length > 1 ? '<button class="btn btn-ref" style="margin-top:8px" onclick="trocarModeloOP()">↔ Ver outro modelo desta ordem</button>' : '') + '</div>';
   } else if (peca && peca.foto_base64) {
     fotoHtml =
       '<div class="card">' +
@@ -1028,7 +1034,7 @@ function renderDetalhe() {
   }
 
   /* Botões de ação */
-  var temFoto  = !ehFicha && !!(peca && peca.foto_base64);
+  var temFoto  = !ehFicha && !S.pecaViaPlano && !!(peca && peca.foto_base64);
   var btnDis   = (temFoto && !S.fotoOk) ? ' disabled' : '';
   var botoesHtml = '<div class="acoes">';
 
@@ -1060,7 +1066,7 @@ function renderDetalhe() {
       ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
       : '') +
     '</div>' +
-    fotoHtml + pinturaHtmlBloco() + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
+    opcoesPecaHtml() + fotoHtml + pinturaHtmlBloco() + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
 }
 
 function confirmarFoto(el) {
@@ -1424,8 +1430,8 @@ function carregarPedidoEDetalhe() {
   var cod = S.tipo ? S.tipo.codigo : '';
   S.pedido = null;
   S.coresPeca = [];
-  if (cod === 'pintura' && S.ot && S.ot.peca_id) {
-    sbGet('pecas_cores', 'peca_id=eq.' + S.ot.peca_id + '&order=ordem&select=parte,cor_numero,ordem,cores(nome,familia,hex,prateleira)', function(err, d) {
+  if (cod === 'pintura' && S.peca && S.peca.id) {
+    sbGet('pecas_cores', 'peca_id=eq.' + S.peca.id + '&order=ordem&select=parte,cor_numero,ordem,cores(nome,familia,hex,prateleira)', function(err, d) {
       S.coresPeca = (!err && d) ? d : [];
       renderDetalhe();
     });
@@ -2033,7 +2039,7 @@ function ampliarFoto(src) {
 }
 function corCodigo(n) { return 'Cor ' + (n < 10 ? '0' : '') + n; }
 function pinturaHtmlBloco() {
-  if (!S.tipo || S.tipo.codigo !== 'pintura' || !S.ot || !S.ot.peca_id) return '';
+  if (!S.tipo || S.tipo.codigo !== 'pintura' || !S.peca) return '';
   var l = S.coresPeca || [], h = '<div class="card"><div class="card-label">🎨 Cores desta peça</div>', i, c, k;
   if (!l.length) {
     return h + '<div class="ficha-pend">Esta peça ainda não tem cores cadastradas. Use a imagem de referência e avise o supervisor.</div></div>';
@@ -2157,6 +2163,73 @@ function removerCorPeca(id, pecaId) {
     if (err) { toast('Erro: ' + err.message, true); return; }
     carregarCoresDaPeca(pecaId, function() { S.formBuilt = false; renderModalidades(); });
   });
+}
+
+
+/* Descobre a peça de uma OT: direta (peca_id) ou pelo plano → OP → itens da OP.
+   OP com várias peças: tenta casar o nome do componente no título da OT; se não achar, deixa escolher. */
+function trNorm(t) {
+  return String(t || '').toLowerCase().replace(/[áàãâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i')
+    .replace(/[óòõôö]/g, 'o').replace(/[úùûü]/g, 'u').replace(/ç/g, 'c').replace(/×.*$/, '').replace(/^(pintar|pintura:|lavar|montar|embalar)\s+/, '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+}
+function resolverPecaId(cb) {
+  var ot = S.ot, i;
+  S.pecaViaPlano = false; S.pecaOpcoes = [];
+  if (ot.peca_id) { cb(ot.peca_id); return; }
+  if (!ot.plano_id) { cb(null); return; }
+  var t = S.tipos[ot.tipo_ot_id];
+  if (t && t.grupo === 'administrativa') { cb(null); return; }
+  sbGet('planos_producao', 'id=eq.' + ot.plano_id + '&select=op_id', function(e1, pl) {
+    var opId = (!e1 && pl && pl.length) ? pl[0].op_id : null;
+    if (!opId) { cb(null); return; }
+    sbGet('op_itens', 'op_id=eq.' + opId + '&entity_type=eq.peca&select=entity_id', function(e2, it) {
+      var ids = [];
+      if (!e2 && it) for (i = 0; i < it.length; i++) if (it[i].entity_id && ids.indexOf(it[i].entity_id) < 0) ids.push(it[i].entity_id);
+      if (!ids.length) {
+        sbGet('ordens_producao', 'id=eq.' + opId + '&select=pedido_id', function(e3, op) {
+          var pid = (!e3 && op && op.length) ? op[0].pedido_id : null;
+          if (!pid) { cb(null); return; }
+          sbGet('pedidos', 'id=eq.' + pid + '&select=peca_propria_id', function(e4, pd) {
+            var peca = (!e4 && pd && pd.length) ? pd[0].peca_propria_id : null;
+            if (peca) S.pecaViaPlano = true;
+            cb(peca || null);
+          });
+        });
+        return;
+      }
+      S.pecaViaPlano = true;
+      if (ids.length === 1) { cb(ids[0]); return; }
+      var lista = ids.join(',');
+      sbGet('pecas_proprias', 'id=in.(' + lista + ')&select=id,modelo,codigo_publico', function(e5, ps) {
+        S.pecaOpcoes = (!e5 && ps) ? ps : [];
+        sbGet('peca_componentes', 'peca_id=in.(' + lista + ')&select=peca_id,nome', function(e6, cs) {
+          var alvo = trNorm(ot.titulo), achados = [], k;
+          if (!e6 && cs && alvo) for (k = 0; k < cs.length; k++) {
+            var nc = trNorm(cs[k].nome);
+            if (nc && (alvo === nc || alvo.indexOf(nc) >= 0 || nc.indexOf(alvo) >= 0) && achados.indexOf(cs[k].peca_id) < 0) achados.push(cs[k].peca_id);
+          }
+          cb(achados.length === 1 ? achados[0] : null);
+        });
+      });
+    });
+  });
+}
+function escolherPecaOP(id) {
+  sbGet('pecas_proprias', 'id=eq.' + id + '&select=id,modelo,codigo_publico,foto_base64,preco,roteiro_id', function(err, pd) {
+    S.peca = (!err && pd && pd.length) ? pd[0] : null;
+    S.pecaViaPlano = true;
+    carregarPedidoEDetalhe();
+  });
+}
+function trocarModeloOP() { S.peca = null; S.coresPeca = []; renderDetalhe(); }
+function opcoesPecaHtml() {
+  var l = S.pecaOpcoes || [], h, i;
+  if (S.peca || l.length < 2) return '';
+  h = '<div class="card"><div class="card-label">🖼️ Modelos desta ordem (' + l.length + ')</div><div class="ot-meta" style="margin-bottom:8px">Toque no modelo que você está pintando para ver a foto e as cores.</div>';
+  for (i = 0; i < l.length; i++) {
+    h += '<button class="btn btn-ref" style="margin-bottom:8px" onclick="escolherPecaOP(\'' + l[i].id + '\')">' + esc((l[i].codigo_publico ? l[i].codigo_publico + ' · ' : '') + (l[i].modelo || '')) + '</button>';
+  }
+  return h + '</div>';
 }
 
 /* ─────────────────────────────────────────

@@ -109,8 +109,21 @@ function trStatusDoDia(dia) {
   var row = trFindRow(dia);
   if (row) return row.status;
   if (dia === 1) return 'nao_iniciado';
-  var anterior = trFindRow(dia - 1);
-  return (anterior && anterior.status === 'concluido') ? 'nao_iniciado' : 'bloqueado';
+  /* v133 — sem bloqueio por sequência: qualquer aula abre; a ordem é só recomendada. */
+  return 'nao_iniciado';
+}
+function trDiasPendentesAntes(trilha, dia) {
+  var r = [];
+  for (var i = 0; i < trilha.dias.length; i++) {
+    if (trilha.dias[i].dia < dia && trStatusDoDia(trilha.dias[i].dia) !== 'concluido') r.push(trilha.dias[i].dia);
+  }
+  return r;
+}
+function trAvisoSequencia(trilha, dia) {
+  var p = trDiasPendentesAntes(trilha, dia);
+  if (!p.length) return '';
+  return '<div class="trein-aviso-seq">💡 O ideal é seguir a sequência. ' + (p.length === 1 ? 'A aula ' + p[0] + ' ainda não foi concluída' : 'As aulas ' + p.join(', ') + ' ainda não foram concluídas') +
+    ' e esta aula pode usar o que se aprende nelas. Você pode continuar, mas se sentir falta de base, volte e faça as anteriores.</div>';
 }
 /* Grava status/etapa_atual/respostas (merge) de um dia. patch (opcional) é
    mesclado em cima de `respostas` já salvo. novoStatus (opcional) troca o
@@ -185,7 +198,7 @@ function treinoRenderTrilhas(box) {
   box.innerHTML =
     '<div class="trein-inicio">' +
     '<div class="trein-header">' +
-    '<div><div class="trein-titulo-principal">🎓 CENTRO DE CAPACITAÇÃO</div><p class="hint">Olá, ' + trEsc(nome || 'colaborador') + '.</p></div>' +
+    '<div><div class="trein-titulo-principal">🎓 CENTRO DE CAPACITAÇÃO</div><p class="hint">Olá, ' + trEsc(nome || 'colaborador') + '. Escolha um curso. Você pode fazer qualquer um, em qualquer ordem; recomendamos começar pela Integração Valente.</p></div>' +
     '<button class="btn-icon" id="treinBtnFechar">← Voltar ao trabalho</button>' +
     '</div>' +
     '<div class="trein-cards-grid">' + cardsHtml + '</div>' +
@@ -214,6 +227,8 @@ function treinoRenderInicio(box) {
   var nome = (T.colaborador.nome || '').trim();
   var temOutras = trTrilhasDoColaborador().length > 1;
 
+  var proximaRec = null;
+  for (var pr = 0; pr < dias.length; pr++) { if (trStatusDoDia(dias[pr].dia) !== 'concluido') { proximaRec = dias[pr].dia; break; } }
   var cardsHtml = '';
   for (var d = 0; d < dias.length; d++) {
     var dd = dias[d];
@@ -225,7 +240,7 @@ function treinoRenderInicio(box) {
       '<span class="trein-card-status-ic">' + TREIN_STATUS_ICONE_ES5[status] + '</span></div>' +
       '<div class="trein-card-titulo">' + trEsc(dd.titulo) + '</div>' +
       '<div class="trein-card-sub">' + trEsc(dd.subtitulo || '') + '</div>' +
-      '<div class="trein-card-label">' + TREIN_STATUS_LABEL_ES5[status] + '</div>' +
+      '<div class="trein-card-label">' + TREIN_STATUS_LABEL_ES5[status] + (dd.dia === proximaRec && status !== 'concluido' ? ' · ▶ Recomendada agora' : '') + '</div>' +
       '</div>';
   }
 
@@ -249,6 +264,7 @@ function treinoRenderInicio(box) {
         '<button class="btn-icon" id="treinBtnCentral">📚 Central de Consulta</button>' +
         '</div>'
       : '') +
+    '<div class="trein-aviso-seq">💡 Você pode abrir qualquer aula, na ordem que preferir. O ideal é seguir a sequência: pular aulas aumenta o risco de faltar conhecimento.</div>' +
     '<div class="trein-cards-grid">' + cardsHtml + '</div>' +
     '</div>';
 
@@ -350,6 +366,7 @@ function treinoRenderEtapaAtual(box, trilha, dia, info, etapaIndex, respostas) {
     '<button class="btn-icon" id="treinBtnVoltar">← Voltar</button>' +
     (etapaIndex > 0 ? '<button class="btn-icon" id="treinBtnEtapaAnterior">← Etapa anterior</button>' : '') +
     '<div class="trein-aula-dia">' + trEsc(trilha.nome.toUpperCase()) + ' — DIA ' + dia + ' / ' + trilha.dias.length + '</div>' +
+    (etapaIndex === 0 ? trAvisoSequencia(trilha, dia) : '') +
     '<div class="trein-progresso-wrap">' +
     '<div class="trein-progresso-label">Etapa ' + (etapaIndex + 1) + ' de ' + totalEtapas + '</div>' +
     '<div class="trein-progresso-barra"><div class="trein-progresso-fill" style="width:' + pct + '%"></div></div>' +
