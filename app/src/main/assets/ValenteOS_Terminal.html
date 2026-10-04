@@ -409,8 +409,12 @@ var S = {
   g:             null,
   semFoto:       [],
   pedido:        null,
+  coresPeca:     [],
   pedidosLista:  [],
   pecasLista:    [],
+  cores:         [],
+  coresQ:        '',
+  pecaCores:     [],
   npConfOk:      false,
   formBuilt:     false,
   pecasQ:        '',
@@ -695,7 +699,7 @@ function carregarOTs(silencioso) {
       }
     }
     S.g = { exec: exec, paus: paus, prod: prod, disp: disp };
-    renderModalidades();
+    S.autoRender = true; renderModalidades(); S.autoRender = false;
     iniciarTimer();
     carregarSemFoto(function() { if (S.view === 'inbox') renderModalidades(); });
     if (EXTRAS) carregarPedidosLista(function() { if (S.view === 'inbox') renderModalidades(); });
@@ -759,7 +763,7 @@ function navMais() { S.nav.lim += 15; renderModalidades(); }
 function navVoltar() {
   var m = S.nav.mod; S.formBuilt = false;
   if (m === 'com_t') { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
-  if (m === 'caixa' || m === 'orcs' || m === 'conf' || m === 'novoped' || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
+  if (m === 'caixa' || m === 'orcs' || m === 'conf' || m === 'novoped' || (m === 'cores' && !S.nav.sub) || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (S.nav.sub) S.nav = { mod: S.nav.mod, sub: null, lim: 15 };
   else S.nav = { mod: null, sub: null, lim: 15 };
   renderModalidades(); window.scrollTo(0, 0);
@@ -798,7 +802,8 @@ function renderModalidades() {
   if (!cont || !S.g) return;
   var nav = S.nav || (S.nav = { mod: null, sub: null, lim: 15 });
   /* formulários abertos não são redesenhados pela atualização automática (perderiam o que foi digitado) */
-  if ((nav.mod === 'novoped' || nav.mod === 'conf') && S.formBuilt) return;
+  if (S.autoRender && nav.mod === 'pecas' && nav.sub) return;
+  if ((nav.mod === 'novoped' || nav.mod === 'conf' || (nav.mod === 'cores' && nav.sub)) && S.formBuilt) return;
   S.formBuilt = false;
   var g = S.g, html = '', j;
   var nProd = listaDaModalidade('prod').length;
@@ -862,7 +867,7 @@ function renderModalidades() {
   if (!nav.mod) html += avisoSemFotoHtml();
   html += '<div class="refresh-bar" id="refreshBar">Atualiza em 60s</div>';
   cont.innerHTML = html;
-  if (nav.mod === 'novoped' || nav.mod === 'conf') S.formBuilt = true;
+  if (nav.mod === 'novoped' || nav.mod === 'conf' || (nav.mod === 'cores' && nav.sub)) S.formBuilt = true;
 }
 
 /* Carrega tipos de OT e as funções (subsetores) do operador — uma vez por login */
@@ -986,7 +991,8 @@ function renderDetalhe() {
     fotoHtml =
       '<div class="card">' +
       '<div class="card-label">🖼️ Confira a peça correta</div>' +
-      '<img src="' + peca.foto_base64 + '" alt="peca" class="foto-img">' +
+      '<img src="' + peca.foto_base64 + '" alt="peca" class="foto-img" onclick="ampliarFoto(this.src)">' +
+      '<div class="ot-meta" style="margin-bottom:8px">Toque na imagem para ampliar.</div>' +
       '<div class="foto-check">' +
       '<input type="checkbox" id="chkFoto" onchange="confirmarFoto(this)">' +
       '<label for="chkFoto">Confirmo que a peça corresponde à foto' +
@@ -1054,7 +1060,7 @@ function renderDetalhe() {
       ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
       : '') +
     '</div>' +
-    fotoHtml + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
+    fotoHtml + pinturaHtmlBloco() + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
 }
 
 function confirmarFoto(el) {
@@ -1417,6 +1423,14 @@ function fmtMoeda(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','
 function carregarPedidoEDetalhe() {
   var cod = S.tipo ? S.tipo.codigo : '';
   S.pedido = null;
+  S.coresPeca = [];
+  if (cod === 'pintura' && S.ot && S.ot.peca_id) {
+    sbGet('pecas_cores', 'peca_id=eq.' + S.ot.peca_id + '&order=ordem&select=parte,cor_numero,ordem,cores(nome,familia,hex,prateleira)', function(err, d) {
+      S.coresPeca = (!err && d) ? d : [];
+      renderDetalhe();
+    });
+    return;
+  }
   if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra' || ehOtComercial())) {
     sbGet('pedidos', 'id=eq.' + S.ot.pedido_id +
       '&select=id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em,data_entrega,modelo_nome,quantidade',
@@ -1718,6 +1732,7 @@ function comMenuHtml() {
   h += tileHtml('📦', 'Pedidos', 'Andamento, pagamento e resposta pronta', (S.pedidosLista || []).length, "navPedidos()");
   h += tileHtml('🏷️', 'Peças próprias', 'Catálogo: preço, estoque, cores e foto', '', "navPecas()");
   h += tileHtml('💰', 'Caixa', 'Saldos dos baldes (consulta)', '', "navCaixa()");
+  h += tileHtml('🎨', 'Cores', 'Cor 01 a Cor 33: nome, tom e prateleira', '', "navCores()");
   h += tileHtml('🧾', 'Orçamentos', 'Orçamentos salvos (criar no computador)', '', "navOrcs()");
   h += tileHtml('✅', 'Conferências', 'Antes de registrar pedido e de publicar anúncio', '', "navIr('conf')");
   h += tileHtml('🎓', 'Capacitação', 'Treinamento do Comercial', '', "abrirTreinamento()");
@@ -1768,8 +1783,9 @@ function pecasFiltrar(v) {
   if (el) el.innerHTML = pecasFiltrarHtml();
 }
 function abrirPecaDet(id) {
-  S.pecaFoto = null;
+  S.pecaFoto = null; S.pecaCores = [];
   navIr('pecas', id);
+  carregarCoresDaPeca(id, function() { if (S.nav.mod === 'pecas' && S.nav.sub === id) renderModalidades(); });
   sbGet('pecas_proprias', 'id=eq.' + id + '&select=foto_base64', function(err, d) {
     S.pecaFoto = (!err && d && d.length) ? d[0].foto_base64 : '';
     if (S.nav.mod === 'pecas' && S.nav.sub === id) renderModalidades();
@@ -1788,7 +1804,7 @@ function pecaDetHtml(id) {
     (p.categoria ? '<div class="ficha-lbl">Categoria</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.categoria) + '</div>' : '') +
     (p.cores ? '<div class="ficha-lbl">Cores</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.cores) + '</div>' : '') +
     (p.decalques ? '<div class="ficha-lbl">Decalques</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.decalques) + '</div>' : '') + '</div>';
-  return h;
+  return h + pecaCoresHtml(id);
 }
 
 /* Caixa (consulta) */
@@ -1858,6 +1874,7 @@ function comNavHtml(nav) {
   if (nav.mod === 'caixa') return back + caixaHtml();
   if (nav.mod === 'orcs') return back + orcsHtml();
   if (nav.mod === 'conf') return back + confHtml();
+  if (nav.mod === 'cores') return back + (nav.sub ? corEditHtml(nav.sub) : '<div class="nav-tit">Cores</div><input class="ficha-in" type="text" placeholder="Buscar por número, nome ou família" oninput="coresFiltrar(this.value)" value="' + esc(S.coresQ || '') + '"><div id="coresLista">' + coresListaHtml() + '</div>');
   if (nav.mod === 'novoped') return back + novoPedidoHtml();
   return '';
 }
@@ -2000,6 +2017,145 @@ function npCriar() {
         fim(e2 ? 'Pedido criado, mas a tarefa de contato falhou. Custos pendentes (computador).' : 'Pedido criado em Negociação. Custos da ficha pendentes: completar no computador.');
       });
     });
+  });
+}
+
+
+/* ─────────────────────────────────────────
+   PINTURA: cores da peça por parte (Cor 01 a Cor 33) + ampliar foto de referência
+───────────────────────────────────────── */
+function ampliarFoto(src) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:9998;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:10px;';
+  ov.innerHTML = '<img src="' + src + '" style="max-width:100%;max-height:100%;border-radius:8px"><div style="position:absolute;top:12px;right:16px;color:#f1f5f9;font-size:1.6rem">✕</div>';
+  ov.onclick = function() { document.body.removeChild(ov); };
+  document.body.appendChild(ov);
+}
+function corCodigo(n) { return 'Cor ' + (n < 10 ? '0' : '') + n; }
+function pinturaHtmlBloco() {
+  if (!S.tipo || S.tipo.codigo !== 'pintura' || !S.ot || !S.ot.peca_id) return '';
+  var l = S.coresPeca || [], h = '<div class="card"><div class="card-label">🎨 Cores desta peça</div>', i, c, k;
+  if (!l.length) {
+    return h + '<div class="ficha-pend">Esta peça ainda não tem cores cadastradas. Use a imagem de referência e avise o supervisor.</div></div>';
+  }
+  for (i = 0; i < l.length; i++) {
+    c = l[i]; k = c.cores || {};
+    h += '<div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:12px">' +
+      '<div style="width:34px;height:34px;border-radius:50%;border:2px solid #475569;margin-right:12px;-webkit-flex-shrink:0;flex-shrink:0;background:' + esc(k.hex || '#1e293b') + '"></div>' +
+      '<div style="-webkit-flex:1;flex:1"><div style="font-weight:700;color:#f1f5f9">' + esc(c.parte) + ' → ' + corCodigo(c.cor_numero) + '</div>' +
+      '<div class="ot-meta">' + esc((k.nome || '') + (k.familia ? ' · ' + k.familia : '') + (k.prateleira ? ' · prateleira ' + k.prateleira : '')) + '</div></div></div>';
+  }
+  return h + '<div class="ficha-pend">Confira o número escrito no pote. A cor da tela é só uma aproximação.</div></div>';
+}
+
+
+/* ─────────────────────────────────────────
+   CORES (Samsung): catálogo Cor 01–33 e cores por parte da peça
+───────────────────────────────────────── */
+function sbDelete(t, qs, cb) { xhr('DELETE', t, qs, null, cb); }
+var FAMILIAS_COR = ['Verde', 'Vermelho', 'Azul', 'Amarelo', 'Laranja', 'Marrom', 'Preto', 'Branco', 'Cinza', 'Tom de pele', 'Metálico', 'Outro'];
+
+function navCores() {
+  sbGet('cores', 'select=numero,nome,familia,hex,prateleira,ativo&order=numero', function(err, d) {
+    S.cores = (!err && d) ? d : [];
+    S.coresQ = '';
+    navIr('cores');
+  });
+}
+function corLinhaHtml(c) {
+  return '<div class="ot-card" onclick="navIr(\'cores\',\'' + c.numero + '\')"><div class="ot-row">' +
+    '<div style="width:34px;height:34px;border-radius:50%;border:2px solid #475569;-webkit-flex-shrink:0;flex-shrink:0;background:' + esc(c.hex || '#1e293b') + '"></div>' +
+    '<div style="-webkit-flex:1;flex:1"><div class="ot-titulo">' + corCodigo(c.numero) + (c.nome ? ' · ' + esc(c.nome) : '') + '</div>' +
+    '<div class="ot-meta">' + esc((c.familia || 'sem família') + (c.prateleira ? ' · prateleira ' + c.prateleira : '')) + '</div></div></div></div>';
+}
+function coresListaHtml() {
+  var l = S.cores || [], q = (S.coresQ || '').toLowerCase(), h = '', i, c;
+  for (i = 0; i < l.length; i++) {
+    c = l[i];
+    if (q && (corCodigo(c.numero) + ' ' + (c.nome || '') + ' ' + (c.familia || '')).toLowerCase().indexOf(q) < 0) continue;
+    h += corLinhaHtml(c);
+  }
+  return h || '<div class="vazio"><div class="vazio-titulo">Nenhuma cor</div></div>';
+}
+function coresFiltrar(v) {
+  S.coresQ = v;
+  var el = document.getElementById('cont').querySelector('#coresLista');
+  if (el) el.innerHTML = coresListaHtml();
+}
+function corEditHtml(n) {
+  var l = S.cores || [], c = null, i;
+  for (i = 0; i < l.length; i++) if (String(l[i].numero) === String(n)) { c = l[i]; break; }
+  if (!c) return '';
+  var opts = '<option value="">— escolher —</option>';
+  for (i = 0; i < FAMILIAS_COR.length; i++) opts += '<option value="' + FAMILIAS_COR[i] + '"' + (c.familia === FAMILIAS_COR[i] ? ' selected' : '') + '>' + FAMILIAS_COR[i] + '</option>';
+  return '<div class="nav-tit">' + corCodigo(c.numero) + '</div><div class="card">' +
+    '<div style="width:60px;height:60px;border-radius:50%;border:2px solid #475569;margin-bottom:12px;background:' + esc(c.hex || '#1e293b') + '" id="corPrev"></div>' +
+    '<div class="ficha-lbl">Nome da cor</div><input class="ficha-in" id="ce_nome" type="text" value="' + esc(c.nome || '') + '" placeholder="Ex.: Verde musgo">' +
+    '<div class="ficha-lbl">Família</div><select class="ficha-in" id="ce_fam">' + opts + '</select>' +
+    '<div class="ficha-lbl">Tom aproximado (hex, ex.: #2e7d32)</div><input class="ficha-in" id="ce_hex" type="text" value="' + esc(c.hex || '') + '" placeholder="#2e7d32" oninput="corPrev()">' +
+    '<div class="ficha-lbl">Prateleira / endereço do pote</div><input class="ficha-in" id="ce_prat" type="text" value="' + esc(c.prateleira || '') + '" placeholder="Ex.: P02">' +
+    '<div class="ot-meta" style="margin-bottom:10px">A tela só aproxima o tom. Vale o número escrito no pote.</div>' +
+    '<button class="btn btn-conc" onclick="salvarCor(' + c.numero + ')">💾 Salvar cor</button></div>';
+}
+function corPrev() {
+  var c = document.getElementById('cont'), v = c.querySelector('#ce_hex').value, p = c.querySelector('#corPrev');
+  if (p && /^#[0-9a-fA-F]{6}$/.test(v)) p.style.background = v;
+}
+function salvarCor(n) {
+  var c = document.getElementById('cont');
+  var hex = (c.querySelector('#ce_hex').value || '').replace(/^\s+|\s+$/g, '');
+  if (hex && !/^#[0-9a-fA-F]{6}$/.test(hex)) { toast('Hex inválido. Use o formato #2e7d32.', true); return; }
+  var patch = { nome: c.querySelector('#ce_nome').value || null, familia: c.querySelector('#ce_fam').value || null, hex: hex || null, prateleira: c.querySelector('#ce_prat').value || null };
+  sbPatch('cores', 'numero=eq.' + n, patch, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    var l = S.cores, i;
+    for (i = 0; i < l.length; i++) if (l[i].numero === n) { l[i].nome = patch.nome; l[i].familia = patch.familia; l[i].hex = patch.hex; l[i].prateleira = patch.prateleira; }
+    toast('Cor salva.');
+    S.formBuilt = false;
+    S.nav = { mod: 'cores', sub: null, lim: 15 };
+    renderModalidades();
+  });
+}
+
+/* Cores por parte dentro do detalhe da peça */
+function carregarCoresDaPeca(id, cb) {
+  sbGet('pecas_cores', 'peca_id=eq.' + id + '&order=ordem&select=id,parte,cor_numero,ordem', function(err, d) {
+    S.pecaCores = (!err && d) ? d : [];
+    if (S.cores && S.cores.length) { cb(); return; }
+    sbGet('cores', 'select=numero,nome,familia,hex,prateleira,ativo&order=numero', function(e2, cs) { S.cores = (!e2 && cs) ? cs : []; cb(); });
+  });
+}
+function pecaCoresHtml(pecaId) {
+  var l = S.pecaCores || [], cs = S.cores || [], h = '<div class="card"><div class="card-label">🎨 Cores por parte</div>', i, j, c, k;
+  if (!l.length) h += '<div class="ficha-pend">Nenhuma cor cadastrada para esta peça.</div>';
+  for (i = 0; i < l.length; i++) {
+    k = null;
+    for (j = 0; j < cs.length; j++) if (cs[j].numero === l[i].cor_numero) k = cs[j];
+    h += '<div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:10px">' +
+      '<div style="width:28px;height:28px;border-radius:50%;border:2px solid #475569;margin-right:10px;background:' + esc((k && k.hex) || '#1e293b') + '"></div>' +
+      '<div style="-webkit-flex:1;flex:1;color:#f1f5f9">' + esc(l[i].parte) + ' → ' + corCodigo(l[i].cor_numero) + (k && k.nome ? ' · ' + esc(k.nome) : '') + '</div>' +
+      '<button class="nav-back" style="margin:0" onclick="removerCorPeca(\'' + l[i].id + '\',\'' + pecaId + '\')">✕</button></div>';
+  }
+  var opts = '<option value="">— cor —</option>';
+  for (j = 0; j < cs.length; j++) opts += '<option value="' + cs[j].numero + '">' + corCodigo(cs[j].numero) + (cs[j].nome ? ' · ' + esc(cs[j].nome) : '') + '</option>';
+  h += '<div class="ficha-lbl" style="margin-top:8px">Adicionar parte</div><input class="ficha-in" id="pc_parte" type="text" placeholder="Ex.: Corpo, Detalhes, Base">' +
+    '<select class="ficha-in" id="pc_cor">' + opts + '</select>' +
+    '<button class="btn btn-ref" onclick="adicionarCorPeca(\'' + pecaId + '\')">➕ Adicionar cor</button></div>';
+  return h;
+}
+function adicionarCorPeca(pecaId) {
+  var c = document.getElementById('cont');
+  var parte = (c.querySelector('#pc_parte').value || '').replace(/^\s+|\s+$/g, ''), cor = parseInt(c.querySelector('#pc_cor').value, 10);
+  if (!parte || isNaN(cor)) { toast('Informe a parte e escolha a cor.', true); return; }
+  sbPost('pecas_cores', { peca_id: pecaId, parte: parte, cor_numero: cor, ordem: (S.pecaCores || []).length }, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    carregarCoresDaPeca(pecaId, function() { S.formBuilt = false; renderModalidades(); });
+  });
+}
+function removerCorPeca(id, pecaId) {
+  sbDelete('pecas_cores', 'id=eq.' + id, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    carregarCoresDaPeca(pecaId, function() { S.formBuilt = false; renderModalidades(); });
   });
 }
 
