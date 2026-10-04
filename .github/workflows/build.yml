@@ -32,25 +32,20 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Sign APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
           BUILD_TOOLS=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
           UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
           ALIGNED="/tmp/app-release-aligned.apk"
           SIGNED="ValenteOS_Samsung_v1.0.apk"
           $ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign -v 4 $UNSIGNED $ALIGNED
-          keytool -genkeypair -v \
-            -keystore /tmp/valente.keystore \
-            -alias valente \
-            -keyalg RSA -keysize 2048 \
-            -validity 10000 \
-            -storepass valente2024 \
-            -keypass valente2024 \
-            -dname "CN=ValenteArtes, O=ValenteArtes, C=BR" 2>/dev/null
+          echo "$KEYSTORE_B64" | base64 -d > /tmp/valente.keystore
           $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign \
             --ks /tmp/valente.keystore \
-            --ks-key-alias valente \
-            --ks-pass pass:valente2024 \
-            --key-pass pass:valente2024 \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
             --out $SIGNED \
             $ALIGNED
 
