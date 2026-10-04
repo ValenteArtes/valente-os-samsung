@@ -40,6 +40,7 @@ var TREIN_COMPETENCIA_NOME_ES5 = {
   orcamento: 'Orçamento', operacao_os: 'Operação do Valente OS', marketplace: 'Marketplace',
   redes_sociais: 'Redes sociais', negociacao: 'Negociação', prospeccao: 'Prospecção'
 };
+if (typeof TREIN_COMPETENCIA_NOME_EXTRA !== 'undefined') { for (var _k in TREIN_COMPETENCIA_NOME_EXTRA) { if (TREIN_COMPETENCIA_NOME_EXTRA.hasOwnProperty(_k)) TREIN_COMPETENCIA_NOME_ES5[_k] = TREIN_COMPETENCIA_NOME_EXTRA[_k]; } }
 var TREIN_TIER_ICONE_ES5 = { verde: '🟢', amarelo: '🟡', vermelho: '🔴', sem_dados: '⚪' };
 var TREIN_TIER_LABEL_ES5 = { verde: 'Bom domínio', amarelo: 'Funcional, com acompanhamento', vermelho: 'Precisa de reforço', sem_dados: 'Sem dados ainda' };
 
