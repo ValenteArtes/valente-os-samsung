@@ -409,6 +409,13 @@ var S = {
   g:             null,
   semFoto:       [],
   pedido:        null,
+  pedidosLista:  [],
+  pecasLista:    [],
+  pecasQ:        '',
+  pecaFoto:      null,
+  baldes:        [],
+  orcs:          [],
+  motivoSel:     null,
   msgExtra:      '',
   nav:           { mod: null, sub: null, lim: 15 },
 };
@@ -689,6 +696,7 @@ function carregarOTs(silencioso) {
     renderModalidades();
     iniciarTimer();
     carregarSemFoto(function() { if (S.view === 'inbox') renderModalidades(); });
+    if (EXTRAS) carregarPedidosLista(function() { if (S.view === 'inbox') renderModalidades(); });
   });
 }
 
@@ -747,6 +755,9 @@ function tileHtml(ico, tit, sub, n, acao) {
 function navIr(mod, sub) { S.nav = { mod: mod, sub: sub || null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); }
 function navMais() { S.nav.lim += 15; renderModalidades(); }
 function navVoltar() {
+  var m = S.nav.mod;
+  if (m === 'com_t') { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
+  if (m === 'caixa' || m === 'orcs' || m === 'conf' || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (S.nav.sub) S.nav = { mod: S.nav.mod, sub: null, lim: 15 };
   else S.nav = { mod: null, sub: null, lim: 15 };
   renderModalidades(); window.scrollTo(0, 0);
@@ -806,10 +817,13 @@ function renderModalidades() {
       html += tileHtml('🏭', (S.meusSubs && S.meusSubs.length) ? 'Minhas funções' : 'Produção',
                        'Tarefas da sua função', nProd, "navIr('prod')");
       html += tileHtml('📋', 'Tarefas disponíveis', 'Baixa urgência: completar fichas, insumos, manutenção', g.disp.length, "navIr('disp')");
+      if (EXTRAS) html += tileHtml('💼', 'Comercial', 'Tarefas e ferramentas: pedidos, peças, caixa, conferências', '', "navIr('com')");
       if (S.meusSubs && S.meusSubs.length && nOutras) {
         html += tileHtml('🔎', 'Outras funções', 'Tarefas de outras funções (ajuda)', nOutras, "navIr('outras')");
       }
     }
+  } else if (EXTRAS && comNavHtml(nav)) {
+    html += comNavHtml(nav);
   } else if (nav.mod === 'semfoto') {
     html += '<button class="nav-back" onclick="navVoltar()">← Voltar</button>' + listaSemFotoHtml();
   } else {
@@ -1034,7 +1048,7 @@ function renderDetalhe() {
       ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
       : '') +
     '</div>' +
-    fotoHtml + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + instrHtml + checkHtml + botoesHtml;
+    fotoHtml + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
 }
 
 function confirmarFoto(el) {
@@ -1133,6 +1147,7 @@ function acaoOT(novoStatus, tipoEvento) {
 
 /* ── FECHAMENTO COMPLETO DA OT (igual ao PC) ─────────────────────────── */
 function confirmarConcluir() {
+  if (ehOtComercial()) { abrirDesfechoComercial(); return; }
   for (var i = 0; i < S.checklist.length; i++) {
     var c = S.checklist[i];
     if (c.obrigatorio && !c.concluido) {
@@ -1396,9 +1411,9 @@ function fmtMoeda(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','
 function carregarPedidoEDetalhe() {
   var cod = S.tipo ? S.tipo.codigo : '';
   S.pedido = null;
-  if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra')) {
+  if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra' || ehOtComercial())) {
     sbGet('pedidos', 'id=eq.' + S.ot.pedido_id +
-      '&select=id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em',
+      '&select=id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em,data_entrega,modelo_nome,quantidade',
       function(err, d) {
         S.pedido = (!err && d && d.length) ? d[0] : null;
         renderDetalhe();
@@ -1495,6 +1510,350 @@ function posCompraProblema(etapa) {
   });
 }
 
+
+/* ─────────────────────────────────────────
+   COMERCIAL (só Samsung, EXTRAS): contato/cobrança/aprovação com dados do
+   pedido, mensagem pronta, desfecho comercial e ferramenta "Pedidos".
+───────────────────────────────────────── */
+var MOTIVOS_PERDA = [
+  { id: 'preco', label: 'Achou caro' }, { id: 'concorrente', label: 'Comprou com concorrente' },
+  { id: 'desistiu', label: 'Desistiu da ideia' }, { id: 'sem_retorno', label: 'Sem retorno do cliente' }
+];
+var ETAPAS_PEDIDO = ['negociacao','pago','modelando','imprimindo','pos_impressao','pintura','preparar_envio','enviado'];
+var ETAPAS_LABEL = { negociacao:'Negociação', pago:'Pago', modelando:'Modelando', imprimindo:'Imprimindo',
+  pos_impressao:'Pós-impressão', pintura:'Pintura', preparar_envio:'Preparando envio', enviado:'Enviado' };
+
+function fmtData(d) { if (!d) return '—'; var p = String(d).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d; }
+function copiarDe(id) {
+  var ta = document.getElementById('cont').querySelector('#' + id);
+  if (!ta) return;
+  ta.focus(); ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  toast(ok ? 'Mensagem copiada.' : 'Selecione o texto e copie manualmente.', !ok);
+}
+function ehOtComercial() {
+  if (!EXTRAS || !S.ot || !S.tipo) return false;
+  var c = S.tipo.codigo;
+  if (c === 'completar_ficha' || c === 'expedicao' || c === 'pos_compra') return false;
+  return !!(S.ot.pedido_id && !S.ot.plano_id && !S.ot.peca_id);
+}
+function barraEtapas(status) {
+  var idx = ETAPAS_PEDIDO.indexOf(status), h = '<div style="display:-webkit-flex;display:flex;gap:3px;margin:6px 0 4px">', i;
+  for (i = 0; i < ETAPAS_PEDIDO.length; i++) {
+    h += '<span style="-webkit-flex:1;flex:1;height:8px;border-radius:4px;background:' + (i <= idx ? '#f97316' : '#334155') + '"></span>';
+  }
+  return h + '</div>';
+}
+function msgComercial(p, codigo) {
+  var nome = (p.cliente || '').split(' ')[0] || 'tudo bem';
+  var saldo = Math.max(0, (p.valor_total || 0) - (p.valor_entrada || 0));
+  if (codigo === 'cobranca' || codigo === 'confirmacao_pagamento') {
+    return 'Oi, ' + nome + '! Passando para combinar o saldo de ' + fmtMoeda(saldo) + ' do seu pedido. Pode me confirmar o pagamento? Obrigado!';
+  }
+  if (codigo === 'aprovacao_arte') {
+    return 'Oi, ' + nome + '! Segue a arte do seu pedido para aprovação. Está tudo certo ou quer algum ajuste?';
+  }
+  if (codigo === 'aprovacao_orcamento') {
+    return 'Oi, ' + nome + '! Conseguiu analisar o orçamento? Posso ajustar algo para fechar?';
+  }
+  return 'Oi, ' + nome + '! Aqui é da Valente Artes. Passando para saber se conseguiu ver nossa proposta. Posso ajudar com alguma dúvida?';
+}
+function comercialHtmlBloco() {
+  if (!ehOtComercial() || !S.pedido) return '';
+  var p = S.pedido, saldo = Math.max(0, (p.valor_total || 0) - (p.valor_entrada || 0));
+  var h = '<div class="card"><div class="card-label">' + esc(S.tipo.nome) + ': ' + esc(p.cliente || '') + '</div>';
+  if (p.contato) h += '<div class="ficha-lbl">Contato</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.contato) + '</div>';
+  h += '<div class="ficha-lbl">Pedido</div><div class="ficha-ok" style="color:#f1f5f9">' + esc((p.modelo_nome || 'Pedido') + (p.quantidade ? ' × ' + p.quantidade : '')) + '</div>';
+  h += '<div class="ficha-lbl">Valor / entrada / saldo</div><div class="ficha-ok" style="color:#f1f5f9">' +
+    fmtMoeda(p.valor_total) + ' / ' + fmtMoeda(p.valor_entrada) + ' / <span style="color:' + (saldo > 0 ? '#fdba74' : '#4ade80') + '">' + fmtMoeda(saldo) + '</span></div>';
+  h += '<div class="ficha-lbl">Entrega prevista · etapa</div><div class="ficha-ok" style="color:#f1f5f9">' + fmtData(p.data_entrega) + ' · ' + esc(ETAPAS_LABEL[p.status] || p.status || '') + '</div>';
+  h += '<div class="ficha-lbl">Mensagem pronta (editável)</div><textarea class="ficha-in" id="cMsg" rows="4">' + esc(msgComercial(p, S.tipo.codigo)) + '</textarea>' +
+    '<button class="btn btn-ref" onclick="copiarDe(\'cMsg\')">📋 Copiar mensagem</button></div>';
+  return h;
+}
+
+/* Desfecho comercial (espelha o app completo): fechado / retornar depois / desistiu */
+function abrirDesfechoComercial() {
+  var cont = document.getElementById('cont');
+  cont.innerHTML = '<div class="nav-tit">Como ficou o contato?</div>' +
+    '<button class="btn btn-conc" onclick="desfechoFechado()" style="margin-bottom:10px">✅ Fechado / resolvido</button>' +
+    '<button class="btn btn-paus" onclick="desfechoReagendar(1)" style="margin-bottom:10px">📅 Cliente pediu para retornar depois</button>' +
+    '<button class="btn btn-ref" onclick="desfechoDesistiu(1)" style="margin-bottom:10px">🚫 Cliente desistiu</button>' +
+    '<button class="btn btn-vol" onclick="renderDetalhe()">← Cancelar</button>';
+}
+function desfechoFechado() { fecharOT('sucesso', 1, 0, 'Desfecho comercial: fechado (terminal)'); }
+function desfechoReagendar(etapa) {
+  var cont = document.getElementById('cont');
+  if (etapa === 1) {
+    var hoje = new Date(), d = new Date(hoje.getTime() + 2 * 86400000);
+    var iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    cont.innerHTML = '<div class="nav-tit">Retornar em qual dia?</div>' +
+      '<input class="ficha-in" id="reagData" type="date" value="' + iso + '">' +
+      '<button class="btn btn-conc" onclick="desfechoReagendar(2)" style="margin-bottom:10px">Confirmar</button>' +
+      '<button class="btn btn-vol" onclick="abrirDesfechoComercial()">← Voltar</button>';
+    return;
+  }
+  var v = cont.querySelector('#reagData').value;
+  if (!v) { toast('Escolha uma data.', true); return; }
+  var dt = v + 'T08:00:00';
+  var iso2 = new Date(dt).toISOString();
+  sbPatch('ordens_trabalho', 'id=eq.' + S.ot.id, { status: 'pendente', disponivel_em: iso2 }, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    sbPost('ot_eventos', { ot_id: S.ot.id, tipo: 'reagendamento', descricao: 'Contato reagendado para ' + fmtData(v) + ' (terminal)', estacao_id: null, motivo: null }, function() {});
+    toast('📅 Contato reagendado.');
+    voltarInbox();
+  });
+}
+function desfechoDesistiu(etapa) {
+  var cont = document.getElementById('cont'), i;
+  if (etapa === 1) {
+    var h = '<div class="nav-tit">Motivo da desistência</div>';
+    for (i = 0; i < MOTIVOS_PERDA.length; i++) {
+      h += '<div class="check-item" onclick="selMotivo(\'' + MOTIVOS_PERDA[i].id + '\')" id="mot_' + MOTIVOS_PERDA[i].id + '"><div class="check-box"></div><div class="check-txt">' + esc(MOTIVOS_PERDA[i].label) + '</div></div>';
+    }
+    h += '<button class="btn btn-conc" onclick="desfechoDesistiu(2)" style="margin:10px 0">Confirmar desistência</button>' +
+      '<button class="btn btn-vol" onclick="abrirDesfechoComercial()">← Voltar</button>';
+    S.motivoSel = null;
+    cont.innerHTML = h;
+    return;
+  }
+  if (!S.motivoSel) { toast('Escolha um motivo.', true); return; }
+  sbPatch('pedidos', 'id=eq.' + S.ot.pedido_id, { perdido: true, motivo_perda: S.motivoSel, perdido_em: new Date().toISOString() }, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    S.msgExtra = 'Desistência registrada.';
+    fecharOT('sucesso', 1, 0, 'Desfecho comercial: desistiu (' + S.motivoSel + ') (terminal)');
+  });
+}
+function selMotivo(id) {
+  var i, el;
+  S.motivoSel = id;
+  for (i = 0; i < MOTIVOS_PERDA.length; i++) {
+    el = document.getElementById('mot_' + MOTIVOS_PERDA[i].id);
+    if (el) { el.className = 'check-item' + (MOTIVOS_PERDA[i].id === id ? ' ok' : ''); el.firstChild.innerHTML = (MOTIVOS_PERDA[i].id === id ? '✓' : ''); }
+  }
+}
+
+/* Ferramenta: Pedidos em andamento */
+function carregarPedidosLista(cb) {
+  sbGet('pedidos', 'status=neq.enviado&select=id,cliente,contato,modelo_nome,quantidade,valor_total,valor_entrada,status,data_entrega,perdido,created_at&order=data_entrega&limit=80', function(err, d) {
+    var r = [], i;
+    if (!err && d) for (i = 0; i < d.length; i++) if (!d[i].perdido) r.push(d[i]);
+    S.pedidosLista = r;
+    if (cb) cb();
+  });
+}
+function navPedidos() { carregarPedidosLista(function() { navIr('pedidos'); }); }
+function pedidosHtml() {
+  var l = S.pedidosLista || [], h = '<div class="nav-tit">Pedidos em andamento (' + l.length + ')</div>', j, p;
+  if (!l.length) h += '<div class="vazio"><div class="vazio-titulo">Nenhum pedido em andamento</div></div>';
+  for (j = 0; j < l.length; j++) {
+    p = l[j];
+    h += '<div class="ot-card" onclick="navIr(\'pedidos\',\'' + p.id + '\')"><div class="ot-titulo">' + esc(p.cliente || 'Sem cliente') + '</div>' +
+      '<div class="ot-meta">' + esc((p.modelo_nome || '') + (p.quantidade ? ' × ' + p.quantidade : '')) + ' · entrega ' + fmtData(p.data_entrega) + '</div>' +
+      barraEtapas(p.status) + '<div class="ot-meta">' + esc(ETAPAS_LABEL[p.status] || p.status || '') + '</div></div>';
+  }
+  return h;
+}
+function pedidoDetalheHtml(id) {
+  var l = S.pedidosLista || [], p = null, i;
+  for (i = 0; i < l.length; i++) if (l[i].id === id) { p = l[i]; break; }
+  if (!p) return '<div class="vazio"><div class="vazio-titulo">Pedido não encontrado</div></div>';
+  var saldo = Math.max(0, (p.valor_total || 0) - (p.valor_entrada || 0));
+  var msg = 'Oi, ' + ((p.cliente || '').split(' ')[0] || 'tudo bem') + '! Seu pedido está na etapa de ' + (ETAPAS_LABEL[p.status] || p.status) +
+    ' e segue dentro do prazo, previsto para ' + fmtData(p.data_entrega) + '.';
+  return '<div class="nav-tit">' + esc(p.cliente || '') + '</div>' +
+    '<div class="card"><div class="card-label">' + esc((p.modelo_nome || 'Pedido') + (p.quantidade ? ' × ' + p.quantidade : '')) + '</div>' +
+    barraEtapas(p.status) + '<div class="ficha-ok" style="color:#f1f5f9">' + esc(ETAPAS_LABEL[p.status] || '') + ' · entrega ' + fmtData(p.data_entrega) + '</div>' +
+    (p.contato ? '<div class="ficha-lbl">Contato</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.contato) + '</div>' : '') +
+    '<div class="ficha-lbl">Valor / pago / saldo</div><div class="ficha-ok" style="color:#f1f5f9">' + fmtMoeda(p.valor_total) + ' / ' + fmtMoeda(p.valor_entrada) +
+    ' / <span style="color:' + (saldo > 0 ? '#fdba74' : '#4ade80') + '">' + fmtMoeda(saldo) + '</span></div>' +
+    '<div class="ficha-lbl">Resposta pronta para o cliente (editável)</div><textarea class="ficha-in" id="pdMsg" rows="4">' + esc(msg) + '</textarea>' +
+    '<button class="btn btn-ref" onclick="copiarDe(\'pdMsg\')">📋 Copiar mensagem</button></div>';
+}
+
+
+/* ─────────────────────────────────────────
+   MENU COMERCIAL (Samsung): tarefas + ferramentas do treinamento
+───────────────────────────────────────── */
+var GRUPOS_COM = {
+  contato:  { nome: 'Contato com cliente',    ico: '📞', tipos: ['contato_cliente'] },
+  cobranca: { nome: 'Cobrança e pagamento',   ico: '💰', tipos: ['cobranca', 'confirmacao_pagamento'] },
+  aprov:    { nome: 'Aprovações (orçamento, arte)', ico: '🖼️', tipos: ['aprovacao_orcamento', 'aprovacao_arte'] },
+  pos:      { nome: 'Pós-compra',             ico: '💬', tipos: ['pos_compra'] },
+  fichas:   { nome: 'Completar fichas',       ico: '📝', tipos: ['completar_ficha'] }
+};
+var CONF_PEDIDO = ['Cliente e contato conferidos', 'Produto e quantidade conferidos', 'Valor igual ao orçamento aprovado',
+  'Entrada e saldo combinados', 'Prazo confirmado com o cliente', 'Observações e referências anotadas'];
+var CONF_ANUNCIO = ['Preço igual ao da ficha da peça', 'Prazo de produção informado', 'Fotos adequadas e fiéis à peça',
+  'Descrição sem promessa não confirmada', 'Marketplace: taxa calculada antes de definir o preço'];
+
+function otsDoGrupo(g) {
+  var base = (S.g ? S.g.prod.concat(S.g.disp) : []), r = [], i;
+  for (i = 0; i < base.length; i++) if (GRUPOS_COM[g].tipos.indexOf(tipoDe(base[i]).codigo) >= 0) r.push(base[i]);
+  return r;
+}
+function followupLista() {
+  var l = S.pedidosLista || [], r = [], i, p, dias;
+  for (i = 0; i < l.length; i++) {
+    p = l[i];
+    if (p.status !== 'negociacao' || !p.created_at) continue;
+    dias = Math.floor((new Date().getTime() - new Date(p.created_at).getTime()) / 86400000);
+    if (dias >= 3) { p._dias = dias; r.push(p); }
+  }
+  return r;
+}
+function comMenuHtml() {
+  var h = '<div class="nav-tit">💼 Comercial</div><div class="secao-label">Tarefas</div>', k;
+  h += tileHtml('📅', 'Follow-up de negociações', 'Pedidos em negociação há 3 dias ou mais', followupLista().length, "navIr('com_t','followup')");
+  for (k in GRUPOS_COM) h += tileHtml(GRUPOS_COM[k].ico, GRUPOS_COM[k].nome, '', otsDoGrupo(k).length, "navIr('com_t','" + k + "')");
+  h += '<div class="secao-label">Ferramentas</div>';
+  h += tileHtml('📦', 'Pedidos', 'Andamento, pagamento e resposta pronta', (S.pedidosLista || []).length, "navPedidos()");
+  h += tileHtml('🏷️', 'Peças próprias', 'Catálogo: preço, estoque, cores e foto', '', "navPecas()");
+  h += tileHtml('💰', 'Caixa', 'Saldos dos baldes (consulta)', '', "navCaixa()");
+  h += tileHtml('🧾', 'Orçamentos', 'Orçamentos salvos (criar no computador)', '', "navOrcs()");
+  h += tileHtml('✅', 'Conferências', 'Antes de registrar pedido e de publicar anúncio', '', "navIr('conf')");
+  h += tileHtml('🎓', 'Capacitação', 'Treinamento do Comercial', '', "abrirTreinamento()");
+  return h;
+}
+function comTarefasHtml(g) {
+  var h = '', j, l, p;
+  if (g === 'followup') {
+    l = followupLista();
+    h += '<div class="nav-tit">Follow-up de negociações (' + l.length + ')</div>';
+    h += '<div class="ot-meta" style="margin-bottom:10px">Sem resposta há 3 dias ou mais: faça contato. Sem desconto automático; fora da sua alçada, consulte o responsável.</div>';
+    for (j = 0; j < l.length; j++) {
+      p = l[j];
+      h += '<div class="ot-card" onclick="navIr(\'pedidos\',\'' + p.id + '\')"><div class="ot-titulo">' + esc(p.cliente || '') + '</div>' +
+        '<div class="ot-meta">' + esc((p.modelo_nome || '') + ' · ' + fmtMoeda(p.valor_total)) + ' · há ' + p._dias + ' dias</div></div>';
+    }
+    return h;
+  }
+  l = otsDoGrupo(g);
+  h += '<div class="nav-tit">' + esc(GRUPOS_COM[g].nome) + ' (' + l.length + ')</div>';
+  if (!l.length) h += '<div class="vazio"><div class="vazio-titulo">Nada por aqui</div></div>';
+  for (j = 0; j < l.length && j < (S.nav.lim || 15); j++) h += cardModHtml(l[j]);
+  if (l.length > S.nav.lim) h += '<button class="mais-btn" onclick="navMais()">Mostrar mais (' + (l.length - S.nav.lim) + ')</button>';
+  return h;
+}
+
+/* Peças próprias (consulta) */
+function navPecas() {
+  sbGet('pecas_proprias', 'select=id,modelo,codigo_publico,preco,estoque,categoria,cores,decalques&order=modelo', function(err, d) {
+    S.pecasLista = (!err && d) ? d : [];
+    S.pecasQ = '';
+    navIr('pecas');
+  });
+}
+function pecasFiltrarHtml() {
+  var l = S.pecasLista || [], q = (S.pecasQ || '').toLowerCase(), h = '', j, p;
+  for (j = 0; j < l.length; j++) {
+    p = l[j];
+    if (q && ((p.modelo || '') + ' ' + (p.codigo_publico || '') + ' ' + (p.categoria || '')).toLowerCase().indexOf(q) < 0) continue;
+    h += '<div class="ot-card" onclick="abrirPecaDet(\'' + p.id + '\')"><div class="ot-titulo">' + esc(p.modelo || 'Sem nome') + '</div>' +
+      '<div class="ot-meta">' + esc(p.codigo_publico || '') + ' · ' + (p.preco > 0 ? fmtMoeda(p.preco) : 'sem preço') + ' · estoque ' + (p.estoque || 0) + '</div></div>';
+  }
+  return h || '<div class="vazio"><div class="vazio-titulo">Nenhuma peça</div></div>';
+}
+function pecasFiltrar(v) {
+  S.pecasQ = v;
+  var el = document.getElementById('cont').querySelector('#pecasLista');
+  if (el) el.innerHTML = pecasFiltrarHtml();
+}
+function abrirPecaDet(id) {
+  S.pecaFoto = null;
+  navIr('pecas', id);
+  sbGet('pecas_proprias', 'id=eq.' + id + '&select=foto_base64', function(err, d) {
+    S.pecaFoto = (!err && d && d.length) ? d[0].foto_base64 : '';
+    if (S.nav.mod === 'pecas' && S.nav.sub === id) renderModalidades();
+  });
+}
+function pecaDetHtml(id) {
+  var l = S.pecasLista || [], p = null, i;
+  for (i = 0; i < l.length; i++) if (l[i].id === id) { p = l[i]; break; }
+  if (!p) return '';
+  var h = '<div class="nav-tit">' + esc(p.modelo || '') + '</div><div class="card">';
+  if (S.pecaFoto) h += '<img src="' + S.pecaFoto + '" class="foto-img" alt="peça">';
+  else if (S.pecaFoto === null) h += '<div class="ficha-lbl">Carregando foto…</div>';
+  else h += '<div class="ficha-pend">Sem foto cadastrada.</div>';
+  h += '<div class="ficha-lbl">Código</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.codigo_publico || '—') + '</div>' +
+    '<div class="ficha-lbl">Preço · estoque</div><div class="ficha-ok" style="color:#f1f5f9">' + (p.preco > 0 ? fmtMoeda(p.preco) : 'sem preço') + ' · ' + (p.estoque || 0) + ' un.</div>' +
+    (p.categoria ? '<div class="ficha-lbl">Categoria</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.categoria) + '</div>' : '') +
+    (p.cores ? '<div class="ficha-lbl">Cores</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.cores) + '</div>' : '') +
+    (p.decalques ? '<div class="ficha-lbl">Decalques</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.decalques) + '</div>' : '') + '</div>';
+  return h;
+}
+
+/* Caixa (consulta) */
+function navCaixa() {
+  sbGet('caixa_baldes', 'select=id,nome,percentual_meta,saldo&order=percentual_meta.desc', function(err, d) {
+    S.baldes = (!err && d) ? d : [];
+    navIr('caixa');
+  });
+}
+function caixaHtml() {
+  var l = S.baldes || [], tot = 0, h = '', j;
+  for (j = 0; j < l.length; j++) tot += (l[j].saldo || 0);
+  h += '<div class="nav-tit">Caixa (consulta)</div><div class="card"><div class="card-label">Saldo total dos baldes</div><span class="qtd-num">' + fmtMoeda(tot) + '</span></div>';
+  for (j = 0; j < l.length; j++) {
+    h += '<div class="ot-card" style="cursor:default"><div class="ot-titulo">' + esc(l[j].nome) + ' <span class="ot-meta">(' + (l[j].percentual_meta || 0) + '%)</span></div>' +
+      '<div class="ot-meta" style="font-size:1rem;color:#f1f5f9">' + fmtMoeda(l[j].saldo) + '</div></div>';
+  }
+  h += '<div class="ot-meta">Lançamentos e saídas ficam no computador.</div>';
+  return h;
+}
+
+/* Orçamentos salvos (consulta) */
+function navOrcs() {
+  sbGet('orcamentos', 'select=id,nome,origem,created_at&order=created_at.desc&limit=40', function(err, d) {
+    S.orcs = (!err && d) ? d : [];
+    navIr('orcs');
+  });
+}
+function orcsHtml() {
+  var l = S.orcs || [], h = '<div class="nav-tit">Orçamentos salvos (' + l.length + ')</div>', j;
+  h += '<div class="ot-meta" style="margin-bottom:10px">Para criar ou alterar um orçamento, use o computador.</div>';
+  for (j = 0; j < l.length; j++) {
+    h += '<div class="ot-card" style="cursor:default"><div class="ot-titulo">' + esc(l[j].nome || 'Sem nome') + '</div>' +
+      '<div class="ot-meta">' + esc(l[j].origem || '') + ' · ' + fmtData(l[j].created_at) + '</div></div>';
+  }
+  return h;
+}
+
+/* Conferências (checklists locais, não salvam) */
+function confHtml() {
+  function bloco(tit, itens, pre) {
+    var h = '<div class="card"><div class="card-label">' + tit + '</div>', i;
+    for (i = 0; i < itens.length; i++) {
+      h += '<div class="check-item" id="' + pre + i + '" onclick="confTog(\'' + pre + i + '\')"><div class="check-box"></div><div class="check-txt">' + esc(itens[i]) + '</div></div>';
+    }
+    return h + '</div>';
+  }
+  return '<div class="nav-tit">Conferências</div>' +
+    '<div class="ot-meta" style="margin-bottom:10px">Marque tudo antes de seguir. A marcação não é salva.</div>' +
+    bloco('Antes de registrar o pedido', CONF_PEDIDO, 'cp_') + bloco('Antes de publicar o anúncio', CONF_ANUNCIO, 'ca_');
+}
+function confTog(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var ok = el.className.indexOf(' ok') < 0;
+  el.className = 'check-item' + (ok ? ' ok' : '');
+  el.firstChild.innerHTML = ok ? '✓' : '';
+}
+
+function comNavHtml(nav) {
+  var back = '<button class="nav-back" onclick="navVoltar()">← Voltar</button>';
+  if (nav.mod === 'com') return back + comMenuHtml();
+  if (nav.mod === 'com_t') return back + comTarefasHtml(nav.sub);
+  if (nav.mod === 'pedidos') return back + (nav.sub ? pedidoDetalheHtml(nav.sub) : pedidosHtml());
+  if (nav.mod === 'pecas') return back + (nav.sub ? pecaDetHtml(nav.sub) :
+    '<div class="nav-tit">Peças próprias</div><input class="ficha-in" type="text" placeholder="Buscar por nome ou código" oninput="pecasFiltrar(this.value)" value="' + esc(S.pecasQ || '') + '"><div id="pecasLista">' + pecasFiltrarHtml() + '</div>');
+  if (nav.mod === 'caixa') return back + caixaHtml();
+  if (nav.mod === 'orcs') return back + orcsHtml();
+  if (nav.mod === 'conf') return back + confHtml();
+  return '';
+}
+
 /* ─────────────────────────────────────────
    NAVEGAÇÃO
 ───────────────────────────────────────── */
@@ -1512,7 +1871,7 @@ function sair() {
   S.colaborador = null; S.pinDigits = []; S.pinErro = false;
   S.ots = []; S.ot = null; S.tipo = null; S.peca = null;
   S.checklist = []; S.fotoOk = false;
-  S.semFoto = []; S.ctxOk = false; S.tipos = {}; S.meusSubs = []; S.g = null;
+  S.semFoto = []; S.pedidosLista = []; S.ctxOk = false; S.tipos = {}; S.meusSubs = []; S.g = null;
   S.nav = { mod: null, sub: null, lim: 15 };
   render();
 }
