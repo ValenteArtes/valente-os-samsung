@@ -767,6 +767,7 @@ function navMais() { S.nav.lim += 15; renderModalidades(); }
 function navVoltar() {
   var m = S.nav.mod; S.formBuilt = false;
   if (m === 'com_t') { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
+  if (m === 'cores' && !S.nav.sub && !podeComercial()) { S.nav = { mod: null, sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (m === 'caixa' || m === 'orcs' || m === 'conf' || m === 'novoped' || (m === 'cores' && !S.nav.sub) || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (S.nav.sub) S.nav = { mod: S.nav.mod, sub: null, lim: 15 };
   else S.nav = { mod: null, sub: null, lim: 15 };
@@ -831,7 +832,8 @@ function renderModalidades() {
       html += tileHtml('🏭', (S.meusSubs && S.meusSubs.length) ? 'Minhas funções' : 'Produção',
                        'Tarefas da sua função', nProd, "navIr('prod')");
       html += tileHtml('📋', 'Tarefas disponíveis', 'Baixa urgência: completar fichas, insumos, manutenção', g.disp.length, "navIr('disp')");
-      if (EXTRAS) html += tileHtml('💼', 'Comercial', 'Tarefas e ferramentas: pedidos, peças, caixa, conferências', '', "navIr('com')");
+      if (EXTRAS && podeComercial()) html += tileHtml('💼', 'Comercial', 'Tarefas e ferramentas: pedidos, peças, caixa, conferências', '', "navIr('com')");
+      if (EXTRAS) html += tileHtml('🎨', 'Cores', 'Cor 01 a Cor 33: nome, tom e prateleira', '', "navCores()");
       if (S.meusSubs && S.meusSubs.length && nOutras) {
         html += tileHtml('🔎', 'Outras funções', 'Tarefas de outras funções (ajuda)', nOutras, "navIr('outras')");
       }
@@ -1703,6 +1705,15 @@ function pedidoDetalheHtml(id) {
     '<button class="btn btn-ref" onclick="copiarDe(\'pdMsg\')">📋 Copiar mensagem</button></div>';
 }
 
+
+
+/* Quem vê o bloco Comercial: quem tem a função Atendimento (definida em Funcionários), cargo comercial, admin ou supervisor. */
+var SUBSETOR_ATENDIMENTO_ID = '5dba2500-7928-4c03-8daa-2900963db1b4';
+function podeComercial() {
+  var c = S.colaborador ? String(S.colaborador.cargo || '').toLowerCase().replace(/\s+/g, '') : '';
+  if (c === 'comercial' || c === 'admin' || c === 'supervisor') return true;
+  return !!(S.meusSubs && S.meusSubs.indexOf(SUBSETOR_ATENDIMENTO_ID) >= 0);
+}
 
 /* ─────────────────────────────────────────
    MENU COMERCIAL (Samsung): tarefas + ferramentas do treinamento
