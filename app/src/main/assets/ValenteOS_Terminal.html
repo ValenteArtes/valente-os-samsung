@@ -411,6 +411,8 @@ var S = {
   pedido:        null,
   pedidosLista:  [],
   pecasLista:    [],
+  npConfOk:      false,
+  formBuilt:     false,
   pecasQ:        '',
   pecaFoto:      null,
   baldes:        [],
@@ -752,12 +754,12 @@ function tileHtml(ico, tit, sub, n, acao) {
     '<div class="tile-ct' + (n ? '' : ' zero') + '">' + n + '</div></div>';
 }
 
-function navIr(mod, sub) { S.nav = { mod: mod, sub: sub || null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); }
+function navIr(mod, sub) { S.formBuilt = false; S.nav = { mod: mod, sub: sub || null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); }
 function navMais() { S.nav.lim += 15; renderModalidades(); }
 function navVoltar() {
-  var m = S.nav.mod;
+  var m = S.nav.mod; S.formBuilt = false;
   if (m === 'com_t') { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
-  if (m === 'caixa' || m === 'orcs' || m === 'conf' || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
+  if (m === 'caixa' || m === 'orcs' || m === 'conf' || m === 'novoped' || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (S.nav.sub) S.nav = { mod: S.nav.mod, sub: null, lim: 15 };
   else S.nav = { mod: null, sub: null, lim: 15 };
   renderModalidades(); window.scrollTo(0, 0);
@@ -795,6 +797,9 @@ function renderModalidades() {
   var cont = document.getElementById('cont');
   if (!cont || !S.g) return;
   var nav = S.nav || (S.nav = { mod: null, sub: null, lim: 15 });
+  /* formulários abertos não são redesenhados pela atualização automática (perderiam o que foi digitado) */
+  if ((nav.mod === 'novoped' || nav.mod === 'conf') && S.formBuilt) return;
+  S.formBuilt = false;
   var g = S.g, html = '', j;
   var nProd = listaDaModalidade('prod').length;
   var nOutras = listaDaModalidade('outras').length;
@@ -857,6 +862,7 @@ function renderModalidades() {
   if (!nav.mod) html += avisoSemFotoHtml();
   html += '<div class="refresh-bar" id="refreshBar">Atualiza em 60s</div>';
   cont.innerHTML = html;
+  if (nav.mod === 'novoped' || nav.mod === 'conf') S.formBuilt = true;
 }
 
 /* Carrega tipos de OT e as funções (subsetores) do operador — uma vez por login */
@@ -1708,6 +1714,7 @@ function comMenuHtml() {
   h += tileHtml('📅', 'Follow-up de negociações', 'Pedidos em negociação há 3 dias ou mais', followupLista().length, "navIr('com_t','followup')");
   for (k in GRUPOS_COM) h += tileHtml(GRUPOS_COM[k].ico, GRUPOS_COM[k].nome, '', otsDoGrupo(k).length, "navIr('com_t','" + k + "')");
   h += '<div class="secao-label">Ferramentas</div>';
+  h += tileHtml('➕', 'Cadastrar pedido', 'Novo pedido com conferência obrigatória', '', "navNovoPedido()");
   h += tileHtml('📦', 'Pedidos', 'Andamento, pagamento e resposta pronta', (S.pedidosLista || []).length, "navPedidos()");
   h += tileHtml('🏷️', 'Peças próprias', 'Catálogo: preço, estoque, cores e foto', '', "navPecas()");
   h += tileHtml('💰', 'Caixa', 'Saldos dos baldes (consulta)', '', "navCaixa()");
@@ -1851,7 +1858,149 @@ function comNavHtml(nav) {
   if (nav.mod === 'caixa') return back + caixaHtml();
   if (nav.mod === 'orcs') return back + orcsHtml();
   if (nav.mod === 'conf') return back + confHtml();
+  if (nav.mod === 'novoped') return back + novoPedidoHtml();
   return '';
+}
+
+
+/* ─────────────────────────────────────────
+   CADASTRAR PEDIDO (Samsung). Cria o pedido em Negociação, a tarefa de contato
+   e distribui a entrada nos baldes do Caixa. Custos automáticos da ficha NÃO são
+   gerados aqui: o aviso fica nas observações para completar no computador.
+───────────────────────────────────────── */
+function uuid4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.floor(Math.random() * 16), v = (c === 'x') ? r : ((r % 4) + 8);
+    return v.toString(16);
+  });
+}
+function navNovoPedido() {
+  sbGet('pecas_proprias', 'select=id,modelo,codigo_publico,preco&order=modelo', function(err, d) {
+    S.pecasLista = (!err && d) ? d : [];
+    navIr('novoped');
+  });
+}
+function novoPedidoHtml() {
+  var i, opts = '<option value="">— escolher peça —</option>', pl = S.pecasLista || [];
+  for (i = 0; i < pl.length; i++) opts += '<option value="' + pl[i].id + '">' + esc((pl[i].codigo_publico ? pl[i].codigo_publico + ' · ' : '') + (pl[i].modelo || '')) + '</option>';
+  var h = '<div class="nav-tit">Cadastrar pedido</div><div class="card">' +
+    '<div class="ficha-lbl">Cliente *</div><input class="ficha-in" id="np_cliente" type="text">' +
+    '<div class="ficha-lbl">Contato (WhatsApp)</div><input class="ficha-in" id="np_contato" type="text">' +
+    '<div class="ficha-lbl">Origem do produto</div><select class="ficha-in" id="np_orig" onchange="npOrig()"><option value="false">Sob encomenda (fora do catálogo)</option><option value="true">Do catálogo (Peças próprias)</option></select>' +
+    '<div id="np_pecaWrap" style="display:none"><div class="ficha-lbl">Peça do catálogo</div><select class="ficha-in" id="np_peca" onchange="npPeca()">' + opts + '</select></div>' +
+    '<div class="ficha-lbl">Nome do modelo / peça *</div><input class="ficha-in" id="np_modelo" type="text">' +
+    '<div class="ficha-lbl">Quantidade</div><input class="ficha-in" id="np_qtd" type="text" inputmode="numeric" value="1" oninput="npRecalc()">' +
+    '<div class="ficha-lbl">Valor unitário (R$)</div><input class="ficha-in" id="np_unit" type="text" inputmode="decimal" oninput="npRecalc()">' +
+    '<div class="ficha-lbl">Valor total (R$)</div><input class="ficha-in" id="np_total" type="text" inputmode="decimal">' +
+    '<div class="ficha-lbl">Entrada recebida (R$)</div><input class="ficha-in" id="np_entrada" type="text" inputmode="decimal" value="0">' +
+    '<div class="ficha-lbl">Data de entrega</div><input class="ficha-in" id="np_data" type="date">' +
+    '<div class="ficha-lbl">Prioridade</div><select class="ficha-in" id="np_prio"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select>' +
+    '<div class="ficha-lbl">Canal de venda</div><select class="ficha-in" id="np_canal"><option value="direto">Direto</option><option value="shopee">Shopee</option><option value="mercado_livre">Mercado Livre</option><option value="outro">Outro</option></select>' +
+    '<div class="ficha-lbl">Observações e referências</div><textarea class="ficha-in" id="np_obs" rows="3"></textarea></div>' +
+    '<div class="card"><div class="card-label">Conferência antes de registrar</div>';
+  for (i = 0; i < CONF_PEDIDO.length; i++) {
+    h += '<div class="check-item" id="npc_' + i + '" onclick="npConf(' + i + ')"><div class="check-box"></div><div class="check-txt">' + esc(CONF_PEDIDO[i]) + '</div></div>';
+  }
+  h += '</div><button class="btn btn-conc" id="np_btn" onclick="npCriar()" style="opacity:.5">Criar pedido (marque toda a conferência)</button>' +
+    '<div class="ot-meta" style="margin-top:8px">Custos automáticos da ficha ficam pendentes: complete no computador.</div>';
+  return h;
+}
+function npNum(id) {
+  var v = String(document.getElementById('cont').querySelector('#' + id).value || '').replace(/\s/g, '');
+  if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.');
+  var n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+function npOrig() {
+  var c = document.getElementById('cont');
+  c.querySelector('#np_pecaWrap').style.display = (c.querySelector('#np_orig').value === 'true') ? 'block' : 'none';
+}
+function npPeca() {
+  var c = document.getElementById('cont'), id = c.querySelector('#np_peca').value, l = S.pecasLista || [], i;
+  for (i = 0; i < l.length; i++) if (l[i].id === id) {
+    c.querySelector('#np_modelo').value = l[i].modelo || '';
+    c.querySelector('#np_unit').value = (l[i].preco > 0) ? String(l[i].preco).replace('.', ',') : '';
+    npRecalc();
+  }
+}
+function npRecalc() {
+  var c = document.getElementById('cont'), t = npNum('np_qtd') * npNum('np_unit');
+  c.querySelector('#np_total').value = t ? t.toFixed(2).replace('.', ',') : '';
+}
+function npConf(i) {
+  var el = document.getElementById('npc_' + i);
+  var ok = el.className.indexOf(' ok') < 0;
+  el.className = 'check-item' + (ok ? ' ok' : '');
+  el.firstChild.innerHTML = ok ? '✓' : '';
+  var todos = true, k;
+  for (k = 0; k < CONF_PEDIDO.length; k++) if (document.getElementById('npc_' + k).className.indexOf(' ok') < 0) todos = false;
+  var b = document.getElementById('np_btn');
+  b.style.opacity = todos ? '1' : '.5';
+  b.innerHTML = todos ? 'Criar pedido' : 'Criar pedido (marque toda a conferência)';
+  S.npConfOk = todos;
+}
+function npAlocarEntrada(valor, cb) {
+  if (!valor || valor <= 0) { cb(); return; }
+  sbGet('caixa_baldes', 'select=id,saldo,percentual_meta,tipo_balde', function(err, bs) {
+    if (err || !bs) { cb(); return; }
+    var i = 0;
+    function prox() {
+      if (i >= bs.length) { cb(); return; }
+      var b = bs[i++];
+      if (b.tipo_balde === 'teto') { prox(); return; }
+      var fatia = Math.round(valor * (b.percentual_meta / 100) * 100) / 100;
+      if (!fatia) { prox(); return; }
+      var novo = Math.round(((b.saldo || 0) + fatia) * 100) / 100;
+      sbPatch('caixa_baldes', 'id=eq.' + b.id, { saldo: novo }, function() { prox(); });
+    }
+    prox();
+  });
+}
+function npCriar() {
+  var c = document.getElementById('cont');
+  if (!S.npConfOk) { toast('Marque toda a conferência antes de criar.', true); return; }
+  var cliente = (c.querySelector('#np_cliente').value || '').replace(/^\s+|\s+$/g, '');
+  var modelo = (c.querySelector('#np_modelo').value || '').replace(/^\s+|\s+$/g, '');
+  if (!cliente) { toast('Informe o cliente.', true); return; }
+  if (!modelo) { toast('Informe o nome do modelo / peça.', true); return; }
+  var catalogo = c.querySelector('#np_orig').value === 'true';
+  var pecaId = catalogo ? (c.querySelector('#np_peca').value || null) : null;
+  if (catalogo && !pecaId) { toast('Escolha a peça do catálogo.', true); return; }
+  var qtd = npNum('np_qtd') || 1, entrada = npNum('np_entrada');
+  var obs = (c.querySelector('#np_obs').value || '').replace(/^\s+|\s+$/g, '');
+  var aviso = '⚠ Criado no tablet: custos automáticos da ficha pendentes (completar no computador).';
+  var id = uuid4();
+  var payload = {
+    id: id, cliente: cliente, contato: c.querySelector('#np_contato').value || null,
+    catalogo: catalogo, peca_propria_id: pecaId, grupo_id: null,
+    modelo_nome: modelo, quantidade: qtd,
+    valor_unitario: npNum('np_unit'), valor_total: (npNum('np_total') || (qtd * npNum('np_unit'))), valor_entrada: entrada,
+    data_entrega: c.querySelector('#np_data').value || null,
+    observacoes: obs ? (obs + '\n' + aviso) : aviso,
+    prioridade: c.querySelector('#np_prio').value, canal_venda: c.querySelector('#np_canal').value,
+    status: 'negociacao', estoque_baixado: false, editado: false,
+    ultimo_editor: 'Tablet · ' + (S.colaborador ? S.colaborador.nome.replace(/\s+$/, '') : '')
+  };
+  var btn = document.getElementById('np_btn'); btn.disabled = true;
+  sbPost('pedidos', payload, function(err) {
+    if (err) { btn.disabled = false; toast('Erro ao criar pedido: ' + err.message, true); return; }
+    npAlocarEntrada(entrada, function() {
+      var tipo = null, k;
+      for (k in S.tipos) { if (S.tipos[k].codigo === 'contato_cliente') { tipo = S.tipos[k]; break; } }
+      function fim(msg) {
+        toast(msg, false);
+        S.formBuilt = false; S.nav = { mod: 'com', sub: null, lim: 15 };
+        carregarPedidosLista(function() { renderModalidades(); });
+      }
+      if (!tipo) { fim('Pedido criado em Negociação. Tarefa de contato não gerada (tipo não encontrado). Custos pendentes.'); return; }
+      sbPost('ordens_trabalho', {
+        titulo: 'Contato: ' + cliente, status: 'pendente', tipo_ot_id: tipo.id, subsetor_id: tipo.subsetor_id,
+        pedido_id: id, quantidade: 1, ordem_execucao: 0
+      }, function(e2) {
+        fim(e2 ? 'Pedido criado, mas a tarefa de contato falhou. Custos pendentes (computador).' : 'Pedido criado em Negociação. Custos da ficha pendentes: completar no computador.');
+      });
+    });
+  });
 }
 
 /* ─────────────────────────────────────────
