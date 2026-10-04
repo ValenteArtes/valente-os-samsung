@@ -218,6 +218,27 @@ html, body {
 .b-bloq  { background: #1c1917; color: #78716c; }
 .b-conc  { background: #052e16; color: #4ade80; }
 
+
+/* ─── MODALIDADES ─── */
+.tile{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-tap-highlight-color:rgba(249,115,22,0.1)}
+.tile:active{border-color:#f97316;background:#162032}
+.tile-ico{font-size:1.6rem;margin-right:14px}
+.tile-txt{-webkit-flex:1;flex:1}
+.tile-tit{font-weight:700;font-size:1.02rem;color:#f1f5f9}
+.tile-sub{font-size:0.76rem;color:#64748b;margin-top:2px}
+.tile-ct{min-width:30px;text-align:center;font-weight:700;font-size:0.9rem;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd}
+.tile-ct.zero{background:#1e293b;color:#475569}
+.nav-back{display:inline-block;background:transparent;border:1px solid #334155;color:#cbd5e1;border-radius:10px;padding:8px 14px;font-size:0.85rem;margin-bottom:12px;cursor:pointer}
+.nav-tit{font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:12px}
+.mais-btn{display:block;width:100%;background:#1e293b;border:1px dashed #334155;color:#94a3b8;border-radius:10px;padding:12px;font-size:0.88rem;margin-bottom:10px}
+
+.aviso-sf{font-size:0.8rem;color:#94a3b8;margin:14px 2px 0}
+.aviso-sf a{color:#fb923c;text-decoration:underline}
+.ficha-in{width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:10px;color:#f1f5f9;font-size:1rem;padding:12px;margin-bottom:12px}
+.ficha-ok{color:#4ade80;font-size:0.9rem;margin-bottom:12px}
+.ficha-pend{color:#fdba74;font-size:0.9rem;margin-bottom:12px}
+.ficha-lbl{font-size:0.78rem;color:#94a3b8;margin-bottom:4px}
+
 /* ─── EMPTY STATE ─── */
 .vazio {
   text-align: center; padding: 60px 20px 40px;
@@ -363,6 +384,8 @@ html, body {
    Usa Supabase REST API via XMLHttpRequest puro
    ================================================================= */
 
+/* Samsung = true (recursos extras); Positivo = false */
+var EXTRAS = true;
 var SUPABASE_URL = 'https://qdqmtjkoufplssgabwzm.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkcW10amtvdWZwbHNzZ2Fid3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTc4NjgsImV4cCI6MjA5NzgzMzg2OH0.gfjYEJ0VpovrXMffqwKhVuVVFonK1CW9Tvu3le-um6M';
 
@@ -380,6 +403,14 @@ var S = {
   fotoOk:        false,
   timer:         null,
   timerSecs:     0,
+  tipos:         {},
+  meusSubs:      [],
+  ctxOk:         false,
+  g:             null,
+  semFoto:       [],
+  pedido:        null,
+  msgExtra:      '',
+  nav:           { mod: null, sub: null, lim: 15 },
 };
 
 /* ─────────────────────────────────────────
@@ -477,7 +508,7 @@ function toast(msg, err) {
   el.textContent = msg;
   el.className = 'show' + (err ? ' err' : '');
   if (_toastT) clearTimeout(_toastT);
-  _toastT = setTimeout(function() { el.className = ''; }, 2600);
+  _toastT = setTimeout(function() { el.className = ''; }, (msg && msg.length > 60) ? 5500 : 2600);
 }
 
 /* ─────────────────────────────────────────
@@ -612,6 +643,7 @@ function renderInbox() {
 }
 
 function carregarOTs(silencioso) {
+  if (!S.ctxOk) { prepararContexto(function() { carregarOTs(silencioso); }); return; }
   var cont = document.getElementById('cont');
   if (!silencioso && cont) {
     cont.innerHTML = '<div class="loading"><div class="spin"></div>Carregando tarefas…</div>';
@@ -620,7 +652,7 @@ function carregarOTs(silencioso) {
   var params =
     'status=not.in.' + encodeURIComponent('(concluida,cancelada)') +
     '&select=id,codigo_publico,titulo,status,quantidade,tipo_ot_id,' +
-    'responsavel_id,quantidade_concluida,ordem_execucao' +
+    'responsavel_id,quantidade_concluida,ordem_execucao,disponivel_em' +
     '&order=ordem_execucao';
 
   sbGet('ordens_trabalho', params, function(err, data) {
@@ -640,56 +672,211 @@ function carregarOTs(silencioso) {
     S.ots = ots;
     var colabId = S.colaborador ? S.colaborador.id : null;
 
-    var exec = [], paus = [], disp = [];
+    var exec = [], paus = [], prod = [], disp = [];
     for (var i = 0; i < ots.length; i++) {
       var o = ots[i];
+      if (o.disponivel_em && new Date(o.disponivel_em).getTime() > new Date().getTime()) continue;
       if (isExec(o.status) && o.responsavel_id === colabId) {
         exec.push(o);
       } else if (o.status === 'pausada' && o.responsavel_id === colabId) {
         paus.push(o);
       } else if (isPend(o.status) || (o.status === 'pausada' && !o.responsavel_id)) {
-        disp.push(o);
+        var tp = S.tipos[o.tipo_ot_id];
+        if (tp && BAIXA_URGENCIA.indexOf(tp.codigo) >= 0) disp.push(o); else prod.push(o);
       }
     }
+    S.g = { exec: exec, paus: paus, prod: prod, disp: disp };
+    renderModalidades();
+    iniciarTimer();
+    carregarSemFoto(function() { if (S.view === 'inbox') renderModalidades(); });
+  });
+}
 
-    var html = '';
+/* ─────────────────────────────────────────
+   MODALIDADES / SUBMODALIDADES
+   Home: Em execução + Minha estação / Tarefas disponíveis / Outras estações.
+   Dentro de cada modalidade: submodalidades por tipo de OT → lista.
+───────────────────────────────────────── */
+/* Tipos de baixa urgência = modalidade 'Tarefas disponíveis' (editável aqui) */
+var BAIXA_URGENCIA = ['completar_ficha','providenciar_insumo','manutencao','manutencao_equipamento'];
+/* Cargo → subsetor, usado quando o funcionário não tem estacao_padrao_id */
+var CARGO_SUBSETOR = { comercial: 'Atendimento' };
+var ICONES_TIPO = {
+  completar_ficha:'📝', cobranca:'💰', contato_cliente:'📞', confirmacao_pagamento:'✅',
+  aprovacao_arte:'🖼️', aprovacao_orcamento:'🧾', manutencao:'🔧', manutencao_equipamento:'🔧',
+  providenciar_insumo:'🛒', impressao:'🖨️', pintura:'🎨', modelagem:'🗿', escultura:'🗿',
+  lavagem:'🧪', cura:'🧪', montagem:'🔧', conferencia:'✅', separacao:'📋',
+  embalagem:'📦', expedicao:'🚚'
+};
+function tipoDe(ot) { return S.tipos[ot.tipo_ot_id] || { codigo: 'outros', nome: 'Outras tarefas', grupo: 'fisica', subsetor_id: null }; }
+function icoTipo(t) { return ICONES_TIPO[t.codigo] || '📋'; }
 
-    function cardHtml(ot) {
-      var conc = ot.quantidade_concluida || 0;
-      var total = ot.quantidade || 0;
-      var meta = (conc > 0 ? conc + '/' + total + ' · ' : '') + (ot.codigo_publico || '');
-      return '<div class="ot-card" onclick="abrirDetalhe(\'' + ot.id + '\')">' +
-        '<div class="ot-row">' +
-        '<div class="ot-icone">📋</div>' +
-        '<div style="flex:1;-webkit-flex:1">' +
-        '<div class="ot-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
-        '<div class="ot-meta">' + esc(meta) + '</div>' +
-        statusBadge(ot.status) +
-        '</div></div></div>';
-    }
+function ehMinha(ot) {
+  if (!S.meusSubs || !S.meusSubs.length) return true;
+  return S.meusSubs.indexOf(tipoDe(ot).subsetor_id) >= 0;
+}
 
-    if (!exec.length && !paus.length && !disp.length) {
+function listaDaModalidade(mod) {
+  var g = S.g || { prod: [], disp: [] }, r = [], i;
+  if (mod === 'disp') return g.disp;
+  for (i = 0; i < g.prod.length; i++) {
+    var m = ehMinha(g.prod[i]);
+    if ((mod === 'prod' && m) || (mod === 'outras' && !m)) r.push(g.prod[i]);
+  }
+  return r;
+}
+
+function cardModHtml(ot) {
+  var conc = ot.quantidade_concluida || 0, total = ot.quantidade || 0;
+  var t = tipoDe(ot);
+  var meta = (conc > 0 ? conc + '/' + total + ' · ' : '') + (ot.codigo_publico || '');
+  return '<div class="ot-card" onclick="abrirDetalhe(\'' + ot.id + '\')">' +
+    '<div class="ot-row"><div class="ot-icone">' + icoTipo(t) + '</div>' +
+    '<div style="flex:1;-webkit-flex:1"><div class="ot-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
+    '<div class="ot-meta">' + esc(t.nome) + ' · ' + esc(meta) + '</div>' + statusBadge(ot.status) +
+    '</div></div></div>';
+}
+
+function tileHtml(ico, tit, sub, n, acao) {
+  return '<div class="tile" onclick="' + acao + '"><div class="tile-ico">' + ico + '</div>' +
+    '<div class="tile-txt"><div class="tile-tit">' + esc(tit) + '</div>' +
+    (sub ? '<div class="tile-sub">' + esc(sub) + '</div>' : '') + '</div>' +
+    '<div class="tile-ct' + (n ? '' : ' zero') + '">' + n + '</div></div>';
+}
+
+function navIr(mod, sub) { S.nav = { mod: mod, sub: sub || null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); }
+function navMais() { S.nav.lim += 15; renderModalidades(); }
+function navVoltar() {
+  if (S.nav.sub) S.nav = { mod: S.nav.mod, sub: null, lim: 15 };
+  else S.nav = { mod: null, sub: null, lim: 15 };
+  renderModalidades(); window.scrollTo(0, 0);
+}
+
+
+/* Fichas (peças) sem foto: aviso na home e lista clicável */
+function carregarSemFoto(cb) {
+  sbGet('pecas_proprias', 'or=(foto_base64.is.null,foto_base64.eq.)&select=id,modelo,codigo_publico,preco,roteiro_id&order=codigo_publico', function(err, d) {
+    if (!err && d) S.semFoto = d;
+    if (cb) cb();
+  });
+}
+function avisoSemFotoHtml() {
+  var n = (S.semFoto || []).length;
+  if (!n) return '';
+  return '<div class="aviso-sf">ℹ️ Existem ' + n + ' fichas sem foto no sistema. ' +
+    '<a href="#" onclick="navIr(\'semfoto\');return false;">Ver fichas</a></div>';
+}
+function listaSemFotoHtml() {
+  var l = S.semFoto || [], h = '', j, p, st;
+  h += '<div class="nav-tit">Fichas sem foto (' + l.length + ')</div>';
+  h += '<div class="ot-meta" style="margin-bottom:10px">Carregue as fotos pelo computador ou celular.</div>';
+  for (j = 0; j < l.length; j++) {
+    p = l[j];
+    st = ((p.preco > 0) ? '' : 'sem preço') + ((p.preco > 0 || p.roteiro_id) ? '' : ' · ') + (p.roteiro_id ? '' : 'sem roteiro');
+    h += '<div class="ot-card" style="cursor:default"><div class="ot-row"><div class="ot-icone">🖼️</div><div style="flex:1;-webkit-flex:1">' +
+      '<div class="ot-titulo">' + esc(p.modelo || 'Sem nome') + '</div>' +
+      '<div class="ot-meta">' + esc(p.codigo_publico || '') + (st ? ' · ' + esc(st) : '') + '</div></div></div></div>';
+  }
+  return h;
+}
+
+function renderModalidades() {
+  var cont = document.getElementById('cont');
+  if (!cont || !S.g) return;
+  var nav = S.nav || (S.nav = { mod: null, sub: null, lim: 15 });
+  var g = S.g, html = '', j;
+  var nProd = listaDaModalidade('prod').length;
+  var nOutras = listaDaModalidade('outras').length;
+
+  if (!nav.mod) {
+    if (!g.exec.length && !g.paus.length && !nProd && !g.disp.length && !nOutras) {
       html = '<div class="vazio"><div class="vazio-ico">☀️</div>' +
         '<div class="vazio-titulo">Sem tarefas no momento</div>' +
         '<div class="vazio-sub">Aguarde novas ordens ou avise o supervisor.</div></div>';
     } else {
-      if (exec.length) {
+      if (g.exec.length) {
         html += '<div class="secao-label">🔧 Em execução</div>';
-        for (var j = 0; j < exec.length; j++) html += cardHtml(exec[j]);
+        for (j = 0; j < g.exec.length; j++) html += cardModHtml(g.exec[j]);
       }
-      if (paus.length) {
+      if (g.paus.length) {
         html += '<div class="secao-label">⏸ Pausadas</div>';
-        for (var j = 0; j < paus.length; j++) html += cardHtml(paus[j]);
+        for (j = 0; j < g.paus.length; j++) html += cardModHtml(g.paus[j]);
       }
-      if (disp.length) {
-        html += '<div class="secao-label">📋 Disponíveis</div>';
-        for (var j = 0; j < disp.length; j++) html += cardHtml(disp[j]);
+      html += '<div class="secao-label">Modalidades</div>';
+      html += tileHtml('🏭', (S.meusSubs && S.meusSubs.length) ? 'Minhas funções' : 'Produção',
+                       'Tarefas da sua função', nProd, "navIr('prod')");
+      html += tileHtml('📋', 'Tarefas disponíveis', 'Baixa urgência: completar fichas, insumos, manutenção', g.disp.length, "navIr('disp')");
+      if (S.meusSubs && S.meusSubs.length && nOutras) {
+        html += tileHtml('🔎', 'Outras funções', 'Tarefas de outras funções (ajuda)', nOutras, "navIr('outras')");
       }
     }
+  } else if (nav.mod === 'semfoto') {
+    html += '<button class="nav-back" onclick="navVoltar()">← Voltar</button>' + listaSemFotoHtml();
+  } else {
+    var lista = listaDaModalidade(nav.mod);
+    var titulos = { prod: (S.meusSubs && S.meusSubs.length) ? 'Minhas funções' : 'Produção',
+                    disp: 'Tarefas disponíveis', outras: 'Outras funções' };
+    html += '<button class="nav-back" onclick="navVoltar()">← Voltar</button>';
+    if (!nav.sub) {
+      html += '<div class="nav-tit">' + esc(titulos[nav.mod]) + '</div>';
+      var grp = {}, ordem = [], k;
+      for (j = 0; j < lista.length; j++) {
+        var t = tipoDe(lista[j]); k = t.codigo;
+        if (!grp[k]) { grp[k] = { t: t, n: 0 }; ordem.push(k); }
+        grp[k].n++;
+      }
+      ordem.sort(function(a, b) { return grp[b].n - grp[a].n; });
+      if (!ordem.length) html += '<div class="vazio"><div class="vazio-titulo">Nada por aqui</div></div>';
+      for (j = 0; j < ordem.length; j++) {
+        html += tileHtml(icoTipo(grp[ordem[j]].t), grp[ordem[j]].t.nome, '', grp[ordem[j]].n,
+                         "navIr('" + nav.mod + "','" + ordem[j] + "')");
+      }
+    } else {
+      var items = [];
+      for (j = 0; j < lista.length; j++) if (tipoDe(lista[j]).codigo === nav.sub) items.push(lista[j]);
+      var tt = items.length ? tipoDe(items[0]) : { nome: 'Tarefas' };
+      html += '<div class="nav-tit">' + esc(tt.nome) + ' (' + items.length + ')</div>';
+      for (j = 0; j < items.length && j < nav.lim; j++) html += cardModHtml(items[j]);
+      if (items.length > nav.lim) html += '<button class="mais-btn" onclick="navMais()">Mostrar mais (' + (items.length - nav.lim) + ')</button>';
+    }
+  }
+  if (!nav.mod) html += avisoSemFotoHtml();
+  html += '<div class="refresh-bar" id="refreshBar">Atualiza em 60s</div>';
+  cont.innerHTML = html;
+}
 
-    html += '<div class="refresh-bar" id="refreshBar">Atualiza em 60s</div>';
-    cont.innerHTML = html;
-    iniciarTimer();
+/* Carrega tipos de OT e as funções (subsetores) do operador — uma vez por login */
+function prepararContexto(cb) {
+  if (S.ctxOk) { cb(); return; }
+  function fim() { S.ctxOk = true; cb(); }
+  sbGet('tipos_ot', 'select=id,codigo,nome,grupo,subsetor_id', function(err, tipos) {
+    var m = {}, i;
+    if (!err && tipos) for (i = 0; i < tipos.length; i++) m[tipos[i].id] = tipos[i];
+    S.tipos = m;
+    S.meusSubs = [];
+    var cid = S.colaborador ? S.colaborador.id : '';
+    /* 1) funções do operador, definidas livremente em Funcionários → 🏭 (tabela colaborador_subsetores) */
+    sbGet('colaborador_subsetores', 'colaborador_id=eq.' + encodeURIComponent(cid) + '&select=subsetor_id', function(e1, caps) {
+      if (!e1 && caps) for (i = 0; i < caps.length; i++) S.meusSubs.push(caps[i].subsetor_id);
+      if (S.meusSubs.length) { fim(); return; }
+      /* 2) estação padrão */
+      var eid = S.colaborador && S.colaborador.estacao_padrao_id;
+      if (eid) {
+        sbGet('estacoes', 'id=eq.' + encodeURIComponent(eid) + '&select=subsetor_id', function(e2, est) {
+          if (!e2 && est && est.length && est[0].subsetor_id) S.meusSubs.push(est[0].subsetor_id);
+          fim();
+        });
+        return;
+      }
+      /* 3) cargo → subsetor */
+      var cg = String((S.colaborador && S.colaborador.cargo) || '').toLowerCase().replace(/\s+/g, '');
+      var nomeSub = CARGO_SUBSETOR[cg];
+      if (!nomeSub) { fim(); return; }
+      sbGet('subsetores', 'nome=eq.' + encodeURIComponent(nomeSub) + '&select=id', function(e3, sub) {
+        if (!e3 && sub && sub.length) S.meusSubs.push(sub[0].id);
+        fim();
+      });
+    });
   });
 }
 
@@ -699,7 +886,7 @@ function carregarOTs(silencioso) {
 function abrirDetalhe(otId) {
   pararTimer();
   S.view = 'detalhe';
-  S.ot = null; S.tipo = null; S.peca = null;
+  S.ot = null; S.tipo = null; S.peca = null; S.roteiros = []; S.pedido = null;
   S.checklist = []; S.fotoOk = false;
   render();
 
@@ -730,13 +917,18 @@ function abrirDetalhe(otId) {
             /* 4. Buscar peça (se houver) */
             if (S.ot.peca_id) {
               sbGet('pecas_proprias',
-                'id=eq.' + S.ot.peca_id + '&select=id,modelo,codigo_publico,foto_base64',
+                'id=eq.' + S.ot.peca_id + '&select=id,modelo,codigo_publico,foto_base64,preco,roteiro_id',
                 function(err4, pd) {
                   S.peca = (pd && pd.length) ? pd[0] : null;
-                  renderDetalhe();
+                  if (S.tipo && S.tipo.codigo === 'completar_ficha') {
+                    sbGet('roteiros', 'ativo=eq.true&order=nome&select=id,codigo_publico,nome', function(e5, rs) {
+                      S.roteiros = rs || [];
+                      carregarPedidoEDetalhe();
+                    });
+                  } else { carregarPedidoEDetalhe(); }
                 });
             } else {
-              renderDetalhe();
+              carregarPedidoEDetalhe();
             }
           }
         );
@@ -767,7 +959,10 @@ function renderDetalhe() {
 
   /* Foto de referência */
   var fotoHtml = '';
-  if (peca && peca.foto_base64) {
+  var ehFicha = ehTipoFicha();
+  if (peca && peca.foto_base64 && ehFicha) {
+    fotoHtml = '<div class="card"><div class="card-label">🖼️ Foto da peça</div><img src="' + peca.foto_base64 + '" alt="peca" class="foto-img"></div>';
+  } else if (peca && peca.foto_base64) {
     fotoHtml =
       '<div class="card">' +
       '<div class="card-label">🖼️ Confira a peça correta</div>' +
@@ -807,7 +1002,7 @@ function renderDetalhe() {
   }
 
   /* Botões de ação */
-  var temFoto  = !!(peca && peca.foto_base64);
+  var temFoto  = !ehFicha && !!(peca && peca.foto_base64);
   var btnDis   = (temFoto && !S.fotoOk) ? ' disabled' : '';
   var botoesHtml = '<div class="acoes">';
 
@@ -839,7 +1034,7 @@ function renderDetalhe() {
       ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
       : '') +
     '</div>' +
-    fotoHtml + instrHtml + checkHtml + botoesHtml;
+    fotoHtml + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + instrHtml + checkHtml + botoesHtml;
 }
 
 function confirmarFoto(el) {
@@ -1102,6 +1297,7 @@ function fecharOT(resultado, qtdBoa, qtdPerd, obs) {
               resultado === 'parcial'   ? 'Fechamento parcial registrado. ⚠️' :
               resultado === 'falha'     ? 'Falha registrada.' :
               'Tarefa cancelada.';
+    if (S.msgExtra) { msg += ' ' + S.msgExtra; S.msgExtra = ''; }
     toast(msg);
     renderDetalhe();
   });
@@ -1118,6 +1314,184 @@ function toggleCheck(checkId) {
     if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
     item.concluido = novo;
     renderDetalhe();
+  });
+}
+
+
+/* ─────────────────────────────────────────
+   COMPLETAR FICHA (tipo completar_ficha): preço + roteiro da peça.
+   Foto é carregada pelo computador; aqui só mostra se existe.
+───────────────────────────────────────── */
+function ehTipoFicha() { return !!(S.tipo && S.tipo.codigo === 'completar_ficha'); }
+
+function fichaHtmlBloco() {
+  var peca = S.peca;
+  if (!ehTipoFicha()) return '';
+  if (!peca) return '<div class="card"><div class="card-label">📝 Ficha da peça</div><div class="instrucoes">Esta tarefa não está ligada a uma peça. Avise o supervisor.</div></div>';
+  var opts = '<option value="">— escolher roteiro —</option>', i, r;
+  for (i = 0; i < (S.roteiros || []).length; i++) {
+    r = S.roteiros[i];
+    opts += '<option value="' + r.id + '"' + (peca.roteiro_id === r.id ? ' selected' : '') + '>' +
+      esc((r.codigo_publico ? '[' + r.codigo_publico + '] ' : '') + r.nome) + '</option>';
+  }
+  var precoVal = (peca.preco && peca.preco > 0) ? String(peca.preco).replace('.', ',') : '';
+  return '<div class="card"><div class="card-label">📝 Ficha: ' + esc(peca.modelo || peca.codigo_publico || '') + '</div>' +
+    '<div class="ficha-lbl">Preço de venda (R$)</div>' +
+    '<input class="ficha-in" id="fichaPreco" type="text" inputmode="decimal" value="' + esc(precoVal) + '" placeholder="Ex.: 180,00">' +
+    '<div class="ficha-lbl">Roteiro de fabricação</div>' +
+    '<select class="ficha-in" id="fichaRot">' + opts + '</select>' +
+    '<div class="ficha-lbl">Foto</div>' +
+    (peca.foto_base64 ? '<div class="ficha-ok">✓ Foto cadastrada</div>' :
+      '<div class="ficha-pend">Sem foto. Pode concluir assim; carregue depois pelo computador ou celular.</div>') +
+    '<button class="btn btn-conc" id="btnSalvarFicha" onclick="salvarFicha()">💾 Salvar ficha</button></div>';
+}
+
+function salvarFicha() {
+  var peca = S.peca, ot = S.ot;
+  if (!peca || !ot) return;
+  var cont = document.getElementById('cont');
+  var inpP = cont.querySelector('#fichaPreco'), selR = cont.querySelector('#fichaRot');
+  var preco = parseFloat(String(inpP.value || '').replace(/\./g, '').replace(',', '.'));
+  var rot = selR.value || null;
+  var patch = {};
+  if (!isNaN(preco) && preco > 0) patch.preco = preco;
+  if (rot) patch.roteiro_id = rot;
+  var temPreco = (patch.preco > 0) || (peca.preco > 0);
+  var temRot = !!(patch.roteiro_id || peca.roteiro_id);
+  if (!patch.preco && !patch.roteiro_id) { toast('Preencha o preço ou escolha o roteiro.', true); return; }
+  var btn = cont.querySelector('#btnSalvarFicha'); if (btn) btn.disabled = true;
+  sbPatch('pecas_proprias', 'id=eq.' + peca.id, patch, function(err) {
+    if (btn) btn.disabled = false;
+    if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+    if (patch.preco) peca.preco = patch.preco;
+    if (patch.roteiro_id) peca.roteiro_id = patch.roteiro_id;
+    var falta = [];
+    if (!temRot) falta.push('roteiro');
+    if (!temPreco) falta.push('preço');
+    if (falta.length) {
+      toast('Salvo. Ainda falta: ' + falta.join(', '));
+      renderDetalhe();
+      return;
+    }
+    /* Preço + roteiro preenchidos: fecha a tarefa mesmo sem foto */
+    if (!peca.foto_base64) {
+      carregarSemFoto(function() {
+        var n = (S.semFoto || []).length;
+        /* a peça atual já saiu da lista só se tiver foto; aqui continua sem foto */
+        S.msgExtra = 'Existem ' + n + ' fichas sem foto no sistema.';
+        fecharOT('sucesso', 1, 0, 'Ficha completada no tablet (sem foto)');
+      });
+    } else {
+      fecharOT('sucesso', 1, 0, 'Ficha completada no tablet');
+    }
+  });
+}
+
+
+/* ─────────────────────────────────────────
+   ENVIO (expedição) e PÓS-COMPRA — dados do pedido
+───────────────────────────────────────── */
+function fmtMoeda(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+function carregarPedidoEDetalhe() {
+  var cod = S.tipo ? S.tipo.codigo : '';
+  S.pedido = null;
+  if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra')) {
+    sbGet('pedidos', 'id=eq.' + S.ot.pedido_id +
+      '&select=id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em',
+      function(err, d) {
+        S.pedido = (!err && d && d.length) ? d[0] : null;
+        renderDetalhe();
+      });
+  } else {
+    renderDetalhe();
+  }
+}
+
+function envioHtmlBloco() {
+  if (!S.tipo || S.tipo.codigo !== 'expedicao' || !S.pedido) return '';
+  var p = S.pedido, saldo = Math.max(0, (p.valor_total || 0) - (p.valor_entrada || 0));
+  var h = '<div class="card"><div class="card-label">🚚 Envio: ' + esc(p.cliente || '') + '</div>';
+  if (p.contato) h += '<div class="ficha-lbl">Contato</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.contato) + '</div>';
+  h += '<div class="ficha-lbl">Saldo a receber (total − entrada)</div><div class="ficha-ok" style="color:' + (saldo > 0 ? '#fdba74' : '#4ade80') + '">' + fmtMoeda(saldo) + '</div>';
+  if (p.status === 'enviado') {
+    h += '<div class="ficha-ok">✓ Pedido já marcado como enviado' + (p.codigo_rastreio ? ' · rastreio ' + esc(p.codigo_rastreio) : '') + '</div></div>';
+    return h;
+  }
+  h += '<div class="ficha-lbl">Transportadora / forma de envio</div>' +
+    '<input class="ficha-in" id="envTransp" type="text" value="' + esc(p.transportadora || '') + '" placeholder="Ex.: Correios, motoboy, retirada">' +
+    '<div class="ficha-lbl">Código de rastreio (se houver)</div>' +
+    '<input class="ficha-in" id="envRastreio" type="text" value="' + esc(p.codigo_rastreio || '') + '">';
+  if (saldo > 0) {
+    h += '<div class="foto-check"><input type="checkbox" id="envSaldo"><label for="envSaldo">Saldo quitado / combinado com o cliente</label></div>';
+  }
+  h += '<button class="btn btn-conc" id="btnEnviar" onclick="marcarEnviado()" style="margin-top:12px">🚚 Marcar como enviado</button></div>';
+  return h;
+}
+
+function marcarEnviado() {
+  var cont = document.getElementById('cont'), p = S.pedido, ot = S.ot;
+  if (!p || !ot) return;
+  var transp = (cont.querySelector('#envTransp').value || '').replace(/^\s+|\s+$/g, '');
+  var rast = (cont.querySelector('#envRastreio').value || '').replace(/^\s+|\s+$/g, '');
+  var chk = cont.querySelector('#envSaldo');
+  if (!transp) { toast('Informe a transportadora / forma de envio.', true); return; }
+  if (chk && !chk.checked) { toast('Confirme o saldo antes de enviar.', true); return; }
+  var btn = cont.querySelector('#btnEnviar'); if (btn) btn.disabled = true;
+  var patch = { transportadora: transp, codigo_rastreio: rast || null, enviado_em: new Date().toISOString(), status: 'enviado' };
+  sbPatch('pedidos', 'id=eq.' + p.id, patch, function(err) {
+    if (err) { if (btn) btn.disabled = false; toast('Erro: ' + err.message, true); return; }
+    p.status = 'enviado';
+    fecharOT('sucesso', ot.quantidade || 1, 0, 'Enviado via ' + transp + (rast ? ' · rastreio ' + rast : '') + ' (terminal)');
+  });
+}
+
+function posCompraHtmlBloco() {
+  if (!EXTRAS || !S.tipo || S.tipo.codigo !== 'pos_compra' || !S.pedido) return '';
+  var p = S.pedido;
+  var msg = 'Oi! Aqui é da Valente Artes. Seu pedido chegou bem? Se gostou, uma avaliação ajuda muito. Qualquer problema, é só me avisar!';
+  var h = '<div class="card"><div class="card-label">💬 Pós-compra: ' + esc(p.cliente || '') + '</div>';
+  if (p.contato) h += '<div class="ficha-lbl">Contato</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.contato) + '</div>';
+  if (p.transportadora || p.codigo_rastreio) {
+    h += '<div class="ficha-lbl">Envio</div><div class="ficha-ok" style="color:#f1f5f9">' + esc(p.transportadora || '') + (p.codigo_rastreio ? ' · ' + esc(p.codigo_rastreio) : '') + '</div>';
+  }
+  h += '<div class="ficha-lbl">Mensagem (editável)</div>' +
+    '<textarea class="ficha-in" id="pcMsg" rows="4">' + esc(msg) + '</textarea>' +
+    '<button class="btn btn-ref" onclick="copiarMsgPos()" style="margin-bottom:10px">📋 Copiar mensagem</button>' +
+    '<button class="btn btn-conc" onclick="posCompraOk()" style="margin-bottom:10px">✅ Tudo certo</button>' +
+    '<button class="btn btn-paus" onclick="posCompraProblema(1)">⚠️ Problema, abrir ocorrência</button>' +
+    '<div id="pcProbBox" style="display:none;margin-top:12px">' +
+    '<div class="ficha-lbl">Descreva o problema</div><textarea class="ficha-in" id="pcProb" rows="3"></textarea>' +
+    '<button class="btn btn-conc" onclick="posCompraProblema(2)">Abrir ocorrência e concluir</button></div></div>';
+  return h;
+}
+
+function copiarMsgPos() {
+  var ta = document.getElementById('cont').querySelector('#pcMsg');
+  if (!ta) return;
+  ta.focus(); ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  toast(ok ? 'Mensagem copiada.' : 'Selecione o texto e copie manualmente.', !ok);
+}
+function posCompraOk() { fecharOT('sucesso', 1, 0, 'Pós-compra: tudo certo (terminal)'); }
+function posCompraProblema(etapa) {
+  var cont = document.getElementById('cont');
+  if (etapa === 1) { cont.querySelector('#pcProbBox').style.display = 'block'; return; }
+  var txt = (cont.querySelector('#pcProb').value || '').replace(/^\s+|\s+$/g, '');
+  if (!txt) { toast('Descreva o problema.', true); return; }
+  var tipo = null, k;
+  for (k in S.tipos) { if (S.tipos[k].codigo === 'contato_cliente') { tipo = S.tipos[k]; break; } }
+  if (!tipo || !S.pedido) { toast('Tipo de contato não encontrado. Avise o supervisor.', true); return; }
+  sbPost('ordens_trabalho', {
+    titulo: 'Ocorrência pós-compra: ' + (S.pedido.cliente || 'cliente'),
+    status: 'pendente', tipo_ot_id: tipo.id, subsetor_id: tipo.subsetor_id,
+    pedido_id: S.pedido.id, quantidade: 1, ordem_execucao: 0,
+    instrucoes: 'Problema relatado no pós-compra: ' + txt
+  }, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    S.msgExtra = 'Ocorrência aberta.';
+    fecharOT('sucesso', 1, 0, 'Pós-compra com problema: ' + txt + ' (terminal)');
   });
 }
 
@@ -1138,6 +1512,8 @@ function sair() {
   S.colaborador = null; S.pinDigits = []; S.pinErro = false;
   S.ots = []; S.ot = null; S.tipo = null; S.peca = null;
   S.checklist = []; S.fotoOk = false;
+  S.semFoto = []; S.ctxOk = false; S.tipos = {}; S.meusSubs = []; S.g = null;
+  S.nav = { mod: null, sub: null, lim: 15 };
   render();
 }
 
