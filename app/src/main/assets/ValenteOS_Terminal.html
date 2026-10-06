@@ -1058,7 +1058,7 @@ function renderDetalhe() {
     botoesHtml += '<button class="btn btn-ret" onclick="acaoOT(\'retomada\',\'retomada\')">▶ Retomar Tarefa</button>';
   }
   botoesHtml += '<button class="btn btn-ref" onclick="imprimirDetalhe()">🖨️ Imprimir ficha</button>';
-  if (codTipo() === 'separacao' && S.ot && S.ot.peca_id) { botoesHtml += '<button class="btn btn-ref" onclick="abrirOndePegar()">📍 Onde pegar</button>'; }
+  if (podeRetirarEstoque() && (isExec(s) || s === 'pausada')) { botoesHtml += '<button class="btn btn-ref" onclick="abrirOndePegar()">📦 Retirar do estoque</button>'; }
   botoesHtml += '<button class="btn btn-vol" onclick="voltarInbox()">← Voltar</button>';
   botoesHtml += '</div>';
 
@@ -1447,11 +1447,20 @@ function concluirPorTipo() {
    Estoque guiado (v155) — "Onde pegar" na tarefa de Separação (ES5)
    Mostra o endereço de cada componente e, ao confirmar, leva para a MESA-SEPARACAO.
 ───────────────────────────────────────── */
-function abrirOndePegar() {
+var TIPOS_RETIRA = ['separacao', 'pintura', 'montagem', 'conferencia', 'embalagem', 'expedicao'];
+function podeRetirarEstoque() {
+  var i, c = codTipo();
+  if (!S.ot || !S.ot.peca_id) { return false; }
+  for (i = 0; i < TIPOS_RETIRA.length; i++) { if (TIPOS_RETIRA[i] === c) { return true; } }
+  return false;
+}
+function abrirOndePegar(qtdManual) {
   var ot = S.ot;
   if (!ot || !ot.peca_id) { toast('Esta tarefa não está ligada a uma peça.', true); return; }
-  var qtd = ot.quantidade || 1;
+  var ehPint = codTipo() === 'pintura';
+  var qtd = qtdManual || (ehPint ? Math.max(1, (ot.quantidade || 1) - (ot.quantidade_concluida || 0) - (ot.quantidade_perdida_acumulada || 0)) : (ot.quantidade || 1));
   janelaFim('ONDE PEGAR', esc(ot.titulo || ''), '<div style="color:#94a3b8;font-size:.9rem">Buscando endereços…</div>', 'Retirei tudo', function() {});
+  document.getElementById('jf-ok').style.display = 'none';
   sbGet('peca_componentes', 'peca_id=eq.' + ot.peca_id + '&select=id,nome&order=created_at', function(e1, comps) {
     if (e1 || !comps) { toast('Erro ao buscar componentes.', true); fecharJanelaFim(); return; }
     if (!comps.length) { fecharJanelaFim(); toast('Esta peça não tem componentes cadastrados.', true); return; }
@@ -1472,7 +1481,7 @@ function abrirOndePegar() {
           var plano = [], total = 0, h = '';
           for (i = 0; i < comps.length; i++) {
             var falta = qtd, pegar = [], pass, j;
-            var ordem = [pint, brut];
+            var ordem = ehPint ? [brut, pint] : [pint, brut];
             for (pass = 0; pass < 2; pass++) {
               var lst = [];
               for (j = 0; j < inv.length; j++) {
@@ -1481,7 +1490,7 @@ function abrirOndePegar() {
               lst.sort(function(a, b) { return b.quantidade - a.quantidade; });
               for (j = 0; j < lst.length && falta > 0; j++) {
                 var t = Math.min(falta, parseFloat(lst[j].quantidade) || 0);
-                if (t > 0) { pegar.push({ row: lst[j], qtd: t, pintado: pass === 0 }); falta -= t; total += t; }
+                if (t > 0) { pegar.push({ row: lst[j], qtd: t, pintado: ordem[pass] === pint }); falta -= t; total += t; }
               }
             }
             plano.push({ comp: comps[i], pegar: pegar, falta: falta });
@@ -1495,10 +1504,11 @@ function abrirOndePegar() {
           }
           var ov = document.getElementById('fech-overlay');
           if (!ov) { return; }
-          ov.firstChild.childNodes[1].innerHTML = h + '<div style="font-size:.75rem;color:#64748b;margin-top:10px">Ao confirmar, os itens vão para a Mesa de separação.</div>' +
+          ov.firstChild.childNodes[1].innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:#94a3b8;font-size:.85rem">Quantas peças?</span><input id="op-q" type="number" min="1" value="' + qtd + '" style="width:80px;padding:8px;text-align:center;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;font-size:1.1rem"></div>' + h + '<div style="font-size:.75rem;color:#64748b;margin-top:10px">Ao confirmar, os itens vão para a mesa de trabalho.</div>' +
             '<div style="display:flex;gap:12px;margin-top:14px"><button id="op-c" style="flex:1;padding:14px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem">Fechar</button>' +
             (total > 0 && mesaId ? '<button id="op-ok" style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700">Retirei tudo</button>' : '') + '</div>';
           document.getElementById('op-c').onclick = fecharJanelaFim;
+          document.getElementById('op-q').onchange = function() { var n = nInt(this.value); if (n > 0) { abrirOndePegar(n); } };
           var okb = document.getElementById('op-ok');
           if (okb) {
             okb.onclick = function() {
