@@ -96,13 +96,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 var TREINAMENTO_TRILHAS = {
-  // ── Cursos do Centro de Capacitação Valente (v133) ──
+  // ── Cursos do Centro de Capacitação Valente (v159 — conteúdo atualizado em 06/10/2026) ──
   integracao: {
     "id": "integracao",
     "nome": "Integração Valente",
     "descricao": "Formação comum de entrada: o fluxo do pedido, o Kanban e as perguntas que guiam o seu trabalho.",
     "icone": "🧭",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Visão do processo",
@@ -192,7 +192,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "O que cada etapa quer dizer",
-            "texto": "Negociação: o pedido está sendo combinado com o cliente. Pago: o pagamento foi confirmado e o trabalho pode seguir. Modelando: o modelo 3D está sendo criado ou preparado. Imprimindo: a peça está sendo fabricada na impressora. Pós-impressão: a peça é tratada depois de impressa, por exemplo com limpeza e remoção de suportes. Pintura: a peça recebe acabamento de cor. Preparar p/ envio: conferência e embalagem. Enviado: a peça saiu para o cliente."
+            "texto": "Negociação: o pedido está sendo combinado com o cliente. Pago: o pagamento foi confirmado e o trabalho pode seguir. Em pedido de instituição pública com empenho, o número do empenho precisa estar registrado antes de iniciar o trabalho. Modelando: o modelo 3D está sendo criado ou preparado. Imprimindo: a peça está sendo fabricada na impressora. Pós-impressão: a peça é tratada depois de impressa, por exemplo com limpeza e remoção de suportes. Pintura: a peça recebe acabamento de cor. Preparar p/ envio: conferência e embalagem. Enviado: a peça saiu para o cliente."
           },
           {
             "tipo": "conteudo",
@@ -254,7 +254,12 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Para que serve o sistema",
-            "texto": "O Valente OS organiza as informações para que a equipe não dependa só de memória, mensagens soltas ou perguntas de corredor. As abas principais são Pedidos, que mostra o Kanban, Peças Próprias, Caixa, Orçamento, Missão (a caixa de entrada das suas tarefas) e o Centro de Capacitação, onde você faz este curso. Cada cargo enxerga as abas liberadas para a sua função, então é normal que o seu usuário não mostre todas."
+            "texto": "O Valente OS organiza as informações para que a equipe não dependa só de memória, mensagens soltas ou perguntas de corredor. As abas principais são Pedidos, que mostra o Kanban, Peças Próprias, Caixa, Orçamento (a calculadora de custo), Propostas (onde se monta o orçamento para o cliente), Estoque, Missão (a caixa de entrada das suas tarefas) e o Centro de Capacitação, onde você faz este curso. No PC existe também a aba Tarefas, que lista as tarefas designadas a você, útil para quem não usa tablet. Cada cargo enxerga as abas liberadas para a sua função, então é normal que o seu usuário não mostre todas."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Onde as peças ficam guardadas",
+            "texto": "A aba Estoque mostra onde cada peça está guardada fisicamente. O local é um endereço por galpão, estante, prateleira e, às vezes, caixa, como G1-E01-P02-C03. Ela tem partes para guardar peças, ver o que há em cada lugar e fazer a retirada guiada, que diz em qual endereço pegar cada componente. Atenção: o estoque físico, que diz onde a peça está, é diferente da contagem de produção, que diz quantas peças existem. Uma não substitui a outra."
           },
           {
             "tipo": "conteudo",
@@ -334,6 +339,11 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Antes de mover qualquer cartão, confirme qual fato real autoriza aquela mudança. A peça terminou de imprimir? Foi conferida? O pagamento foi confirmado? Mover vem depois do fato, nunca antes, e não serve para parecer que o trabalho está andando. Quem pode mover cada etapa e quais condições liberam a movimentação seguem o procedimento definido pela Valente. Em caso de dúvida, consulte o responsável."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "O cartão hoje no Valente OS",
+            "texto": "Cada cartão mostra a etapa atual da produção, por exemplo modelagem, impressão ou pintura, e a tela se atualiza sozinha a cada 60 segundos. Pedido novo aparece como Aguardando liberação. No cartão há o botão Liberar, que gera a ordem de produção, o plano e as tarefas. Se faltar pagamento ou empenho, o botão avisa a pendência. Também não é possível mover para uma etapa de produção com empenho pendente: o empenho precisa estar registrado primeiro."
+          },
+          {
             "tipo": "multipla_escolha",
             "competencia": "fluxo_kanban",
             "pergunta": "Você terminou a limpeza de uma peça, mas ainda não conferiu se ficou boa. Seu cartão está em Pós-impressão. O que é mais correto fazer?",
@@ -377,7 +387,7 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "confirmacao_pratica",
             "competencia": "fluxo_kanban",
             "local": "Valente OS > aba Pedidos (Kanban)",
-            "instrucao": "Escolha um cartão e observe apenas. Pense em qual evento real deveria acontecer para ele passar à coluna seguinte. Não arraste nem altere o cartão. Se tiver dúvida sobre quem pode mover aquela etapa, pergunte ao responsável."
+            "instrucao": "Escolha um cartão e observe apenas. Veja qual etapa atual da produção aparece nele, como modelagem, impressão ou pintura, e pense em qual evento real deveria acontecer para ele passar à coluna seguinte. Não arraste nem altere o cartão. Se tiver dúvida sobre quem pode mover aquela etapa, pergunte ao responsável."
           }
         ]
       },
@@ -513,10 +523,23 @@ var TREINAMENTO_TRILHAS = {
             ]
           },
           {
+            "tipo": "conteudo",
+            "titulo": "A caixa SUA MISSÃO",
+            "texto": "No topo da tarefa aparece a caixa SUA MISSÃO, que diz o que você deve fazer, por exemplo: Pintar 8 de 18 unidades de Saia. Quando a tarefa já avançou, ela mostra o que falta e uma linha como Já feitas nesta tarefa: 10. Ela também informa quantas unidades são necessárias para fechar o pedido e quantas peças impressas estão disponíveis. Leia essa caixa antes de começar. Nas tarefas de pintura, separação, montagem, conferência, embalagem e expedição, o botão Retirar do estoque mostra onde pegar a peça. O PIN identifica quem executa: seu nome aparece no topo e fica gravado como responsável pelo que você inicia e conclui."
+          },
+          {
+            "tipo": "verdadeiro_falso",
+            "competencia": "responsabilidade",
+            "afirmacao": "Se um colega está sem PIN por perto, você pode iniciar e concluir tarefas com o PIN dele, porque o resultado do trabalho é o mesmo.",
+            "correta": false,
+            "feedbackCerto": "Correto. O PIN identifica quem executou e grava o responsável. Usar o de outra pessoa registra uma informação falsa.",
+            "feedbackErrado": "O nome gravado como responsável vem do PIN. Usar o PIN de outra pessoa registra quem não fez o trabalho, o que vai contra a regra de registrar só o que de fato aconteceu."
+          },
+          {
             "tipo": "confirmacao_pratica",
             "competencia": "responsabilidade",
             "local": "Valente OS > aba Missão (caixa de entrada de tarefas)",
-            "instrucao": "Abra uma tarefa (OT) apenas para ler. Observe título, instruções, checklist e quantidade. Pergunte-se: eu saberia exatamente o que fazer? Tenho a referência certa? Não clique em Iniciar nem em Concluir. Se não houver tarefas na sua caixa, observe a área e anote o que espera encontrar nela."
+            "instrucao": "Abra uma tarefa (OT) apenas para ler. Observe a caixa SUA MISSÃO no topo, o título, as instruções, o checklist, as fotos de referência e a quantidade. Pergunte-se: eu saberia exatamente o que fazer? Tenho a referência certa? Não clique em Iniciar nem em Concluir. Se não houver tarefas na sua caixa, observe a área e anote o que espera encontrar nela."
           }
         ]
       },
@@ -539,6 +562,33 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "A sequência",
             "texto": "Use EXECUTAR, CONFERIR, REGISTRAR, ENTREGAR. Conferir: o resultado bate com o pedido? Registrar: marque o que for devido no Valente OS, como concluir a tarefa ou preencher o checklist. Entregar: a peça vai identificada, organizada e com o que a próxima pessoa precisa saber, como alertas ou observações. Só registre como feito aquilo que de fato foi feito."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Cada tarefa fecha do seu jeito",
+            "texto": "Ao concluir, cada tipo de tarefa abre a sua janela. Na impressão, você responde Tudo certo, Saiu só parte, Falhou ou Cancelada. Em etapas como lavagem, cura, montagem e separação, a janela Concluir etapa pergunta quantas ficaram prontas, quantas precisam voltar para a fase anterior, com o motivo, e mostra a próxima etapa. Na pintura de várias peças, a Produção do dia registra quantas foram pintadas e quantas estragaram. Em Conferência e Embalagem, Encontrei problema exige motivo e impede o pedido de seguir. Na expedição, o caminho é Marcar como enviado, com forma de envio, código de rastreio e saldo quitado ou combinado."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "responsabilidade",
+            "pergunta": "Você embalou o pedido e vai fechar a tarefa de expedição. Qual é o caminho correto no sistema?",
+            "opcoes": [
+              "Marcar como enviado, informando a forma de envio, o código de rastreio e se o saldo está quitado ou combinado",
+              "Concluir a tarefa de expedição e avisar o cliente do envio por mensagem, sem registrar o rastreio",
+              "Deixar a tarefa aberta até o cliente confirmar o recebimento",
+              "Mover o cartão para Enviado e deixar a tarefa de expedição para outra pessoa fechar"
+            ],
+            "correta": 0,
+            "feedbackCerto": "Isso. Marcar como enviado registra o fato com os dados que a próxima pessoa e o cliente vão precisar.",
+            "feedbackPorOpcao": [
+              null,
+              "Concluir a expedição sem marcar como enviado não é o caminho. O envio fica sem registro de rastreio e de saldo.",
+              "A confirmação de recebimento é tratada depois, no pós-compra. A expedição se fecha ao registrar o envio.",
+              "Quem executou deve registrar o próprio fato, e o registro do envio é feito na janela da tarefa."
+            ],
+            "erroCriticoOpcoes": [
+              1
+            ]
           },
           {
             "tipo": "resposta_cliente",
@@ -920,22 +970,22 @@ var TREINAMENTO_TRILHAS = {
                 ]
               },
               "c": {
-                "cliente": "A peça foi resolvida e pintada. Na etapa Preparar p/ envio, você confere e vai embalar. O que você faz antes de mover para Enviado?",
+                "cliente": "A peça foi resolvida e pintada. Na etapa Preparar p/ envio, você confere e vai embalar. O que você faz antes de marcar como enviado?",
                 "opcoes": [
                   {
-                    "label": "Embalo e movo para Enviado, pois a peça parece certa.",
+                    "label": "Embalo e marco como enviado, pois a peça parece certa.",
                     "correta": false,
                     "erroCritico": false,
                     "feedback": "Parecer certa não é conferir com o pedido."
                   },
                   {
-                    "label": "Confiro a peça contra o pedido, embalo identificada e só movo para Enviado quando for de fato enviada.",
+                    "label": "Confiro a peça contra o pedido, embalo identificada e só uso Marcar como enviado, com o rastreio, quando for de fato enviada.",
                     "correta": true,
                     "erroCritico": false,
                     "feedback": "Isso. O cartão acompanha o fato real, e a entrega sai conferida."
                   },
                   {
-                    "label": "Movo para Enviado agora para o cliente ver que já está a caminho.",
+                    "label": "Marco como enviado agora para o cliente ver que já está a caminho.",
                     "correta": false,
                     "erroCritico": true,
                     "feedback": "Informar um envio que não aconteceu é uma informação falsa."
@@ -970,570 +1020,1212 @@ var TREINAMENTO_TRILHAS = {
     ]
   },
   comercial: {
-    id: 'comercial',
-    nome: 'Formação Comercial Valente',
-    descricao: 'Do atendimento ao pós-venda: como vender o que a Valente produz.',
-    icone: '🎓',
-    versao: 3, // v131 — conteúdo reescrito de novo (v3, ferramentas primeiro); progresso das versões anteriores fica no histórico, sem se misturar
-    cargosPermitidos: ['comercial'],
-    competencias: [
-      'Atendimento e condução de venda',
-      'Orçamento e formação de preço',
-      'Fluxo de pedido no Valente OS',
-      'Venda em marketplace',
-      'Negociação e prospecção',
+    "id": "comercial",
+    "nome": "Formação Comercial Valente",
+    "descricao": "Do atendimento ao pós-venda: como vender o que a Valente produz.",
+    "icone": "🎓",
+    "versao": 4,
+    "cargosPermitidos": [
+      "comercial"
     ],
-    criteriosConclusao: null, // null = concluir todos os dias (regra padrão do motor)
-    dias: [
+    "competencias": [
+      "Atendimento e condução de venda",
+      "Orçamento e formação de preço",
+      "Fluxo de pedido no Valente OS",
+      "Venda em marketplace",
+      "Negociação e prospecção"
+    ],
+    "criteriosConclusao": null,
+    "dias": [
       {
-        dia: 1, titulo: 'Minha Estação Comercial Valente', subtitulo: 'Conhecer as ferramentas disponíveis no usuário Comercial e saber para que cada uma serve antes de atender clientes',
-        etapas: [
+        "dia": 1,
+        "titulo": "Minha Estação Comercial Valente",
+        "subtitulo": "Conhecer as ferramentas disponíveis no usuário Comercial e saber para que cada uma serve antes de atender clientes",
+        "etapas": [
           {
-            tipo: 'conteudo', titulo: 'Antes de vender, conheça sua bancada de trabalho',
-            texto: 'O Valente OS organiza informações usadas pelo Comercial e por outras etapas da operação. Você não precisa decorar tudo no primeiro dia. Precisa aprender onde cada tipo de informação nasce, onde é consultado e quando uma ferramenta deve ser usada. No usuário Comercial, as áreas principais são: Pedidos, Peças Próprias, Caixa, Orçamento e Centro de Capacitação. Regra do Dia 1: antes de perguntar a outra pessoa ou responder de memória, verifique se a informação já está disponível na ferramenta correta.',
+            "tipo": "conteudo",
+            "titulo": "Antes de vender, conheça sua bancada de trabalho",
+            "texto": "O Valente OS organiza informações usadas pelo Comercial e por outras etapas da operação. Você não precisa decorar tudo no primeiro dia. Precisa aprender onde cada tipo de informação nasce, onde é consultado e quando uma ferramenta deve ser usada. No usuário Comercial, as áreas principais são: Pedidos, Peças Próprias, Caixa, Orçamento, Propostas, Tarefas e Centro de Capacitação. Regra do Dia 1: antes de perguntar a outra pessoa ou responder de memória, verifique se a informação já está disponível na ferramenta correta."
           },
           {
-            tipo: 'confirmacao_pratica', competencia: 'operacao_os', local: 'Aba Pedidos',
-            instrucao: 'Abra a aba Pedidos. Nela ficam os pedidos registrados e o andamento operacional de cada trabalho. O que é Kanban? É uma forma visual de acompanhar um trabalho por etapas — cada pedido é um cartão que passa de uma coluna para outra conforme avança. Na Valente, o fluxo pode apresentar etapas como: Negociação → Pago → Modelando → Imprimindo → Pós-impressão → Pintura → Preparar/envio → Enviado. O nome da coluna informa a etapa atual: estar em Pintura não significa automaticamente que o pedido está pronto para retirada; ainda podem existir preparação, conferência e envio.',
+            "tipo": "confirmacao_pratica",
+            "competencia": "operacao_os",
+            "local": "Aba Pedidos",
+            "instrucao": "Abra a aba Pedidos. Nela ficam os pedidos registrados e o andamento operacional de cada trabalho. O que é Kanban? É uma forma visual de acompanhar um trabalho por etapas — cada pedido é um cartão que passa de uma coluna para outra conforme avança. Na Valente, o fluxo pode apresentar etapas como: Negociação → Pago → Modelando → Imprimindo → Pós-impressão → Pintura → Preparar/envio → Enviado. O nome da coluna informa a etapa atual: estar em Pintura não significa automaticamente que o pedido está pronto para retirada; ainda podem existir preparação, conferência e envio. Cada cartão mostra a etapa atual da produção (por exemplo, modelagem, impressão ou pintura) e a tela se atualiza sozinha a cada 60 segundos, então você não precisa recarregar para ver o andamento."
           },
           {
-            tipo: 'conteudo', titulo: 'O que existe dentro de um pedido',
-            texto: 'Para um pedido ser útil à operação, ele precisa conter informações suficientes pra identificar quem pediu, o que foi combinado e o que deverá ser produzido (os campos exatos seguem a tela real do Valente OS): Cliente (quem está comprando), Produto/serviço (o que será produzido ou entregue), Quantidade, Valor (valor comercial acordado), Pagamento/entrada e saldo (conforme a regra vigente e os campos disponíveis), Prazo (condição confirmada), Observações (detalhes necessários pra executar corretamente). Atenção: nunca invente um dado só pra completar um campo — se uma informação obrigatória ainda não foi confirmada, siga o procedimento vigente ou consulte o responsável.',
+            "tipo": "conteudo",
+            "titulo": "O que existe dentro de um pedido",
+            "texto": "Para um pedido ser útil à operação, ele precisa conter informações suficientes pra identificar quem pediu, o que foi combinado e o que deverá ser produzido (os campos exatos seguem a tela real do Valente OS): Cliente (quem está comprando), Produto/serviço (o que será produzido ou entregue), Quantidade, Valor (valor comercial acordado), Pagamento/entrada e saldo (conforme a regra vigente e os campos disponíveis), Prazo (condição confirmada), Observações (detalhes necessários pra executar corretamente). Atenção: nunca invente um dado só pra completar um campo — se uma informação obrigatória ainda não foi confirmada, siga o procedimento vigente ou consulte o responsável."
           },
           {
-            tipo: 'confirmacao_pratica', competencia: 'produtos', local: 'Aba Peças Próprias',
-            instrucao: 'Abra Peças Próprias. Esta área reúne produtos e referências já cadastrados pela Valente — ajuda o Comercial a verificar se algo já existe antes de tratar toda solicitação como projeto novo. Observe os campos disponíveis na versão atual: nome, foto, preço, estoque, categoria, tamanho ou outros dados cadastrados.',
+            "tipo": "confirmacao_pratica",
+            "competencia": "produtos",
+            "local": "Aba Peças Próprias",
+            "instrucao": "Abra Peças Próprias. Esta área reúne produtos e referências já cadastrados pela Valente — ajuda o Comercial a verificar se algo já existe antes de tratar toda solicitação como projeto novo. Observe os campos disponíveis na versão atual: nome, foto, preço, estoque, categoria, tamanho ou outros dados cadastrados."
           },
           {
-            tipo: 'confirmacao_pratica', competencia: 'ferramentas_digitais', local: 'Aba Caixa',
-            instrucao: 'Abra Caixa. O Comercial usa esta área pra consultar informações financeiras relacionadas aos pedidos, como valores recebidos e saldos, dentro das permissões do usuário. O objetivo aqui não é fazer a contabilidade da empresa — é conseguir responder perguntas operacionais sem alterar dados por suposição.',
+            "tipo": "confirmacao_pratica",
+            "competencia": "ferramentas_digitais",
+            "local": "Aba Caixa",
+            "instrucao": "Abra Caixa. O Comercial usa esta área pra consultar informações financeiras relacionadas aos pedidos, como valores recebidos e saldos, dentro das permissões do usuário. O objetivo aqui não é fazer a contabilidade da empresa — é conseguir responder perguntas operacionais sem alterar dados por suposição."
           },
           {
-            tipo: 'confirmacao_pratica', competencia: 'orcamento', local: 'Aba Orçamento',
-            instrucao: 'Abra Orçamento. Esta é a ferramenta usada pra formar preço com base em informações do trabalho — orçamento não deve sair de memória ou chute. A tela tem caminhos diferentes pra situações diferentes; dois caminhos importantes são "Tenho STL" e "Só tenho imagem". Nesta primeira aula, o objetivo é só localizar esses caminhos — no Dia 4 você aprende a usá-los.',
+            "tipo": "confirmacao_pratica",
+            "competencia": "orcamento",
+            "local": "Aba Orçamento",
+            "instrucao": "Abra Orçamento. Esta é a calculadora de custo, usada pra formar preço com base em informações do trabalho — orçamento não deve sair de memória ou chute. A tela tem caminhos diferentes pra situações diferentes; dois caminhos importantes são \"Tenho STL\" e \"Só tenho imagem\". Atenção: a calculadora gera o custo; o documento que vai para o cliente é montado na aba Propostas, que você conhece no Dia 4. Nesta primeira aula, o objetivo é só localizar esses caminhos."
           },
           {
-            tipo: 'confirmacao_pratica', competencia: 'ferramentas_digitais', local: 'Centro de Capacitação (aqui mesmo)',
-            instrucao: 'É a área em que você está agora. Aqui ficam as trilhas de aprendizagem, progresso e, futuramente, consultas rápidas de procedimento. Quando não lembrar um processo, o Centro de Capacitação deve ser uma das primeiras fontes de consulta.',
+            "tipo": "confirmacao_pratica",
+            "competencia": "ferramentas_digitais",
+            "local": "Aba Propostas e aba Tarefas",
+            "instrucao": "Abra a aba Propostas e observe a lista de propostas salvas, com busca e filtro por status (rascunho, enviada, aprovada, recusada). Depois abra a aba lateral Tarefas: é lá que o Comercial vê as tarefas designadas a ele, como contatar um cliente, confirmar um pagamento ou aprovar uma arte. Só observe; não altere nada."
           },
           {
-            tipo: 'multipla_escolha', competencia: 'operacao_os',
-            pergunta: 'Um cliente pergunta: "Em que etapa está meu pedido?" Onde você procura primeiro?',
-            opcoes: ['Caixa', 'Pedidos/Kanban', 'Orçamento', 'Peças Próprias'],
-            correta: 1,
-            feedbackCerto: 'Você aprendeu no tour que o Kanban mostra o estágio operacional do pedido.',
-            feedbackPorOpcao: ['Caixa é financeiro, não status — tente de novo.', null, 'Orçamento calcula preço, não mostra status — tente de novo.', 'Peças Próprias é estoque de produto pronto, não status de pedido — tente de novo.'],
+            "tipo": "confirmacao_pratica",
+            "competencia": "ferramentas_digitais",
+            "local": "Centro de Capacitação (aqui mesmo)",
+            "instrucao": "É a área em que você está agora. Aqui ficam as trilhas de aprendizagem, progresso e, futuramente, consultas rápidas de procedimento. Quando não lembrar um processo, o Centro de Capacitação deve ser uma das primeiras fontes de consulta."
           },
           {
-            tipo: 'multipla_escolha', competencia: 'ferramentas_digitais',
-            pergunta: 'Você precisa verificar quanto ainda falta pagar de um pedido. Onde procura?',
-            opcoes: ['Caixa', 'Orçamento', 'Peças Próprias', 'Centro de Capacitação'],
-            correta: 0,
-            feedbackCerto: 'A área financeira é a fonte adequada pra consultar pagamento e saldo dentro das permissões do Comercial.',
-            feedbackPorOpcao: [null, 'Orçamento calcula preço, não mostra o que já foi pago — tente de novo.', 'Peças Próprias não tem nada a ver com pagamento — tente de novo.', 'Centro de Capacitação é aprendizado, não controle financeiro — tente de novo.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'produtos',
-            pergunta: 'O cliente pergunta se a Valente já possui determinado modelo cadastrado. Onde começa a busca?',
-            opcoes: ['Pedidos', 'Caixa', 'Peças Próprias', 'Orçamento'],
-            correta: 2,
-            feedbackCerto: 'Essa área reúne produtos e referências já cadastrados.',
-            feedbackPorOpcao: ['Pedidos é pra pedidos já registrados, não catálogo — tente de novo.', 'Caixa é financeiro — tente de novo.', null, 'Orçamento calcula preço, não mostra o catálogo — tente de novo.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'orcamento',
-            pergunta: 'Você precisa calcular o preço de uma impressão. Qual ferramenta foi criada pra isso?',
-            opcoes: ['Orçamento', 'Caixa', 'Pedidos', 'Capacitação'],
-            correta: 0,
-            feedbackCerto: 'O Dia 4 vai ensinar a usar essa ferramenta em profundidade.',
-            feedbackPorOpcao: [null, 'Caixa não calcula preço — tente de novo.', 'Pedidos é pra registrar depois de orçado — tente de novo.', 'Capacitação é aprendizado, não a ferramenta de cálculo — tente de novo.'],
-          },
-        ],
-      },
-      {
-        dia: 2, titulo: 'Como funciona um pedido', subtitulo: 'Aprender a registrar informações mínimas, compreender o cartão do pedido e interpretar o Kanban',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Por que registrar corretamente',
-            texto: 'Um pedido é a tradução operacional do que foi combinado com o cliente. Se o registro estiver incompleto ou errado, produção, financeiro e atendimento podem trabalhar com informações diferentes. Registrar não é "encher campos" — é garantir que outra pessoa consiga entender o pedido sem depender da memória de quem atendeu.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Dados mínimos e origem da informação',
-            texto: 'Cliente vem do cadastro/identificação do comprador. Produto e quantidade vêm do que foi aprovado. Valor vem do orçamento/negociação. Pagamento vem do que foi efetivamente recebido ou da condição confirmada. Prazo deve ser o prazo confirmado, não o desejado pelo cliente quando ainda não foi validado. Observações guardam detalhes relevantes para execução.',
-          },
-          {
-            tipo: 'confirmacao_pratica', competencia: 'operacao_os', local: 'Criação/edição de pedido',
-            instrucao: 'Abra a criação/edição de pedido e percorra os campos sem salvar um pedido real. Pra cada campo, responda mentalmente: "de onde vem esta informação?" e "o que pode acontecer se eu preencher errado?".',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Entendendo o Kanban em profundidade',
-            texto: 'Negociação indica que a oportunidade ainda está sendo tratada. Pago representa a condição de pagamento/entrada conforme a regra vigente. Modelando indica desenvolvimento/modelagem. Imprimindo indica fabricação em impressora. Pós-impressão reúne operações posteriores à impressão. Pintura indica acabamento de pintura. Preparar/envio indica conferência, embalagem ou preparação para saída. Enviado indica que o pedido seguiu para o cliente. Nem todo trabalho terá exatamente a mesma necessidade em todas as etapas — o importante é interpretar o estado mostrado e não prometer algo que o sistema não confirma.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Como responder andamento',
-            texto: 'Use a sequência: CONSULTAR → INTERPRETAR → RESPONDER. Se o status não for suficiente: CONSULTAR → CONFIRMAR COM O RESPONSÁVEL → RESPONDER.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'operacao_os',
-            pergunta: 'O pedido aparece em "Imprimindo". O cliente pergunta: "Já está sendo pintado?"',
-            opcoes: ['Sim, porque já está em produção.', 'Não podemos afirmar; o sistema ainda mostra Imprimindo.', 'Sim, impressão e pintura são a mesma etapa.', 'Verificar o Caixa.'],
-            correta: 1,
-            feedbackCerto: 'Pintura é uma etapa posterior no fluxo apresentado.',
-            feedbackPorOpcao: ['O sistema ainda não mostra Pintura — não dá pra afirmar isso — tente de novo.', null, 'Impressão e pintura são etapas diferentes no fluxo — tente de novo.', 'Caixa é financeiro, não mostra etapa de produção — tente de novo.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'operacao_os', erroCriticoOpcoes: [0, 2],
-            pergunta: 'O pedido aparece em "Pintura" e o cliente pergunta se pode retirar hoje. O que fazer?',
-            opcoes: ['Confirmar retirada imediatamente.', 'Verificar se concluiu as etapas necessárias e se está liberado.', 'Mover para Enviado.', 'Dizer que não sem consultar.'],
-            correta: 1,
-            feedbackCerto: 'Estar em Pintura não significa automaticamente estar pronto pra retirada.',
-            feedbackPorOpcao: ['Confirmar sem verificar é um erro crítico — status intermediário não é liberação.', null, 'Mover manualmente o pedido pra fingir que está pronto é um erro crítico.', 'Recusar sem consultar também pode estar errado — verifique antes.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'operacao_os',
-            pergunta: 'Qual informação deve entrar no campo prazo?',
-            opcoes: ['O prazo que o cliente gostaria, mesmo sem confirmação.', 'O prazo confirmado conforme o processo da empresa.', 'Qualquer data aproximada.', 'A data em que a conversa começou.'],
-            correta: 1,
-            feedbackCerto: 'O registro operacional deve representar o que foi efetivamente confirmado.',
-            feedbackPorOpcao: ['Desejo do cliente não é prazo confirmado — tente de novo.', null, 'Uma data aproximada não é uma confirmação real — tente de novo.', 'A data do início da conversa não tem relação com o prazo de entrega — tente de novo.'],
-          },
-          {
-            tipo: 'missao', competencia: 'operacao_os',
-            titulo: 'Missão do dia',
-            objetivo: 'Praticar quais dados mínimos um pedido precisa ter e em que etapa do Kanban ele começaria.',
-            contexto: 'Pense num pedido fictício.',
-            tarefas: ['Identifique: cliente, produto, quantidade, valor, pagamento/saldo, prazo e observações.', 'Indique em qual etapa do Kanban esse pedido começaria segundo o procedimento vigente. Não grave dados reais.'],
-            criterioConclusao: 'Ter identificado os dados e a etapa inicial antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 3, titulo: 'O que a Valente vende?', subtitulo: 'Entender os tipos de demanda para saber qual ferramenta e qual caminho usar depois',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Produto existente, personalizado e projeto novo',
-            texto: 'Produto existente: já foi desenvolvido e pode possuir cadastro/referência em Peças Próprias. Produto personalizado: parte de algo existente, mas recebe alterações. Projeto sob encomenda: nasce de foto, desenho, ideia ou necessidade e ainda exige desenvolvimento/modelagem.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Quando o cliente já possui STL',
-            texto: 'STL é um arquivo 3D usado como base para impressão. Ter um STL pode eliminar a necessidade de criar o modelo do zero, mas não elimina perguntas sobre tamanho, quantidade, acabamento, material adequado ou prazo.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Resina e FDM — visão comercial',
-            texto: 'Resina costuma ser indicada quando detalhe e acabamento são prioridade. FDM costuma ser usada em peças maiores, funcionais ou quando suas características atendem melhor ao projeto. O Comercial não deve transformar isso em regra absoluta. Dúvida técnica específica deve ser confirmada com a produção.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Quantidade muda a operação',
-            texto: 'Produzir uma unidade e produzir cem unidades não são a mesma operação. Volume pode alterar capacidade, prazo, organização, custo e logística. Por isso, grandes quantidades exigem análise antes de prometer condição ou prazo.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'produtos',
-            pergunta: '"Quero esse modelo do catálogo, mas com outro nome na base." Como classificar?',
-            opcoes: ['Produto existente sem alteração', 'Produto personalizado', 'Projeto totalmente novo', 'Apenas impressão de STL'],
-            correta: 1,
-            feedbackCerto: 'Existe uma solução de base, mas haverá alteração solicitada pelo cliente.',
-            feedbackPorOpcao: ['Houve pedido de alteração — não é sem alteração — tente de novo.', null, 'Já existe uma base pronta, não é do zero — tente de novo.', 'Não foi mencionado nenhum arquivo 3D enviado — tente de novo.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'produtos',
-            pergunta: '"Tenho STL e quero 80 unidades pintadas." O que o STL resolve e o que ainda precisa ser analisado?',
-            opcoes: ['Resolve tudo.', 'Resolve a existência do arquivo 3D; ainda é preciso analisar tamanho, quantidade, acabamento, prazo e demais condições.', 'Só resolve o pagamento.', 'Significa que deve ser FDM.'],
-            correta: 1,
-            feedbackCerto: 'Arquivo pronto não elimina as variáveis comerciais e produtivas.',
-            feedbackPorOpcao: ['O STL só resolve o arquivo, não o resto — tente de novo.', null, 'STL não tem relação com pagamento — tente de novo.', 'Ter STL não define a tecnologia de impressão — tente de novo.'],
-          },
-          {
-            tipo: 'missao', competencia: 'produtos',
-            titulo: 'Missão de classificação',
-            objetivo: 'Classificar demandas e identificar o que ainda falta descobrir antes de orçar.',
-            contexto: 'Cinco demandas: peça do catálogo; peça do catálogo com personalização; STL pronto; foto sem arquivo 3D; pedido de 200 unidades.',
-            tarefas: ['Classifique cada uma das 5 demandas.', 'Pra cada uma, diga qual informação ainda precisaria obter antes de orçar.'],
-            criterioConclusao: 'Ter classificado as 5 e identificado a informação faltante de cada uma antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 4, titulo: 'Aprendendo a fazer um orçamento', subtitulo: 'Conhecer a aba Orçamento, entender os caminhos disponíveis e aprender quais informações alimentam a ferramenta',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'O que é um orçamento',
-            texto: 'Orçar é transformar informações do pedido em uma proposta usando regras e ferramentas da empresa. O preço não deve ser escolhido por sensação. Material é apenas uma parte; também podem existir mão de obra, perdas, operação, acabamento, taxas, impostos e margem.',
-          },
-          {
-            tipo: 'confirmacao_pratica', competencia: 'ferramentas_digitais', local: 'Aba Orçamento',
-            instrucao: 'Abra a aba Orçamento. Localize os caminhos "Tenho STL" e "Só tenho imagem". Observe os campos existentes em cada caminho.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Caminho: Tenho STL',
-            texto: 'Use quando o cliente fornece um arquivo 3D. A ferramenta poderá exigir informações extraídas do arquivo ou definidas no pedido, como dimensões, tecnologia, material, tempo/peso estimado, quantidade e acabamento, conforme a versão atual do sistema.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Caminho: Só tenho imagem',
-            texto: 'Use quando o cliente possui foto, desenho ou referência, mas não um modelo 3D pronto. Nessa situação pode existir uma etapa de avaliação/modelagem antes da produção. A imagem não deve ser tratada como se fosse automaticamente um STL.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'As 6 perguntas de ouro agora têm um motivo',
-            texto: 'O que deseja produzir? Tem arquivo 3D ou só imagem? Qual tamanho? Quantas unidades? Precisa de pintura/acabamento? Para quando precisa? Essas perguntas existem porque as ferramentas e a operação precisam dessas informações pra escolher o caminho, calcular e verificar viabilidade.',
-          },
-          {
-            tipo: 'missao', competencia: 'orcamento',
-            titulo: 'Exercício orientado',
-            objetivo: 'Praticar a escolha do caminho certo da calculadora.',
-            contexto: 'Caso A — STL pronto, 1 unidade. Caso B — somente fotografia. Caso C — STL pronto, 50 unidades pintadas.',
-            tarefas: ['Em cada caso, identifique o caminho da ferramenta (Tenho STL / Só tenho imagem).', 'Em cada caso, liste os dados que ainda faltam. Não grave dados reais.'],
-            criterioConclusao: 'Ter pensado nos 3 casos antes de marcar como concluída.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'orcamento',
-            pergunta: 'Cliente envia apenas uma fotografia e pede preço. Qual caminho conceitual deve ser considerado primeiro?',
-            opcoes: ['Tratar a foto como STL.', 'Caminho de imagem/referência, com avaliação/modelagem quando necessário.', 'Usar preço de produto parecido.', 'Perguntar somente forma de pagamento.'],
-            correta: 1,
-            feedbackCerto: 'A aula mostrou que foto é referência visual, não arquivo 3D pronto.',
-            feedbackPorOpcao: ['Foto não é STL — tente de novo.', null, 'Comparar com outro produto não substitui o cálculo real — tente de novo.', 'Forma de pagamento vem depois de orçar — tente de novo.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'orcamento',
-            pergunta: 'Por que não basta saber o custo do material para definir o preço?',
-            opcoes: ['Porque material nunca entra no preço.', 'Porque existem outros custos e regras que também podem compor a proposta.', 'Porque todo produto precisa ter o mesmo preço.', 'Porque o cliente escolhe o lucro.'],
-            correta: 1,
-            feedbackCerto: 'Preço não é apenas material mais uma diferença arbitrária.',
-            feedbackPorOpcao: ['Material entra sim no preço, só não é o único custo — tente de novo.', null, 'Cada produto tem seu próprio custo — não é sempre o mesmo preço — tente de novo.', 'O lucro não é escolhido pelo cliente — tente de novo.'],
-          },
-        ],
-      },
-      {
-        dia: 5, titulo: 'Agora vamos atender o cliente', subtitulo: 'Usar as ferramentas já conhecidas para receber, entender, confirmar, apresentar e conduzir uma demanda',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Atendimento não é decorar frases',
-            texto: 'Agora você já conhece o sistema, sabe o que é um pedido, reconhece tipos de demanda e conhece os caminhos do orçamento. O atendimento serve para obter e organizar as informações necessárias para usar essas ferramentas corretamente.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Fluxo do atendimento',
-            texto: 'RECEBER → ENTENDER → CONFIRMAR → APRESENTAR → CONDUZIR. Receber é acolher. Entender é descobrir a necessidade. Confirmar é repetir/organizar o que foi entendido. Apresentar é oferecer a solução ou proposta adequada. Conduzir é indicar o próximo passo.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Perguntar com propósito',
-            texto: 'Não faça um interrogatório. Use o que o cliente já disse e pergunte apenas o que falta. Se ele já informou quantidade, não pergunte novamente. Se mandou STL, não pergunte se tem arquivo 3D. A conversa deve parecer natural, mas produzir informação útil.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Quando não souber',
-            texto: 'Nunca transforme dúvida em certeza. Use: "Vou confirmar essa informação e retorno para você." Isso vale para técnica, prazo, capacidade, desconto ou regra que não esteja clara.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'atendimento', erroCriticoOpcoes: [3],
-            pergunta: 'Cliente: "Quanto custa uma miniatura personalizada?" Qual resposta inicia melhor o atendimento?',
-            opcoes: ['"R$70."', '"Claro. Você já tem alguma referência, foto ou arquivo 3D do que gostaria de fazer?"', '"Depende."', '"Me mande o pagamento primeiro."'],
-            correta: 1,
-            feedbackCerto: 'A resposta acolhe e começa a obter uma informação que define o caminho do orçamento.',
-            feedbackPorOpcao: ['Você deu um preço sem saber nada sobre o pedido — tente de novo.', null, 'Resposta vaga, não conduz a nada — tente de novo.', 'Pedir pagamento antes de qualquer levantamento é um erro crítico.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'atendimento', erroCriticoOpcoes: [2, 3],
-            pergunta: 'Cliente: "Tenho STL, quero 30 unidades de 8 cm pintadas para um evento daqui a 20 dias." Qual atitude é melhor?',
-            opcoes: ['Repetir as seis perguntas de ouro desde o começo.', 'Reconhecer o que já foi informado e investigar apenas o que ainda falta, além de verificar orçamento/capacidade.', 'Dar desconto automático pela quantidade.', 'Prometer o prazo.'],
-            correta: 1,
-            feedbackCerto: 'Bom atendimento aproveita os dados já fornecidos e evita interrogatório.',
-            feedbackPorOpcao: ['Repetir tudo que ele já disse vira interrogatório — tente de novo.', null, 'Desconto automático fora da autonomia é erro crítico.', 'Prometer prazo sem verificar capacidade é erro crítico.'],
-          },
-          {
-            tipo: 'texto_livre', competencia: 'atendimento',
-            pergunta: 'Cliente: "Vi uma peça de vocês no Instagram e queria fazer uma parecida para minha filha." Escreva sua primeira resposta.',
-            pontosEsperados: ['Acolher', 'Identificar qual peça/referência', 'Iniciar levantamento sem inventar preço ou prazo'],
-          },
-          {
-            tipo: 'missao', competencia: 'atendimento',
-            titulo: 'Missão',
-            objetivo: 'Conduzir mentalmente três atendimentos reconhecendo qual ferramenta usar depois.',
-            contexto: '1) cliente com produto do catálogo. 2) cliente com STL. 3) cliente com apenas fotos.',
-            tarefas: ['Conduza os três atendimentos simulados.', 'Em cada um, identifique qual ferramenta do Valente OS será usada depois da conversa.'],
-            criterioConclusao: 'Ter pensado nos 3 atendimentos e nas ferramentas correspondentes antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 6, titulo: 'Da negociação ao pedido', subtitulo: 'Transformar uma oportunidade aprovada em informação operacional correta, sem confundir conversa com pedido',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'O que muda quando o cliente aprova',
-            texto: 'Aprovação comercial precisa ser convertida em registro operacional. O pedido deve refletir o que foi combinado: produto, quantidade, valor, pagamento, prazo confirmado e observações relevantes.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Conferência antes do registro',
-            texto: 'Antes de concluir o pedido, compare o que está no sistema com o que foi aprovado. Uma divergência pequena pode virar erro grande na produção.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Pagamento e início do fluxo',
-            texto: 'Não invente política de entrada ou condição de pagamento. Use a regra vigente. Se houver dúvida, consulte o responsável. O status financeiro deve representar o que realmente aconteceu.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Acompanhamento depois da venda',
-            texto: 'Depois de registrado, o Comercial acompanha pelo Kanban e consulta o Caixa quando necessário. O sistema deve ser a primeira fonte antes de interromper produção ou financeiro.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'operacao_os', erroCriticoOpcoes: [0, 2],
-            pergunta: 'Cliente diz "pode fazer", mas a condição de pagamento ainda não está confirmada. O que fazer?',
-            opcoes: ['Marcar como Pago para adiantar.', 'Seguir a regra vigente e confirmar o que faltar antes de representar o pedido como pago.', 'Inventar 50% de entrada.', 'Enviar direto para impressão.'],
-            correta: 1,
-            feedbackCerto: 'O sistema deve refletir fatos e regras confirmadas.',
-            feedbackPorOpcao: ['Marcar como pago sem o pagamento é erro crítico.', null, 'Inventar um percentual é erro crítico.', 'Mandar pra produção sem confirmar pagamento foge da regra — risco operacional.'],
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'operacao_os',
-            pergunta: 'Ao registrar o pedido, você percebe que o prazo no WhatsApp era apenas um desejo do cliente e nunca foi confirmado. O que fazer?',
-            opcoes: ['Registrar como prazo fechado.', 'Confirmar viabilidade antes de registrar como compromisso.', 'Escolher uma data parecida.', 'Deixar a produção descobrir depois.'],
-            correta: 1,
-            feedbackCerto: 'Desejo do cliente não é automaticamente prazo confirmado.',
-            feedbackPorOpcao: ['Isso não foi confirmado — não registre como fechado — tente de novo.', null, 'Chutar uma data parecida é inventar informação — tente de novo.', 'Deixar a produção descobrir depois gera um problema evitável — tente de novo.'],
-          },
-          {
-            tipo: 'missao', competencia: 'operacao_os',
-            titulo: 'Missão',
-            objetivo: 'Transformar um orçamento aprovado em pedido registrado corretamente.',
-            contexto: 'Receba um orçamento fictício aprovado.',
-            tarefas: ['Monte o conjunto de informações necessárias para criar o pedido.', 'Descreva como acompanharia o trabalho até Enviado.'],
-            criterioConclusao: 'Ter montado as informações e descrito o acompanhamento antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 7, titulo: 'Colocando um produto à venda', subtitulo: 'Aprender a transformar informações confiáveis do produto em cadastro e anúncio comercial',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Antes de anunciar, a informação precisa estar certa',
-            texto: 'Um anúncio ruim não é apenas feio. Pode gerar preço errado, expectativa errada, dúvidas e retrabalho. Antes de publicar, confira a fonte das informações.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'O que um anúncio precisa responder',
-            texto: 'O que é? Para quem é? Qual tamanho? Como é feito? Quais opções existem? Quanto custa? Qual o prazo? Como comprar? Nem todo anúncio precisa ter um texto enorme, mas não deve esconder informação essencial.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Título, fotos e descrição',
-            texto: 'Título identifica o produto de forma clara. Fotos precisam representar corretamente a peça. Descrição organiza características e condições. Não invente característica apenas para deixar o anúncio mais atraente.',
-          },
-          {
-            tipo: 'confirmacao_pratica', competencia: 'produtos', local: 'Aba Peças Próprias',
-            instrucao: 'Abra Peças Próprias e use os dados cadastrados como ponto de partida. Confirme preço, tamanho, variações e demais campos relevantes antes de publicar.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'produtos', erroCriticoOpcoes: [1, 3],
-            pergunta: 'A foto está ótima, mas o preço do cadastro está diferente do material de divulgação antigo. O que fazer?',
-            opcoes: ['Usar o menor preço.', 'Publicar e corrigir depois.', 'Confirmar qual informação está vigente antes de publicar.', 'Tirar o preço e inventar no atendimento.'],
-            correta: 2,
-            feedbackCerto: 'Quando duas fontes divergem, o Comercial precisa confirmar a informação vigente.',
-            feedbackPorOpcao: ['Escolher o menor preço "no chute" é inventar informação — tente de novo.', 'Publicar errado e corrigir depois é erro crítico — informação errada pode já ter alcançado o cliente.', null, 'Inventar preço no atendimento é erro crítico.'],
-          },
-          {
-            tipo: 'texto_livre', competencia: 'produtos',
-            pergunta: 'Com os dados: miniatura personalizada de pet, resina, 10 cm, pintura manual, prazo 20 dias, preço R$85 — escreva um título e uma descrição curta.',
-            pontosEsperados: ['Usa somente informações fornecidas', 'Identifica produto, tamanho/personalização e condições relevantes', 'Não inventa benefícios não informados'],
-          },
-          {
-            tipo: 'missao', competencia: 'produtos',
-            titulo: 'Missão',
-            objetivo: 'Montar e revisar criticamente um anúncio de treinamento.',
-            contexto: 'Use os dados da etapa anterior ou um produto fictício similar.',
-            tarefas: ['Monte um anúncio de treinamento.', 'Revise procurando 5 tipos de erro: informação faltando, preço divergente, prazo ausente, foto inadequada e promessa não confirmada.'],
-            criterioConclusao: 'Ter montado e revisado o anúncio procurando os 5 tipos de erro antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 8, titulo: 'Marketplaces e redes sociais', subtitulo: 'Entender como o canal de venda muda preço, comunicação e condução do cliente',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Venda direta e marketplace não são iguais',
-            texto: 'Shopee, Mercado Livre e outros canais podem possuir taxas, comissões e custos próprios. Por isso, copiar o preço da venda direta pode reduzir o resultado da Valente.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'O que o Comercial precisa entender',
-            texto: 'Preço anunciado → custos/taxas do canal → líquido recebido → custo do produto → resultado/margem. Não é necessário decorar taxas. É necessário usar parâmetros atualizados da ferramenta ou consultar o responsável.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Calculadora de marketplace',
-            texto: '⚠️ Quando o recurso estiver disponível no Valente OS, a ferramenta deve mostrar os modos reais: preservar determinado resultado, ou testar um preço de anúncio e visualizar o que sobra. Enquanto não estiver disponível, a regra é CONSULTAR RESPONSÁVEL e não inventar percentual.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'marketplace', erroCriticoOpcoes: [0, 3],
-            pergunta: 'Preço direto é R$70. Você pode copiar automaticamente R$70 para qualquer marketplace?',
-            opcoes: ['Sim.', 'Não; é preciso considerar os custos atuais do canal.', 'Sim, se a peça for pequena.', 'Não, mas basta acrescentar 10%.'],
-            correta: 1,
-            feedbackCerto: 'Nem copiar o preço nem inventar um percentual substitui a ferramenta.',
-            feedbackPorOpcao: ['Copiar o preço direto ignora as taxas do canal — erro crítico.', null, 'Tamanho do produto não muda o fato de que o canal cobra taxas — tente de novo.', 'Inventar um percentual fixo (10%) também é chute — erro crítico.'],
-          },
-          {
-            tipo: 'conteudo', titulo: 'Redes sociais como entrada comercial',
-            texto: 'Nas redes, nem toda interação é venda. O Comercial precisa reconhecer intenção. Um elogio é engajamento; "vocês fazem personalizado?" é oportunidade; "qual prazo para 30?" é uma oportunidade ainda mais qualificada.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Conteúdo e próximo passo',
-            texto: 'Produto mostra o que vendemos. Processo mostra fabricação/acabamento. Prova mostra resultado ou entrega. A chamada para ação indica o próximo passo: WhatsApp, orçamento ou consulta.',
-          },
-          {
-            tipo: 'multipla_escolha', competencia: 'redes_sociais',
-            pergunta: 'Qual interação merece prioridade comercial?',
-            opcoes: ['❤️', '"Muito bonito!"', '"Vocês fazem 30 unidades com a logo da minha empresa?"', '🔥'],
-            correta: 2,
-            feedbackCerto: 'A pessoa apresentou necessidade, quantidade e personalização: há intenção comercial clara.',
-            feedbackPorOpcao: ['Reação é só sinal de atenção — tente de novo.', 'Elogio não revela necessidade específica — tente de novo.', null, 'Reação não revela necessidade nenhuma — tente de novo.'],
-          },
-          {
-            tipo: 'missao', competencia: 'redes_sociais',
-            titulo: 'Missão',
-            objetivo: 'Praticar os formatos de conteúdo comercial e reconhecer quando uma interação vira atendimento.',
-            contexto: 'Produto fictício.',
-            tarefas: ['Prepare uma publicação, um Story, uma resposta de Direct e uma chamada para WhatsApp.', 'Identifique qual interação deve virar atendimento.'],
-            criterioConclusao: 'Ter preparado os itens e identificado a interação antes de marcar como concluída.',
-          },
-        ],
-      },
-      {
-        dia: 9, titulo: 'Negociação, follow-up e prospecção', subtitulo: 'Aprender a investigar objeções, respeitar limites de autonomia e continuar oportunidades',
-        etapas: [
-          {
-            tipo: 'conteudo', titulo: 'Negociar não é dar desconto',
-            texto: 'Quando o cliente diz "está caro", ele pode estar comparando tamanho, acabamento, prazo, personalização, forma de pagamento ou simplesmente não ter entendido o valor da proposta. Primeiro investigue.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Comparar propostas corretamente',
-            texto: 'Preço só é comparável quando o escopo também é. Pergunte o que está incluído na outra proposta antes de atacar concorrente ou alterar preço.',
-          },
-          {
-            tipo: 'conteudo', titulo: 'Autonomia',
-            texto: 'PODE: consultar produto, enviar fotos, coletar informações, acompanhar pedido e orçar dentro das regras. CONSULTAR: prazo fora do normal, grandes quantidades, produto diferente, desconto ou condição especial. NÃO PODE: inventar preço/prazo, prometer capacidade sem verificar, conceder desconto fora da autorização ou alterar financeiro por suposição.',
-          },
-          {
-            tipo: 'resposta_cliente', competencia: 'negociacao',
-            cliente: 'O concorrente faz mais barato.',
-            opcoes: [
-              { label: '"O material dele é pior."', correta: false, feedback: 'Evite atacar o concorrente — isso não fortalece sua proposta e pode nem ser verdade.' },
-              { label: '"Então já baixo meu preço."', correta: false, erroCritico: true, feedback: 'Dar desconto automático pra "competir" sem avaliar está fora da autonomia padrão.' },
-              { label: '"Entendo. O que está incluído na proposta dele para compararmos corretamente?"', correta: true, feedback: 'A resposta investiga a objeção sem atacar concorrente nem dar desconto automático.' },
-              { label: '"Compre com ele."', correta: false, feedback: 'Essa resposta fecha a porta pra uma venda que ainda pode acontecer.' },
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "pergunta": "Um cliente pergunta: \"Em que etapa está meu pedido?\" Onde você procura primeiro?",
+            "opcoes": [
+              "Caixa",
+              "Pedidos/Kanban",
+              "Orçamento",
+              "Peças Próprias"
             ],
+            "correta": 1,
+            "feedbackCerto": "Você aprendeu no tour que o Kanban mostra o estágio operacional do pedido.",
+            "feedbackPorOpcao": [
+              "Caixa é financeiro, não status — tente de novo.",
+              null,
+              "Orçamento calcula preço, não mostra status — tente de novo.",
+              "Peças Próprias é estoque de produto pronto, não status de pedido — tente de novo."
+            ]
           },
           {
-            tipo: 'conteudo', titulo: 'Follow-up',
-            texto: 'Orçamento enviado não é atendimento encerrado. Acompanhe de forma profissional: orçamento → acompanhamento → retorno → fechamento ou perda. O objetivo do follow-up é facilitar a decisão, não pressionar.',
+            "tipo": "multipla_escolha",
+            "competencia": "ferramentas_digitais",
+            "pergunta": "Você precisa verificar quanto ainda falta pagar de um pedido. Onde procura?",
+            "opcoes": [
+              "Caixa",
+              "Orçamento",
+              "Peças Próprias",
+              "Centro de Capacitação"
+            ],
+            "correta": 0,
+            "feedbackCerto": "A área financeira é a fonte adequada pra consultar pagamento e saldo dentro das permissões do Comercial.",
+            "feedbackPorOpcao": [
+              null,
+              "Orçamento calcula preço, não mostra o que já foi pago — tente de novo.",
+              "Peças Próprias não tem nada a ver com pagamento — tente de novo.",
+              "Centro de Capacitação é aprendizado, não controle financeiro — tente de novo."
+            ]
           },
           {
-            tipo: 'texto_livre', competencia: 'negociacao',
-            pergunta: 'O cliente recebeu orçamento há 3 dias e não respondeu. Escreva um follow-up curto.',
-            pontosEsperados: ['Lembra o orçamento', 'Oferece ajuda', 'Evita pressão ou urgência inventada'],
+            "tipo": "multipla_escolha",
+            "competencia": "produtos",
+            "pergunta": "O cliente pergunta se a Valente já possui determinado modelo cadastrado. Onde começa a busca?",
+            "opcoes": [
+              "Pedidos",
+              "Caixa",
+              "Peças Próprias",
+              "Orçamento"
+            ],
+            "correta": 2,
+            "feedbackCerto": "Essa área reúne produtos e referências já cadastrados.",
+            "feedbackPorOpcao": [
+              "Pedidos é pra pedidos já registrados, não catálogo — tente de novo.",
+              "Caixa é financeiro — tente de novo.",
+              null,
+              "Orçamento calcula preço, não mostra o catálogo — tente de novo."
+            ]
           },
           {
-            tipo: 'conteudo', titulo: 'Prospecção',
-            texto: 'O Comercial também busca oportunidades. Escolas, unidades militares, empresas, restaurantes, eventos, clubes, lojas e instituições podem ter demandas compatíveis. A abordagem deve ter motivo e relevância para aquele contato.',
-          },
-          {
-            tipo: 'texto_livre', competencia: 'prospeccao',
-            pergunta: 'Escolha um desses públicos e escreva uma abordagem inicial.',
-            pontosEsperados: ['Apresentação curta', 'Motivo do contato', 'Relevância/benefício', 'Convite pra conversar'],
-          },
-          {
-            tipo: 'missao', competencia: 'prospeccao',
-            titulo: 'Missão',
-            objetivo: 'Analisar contatos fictícios, escolher os de maior potencial e praticar negociação sem desconto automático.',
-            contexto: 'Cinco contatos fictícios.',
-            tarefas: ['Analise os 5 e escolha dois com maior potencial; prepare abordagem pra eles.', 'Pra um deles, simule uma objeção de preço e conduza sem desconto automático.'],
-            criterioConclusao: 'Ter escolhido os 2 contatos, preparado a abordagem e simulado a objeção antes de marcar como concluída.',
-          },
-        ],
+            "tipo": "multipla_escolha",
+            "competencia": "orcamento",
+            "pergunta": "Você precisa calcular o preço de uma impressão. Qual ferramenta foi criada pra isso?",
+            "opcoes": [
+              "Orçamento",
+              "Caixa",
+              "Pedidos",
+              "Capacitação"
+            ],
+            "correta": 0,
+            "feedbackCerto": "O Dia 4 vai ensinar a usar essa ferramenta em profundidade.",
+            "feedbackPorOpcao": [
+              null,
+              "Caixa não calcula preço — tente de novo.",
+              "Pedidos é pra registrar depois de orçado — tente de novo.",
+              "Capacitação é aprendizado, não a ferramenta de cálculo — tente de novo."
+            ]
+          }
+        ]
       },
       {
-        dia: 10, titulo: 'Missão Comercial Valente', subtitulo: 'Demonstrar que consegue usar as ferramentas e conhecimentos da trilha em uma situação integrada',
-        etapas: [
+        "dia": 2,
+        "titulo": "Como funciona um pedido",
+        "subtitulo": "Aprender a registrar informações mínimas, compreender o cartão do pedido e interpretar o Kanban",
+        "etapas": [
           {
-            tipo: 'conteudo', titulo: 'Como funciona',
-            texto: 'Este dia não apresenta conteúdo novo importante. Ele verifica se você consegue combinar: consulta ao sistema, classificação da demanda, levantamento de dados, orçamento, negociação, registro e acompanhamento.',
+            "tipo": "conteudo",
+            "titulo": "Por que registrar corretamente",
+            "texto": "Um pedido é a tradução operacional do que foi combinado com o cliente. Se o registro estiver incompleto ou errado, produção, financeiro e atendimento podem trabalhar com informações diferentes. Registrar não é \"encher campos\" — é garantir que outra pessoa consiga entender o pedido sem depender da memória de quem atendeu."
           },
           {
-            tipo: 'cenario', competencia: 'atendimento', titulo: 'Atendimento integrado',
-            noInicial: 'a',
-            nos: {
-              a: {
-                cliente: 'Olá. Vi vocês no Instagram. Minha empresa fará um evento e precisamos de miniaturas personalizadas. Vocês fazem?',
-                opcoes: [
-                  { label: '"R$70 cada."', correta: false, erroCritico: true, feedback: 'Você informou preço sem saber nada sobre o pedido — isso é um erro crítico.', proximo: 'b' },
-                  { label: '"Fazemos trabalhos personalizados. Me conta um pouco mais: o que vocês imaginam e quantas unidades precisam?"', correta: true, feedback: 'Usa o método de atendimento aprendido no Dia 5.', proximo: 'b' },
-                  { label: '"Mande o pagamento."', correta: false, erroCritico: true, feedback: 'Pedir pagamento antes de levantar qualquer informação é um erro crítico.', proximo: 'b' },
-                  { label: '"Só com STL."', correta: false, feedback: 'Recusar de cara sem perguntar fecha uma oportunidade real.', proximo: 'b' },
-                ],
-              },
-              b: {
-                cliente: 'Seriam 100 miniaturas da nossa equipe. Tenho apenas algumas fotos. Pensamos em 10 cm, pintadas. O evento é daqui a 12 dias.',
-                opcoes: [
-                  { label: '"Já temos tudo e podemos prometer."', correta: false, erroCritico: true, feedback: 'Prometer sem orçamento nem verificação de capacidade é um erro crítico.', proximo: 'c' },
-                  { label: '"É projeto a partir de referência, com possível modelagem; quantidade, acabamento e prazo exigem orçamento e verificação de capacidade."', correta: true, feedback: 'A resposta combina os Dias 3 e 4.', proximo: 'c' },
-                  { label: '"Foto é equivalente a STL."', correta: false, erroCritico: true, feedback: 'Foto não é arquivo 3D — essa afirmação é tecnicamente incorreta.', proximo: 'c' },
-                  { label: '"Basta multiplicar um preço unitário por 100."', correta: false, erroCritico: true, feedback: 'Produção em escala muda custo por peça — multiplicar direto é um erro crítico.', proximo: 'c' },
-                ],
-              },
-              c: {
-                cliente: 'Se eu fizer 300, consegue melhorar o preço?',
-                opcoes: [
-                  { label: '"Sim, 20%."', correta: false, erroCritico: true, feedback: 'Prometer um percentual específico de desconto sem consultar é um erro crítico.', proximo: 'd' },
-                  { label: '"Volume maior pode mudar a condição, mas preciso recalcular/consultar antes de confirmar."', correta: true, feedback: 'Não promete desconto fora da autonomia.', proximo: 'd' },
-                  { label: '"O preço nunca muda."', correta: false, feedback: 'Essa afirmação fecha uma negociação que talvez pudesse avançar.', proximo: 'd' },
-                  { label: '"Faço metade."', correta: false, erroCritico: true, feedback: 'Prometer 50% de desconto sem qualquer análise é um erro crítico grave.', proximo: 'd' },
-                ],
-              },
-              d: {
-                cliente: 'Mas preciso em 5 dias.',
-                opcoes: [
-                  { label: '"Tranquilo."', correta: false, erroCritico: true, feedback: 'Prometer prazo sem checar capacidade é um erro crítico.', proximo: 'e' },
-                  { label: '"Vou verificar a capacidade de produção antes de confirmar se esse prazo é viável."', correta: true, feedback: 'Prazo precisa de confirmação operacional.', proximo: 'e' },
-                  { label: '"Impossível."', correta: false, feedback: 'Recusar sem verificar a capacidade pode perder uma venda viável.', proximo: 'e' },
-                  { label: '"Se pagar hoje eu garanto."', correta: false, erroCritico: true, feedback: 'Condicionar uma garantia de prazo ao pagamento, sem checar capacidade, é um erro crítico.', proximo: 'e' },
-                ],
-              },
-              e: {
-                cliente: 'Posso pagar metade agora?',
-                opcoes: [
-                  { label: '"Sim, sempre 50%."', correta: false, erroCritico: true, feedback: 'Afirmar uma política fixa sem confirmar é um erro crítico — essa condição precisa ser consultada.' },
-                  { label: '"Pode pagar 30%."', correta: false, erroCritico: true, feedback: 'Afirmar um percentual específico sem confirmar a política vigente é um erro crítico.' },
-                  { label: '"Vou confirmar a condição aplicável ao pedido e te explico entrada e saldo corretamente."', correta: true, feedback: 'Não inventa política comercial.' },
-                  { label: '"Só pagamento total."', correta: false, feedback: 'Essa afirmação pode nem ser verdadeira e fecha uma forma de pagamento sem necessidade.' },
-                ],
-              },
-            },
+            "tipo": "conteudo",
+            "titulo": "Dados mínimos e origem da informação",
+            "texto": "Cliente vem do cadastro/identificação do comprador. Produto e quantidade vêm do que foi aprovado. Valor vem do orçamento/negociação. Pagamento vem do que foi efetivamente recebido ou da condição confirmada. Prazo deve ser o prazo confirmado, não o desejado pelo cliente quando ainda não foi validado. Observações guardam detalhes relevantes para execução."
           },
           {
-            tipo: 'texto_livre', competencia: 'atendimento',
-            pergunta: 'Monte o briefing final do atendimento. Organize: cliente, tipo de projeto, referência disponível, tamanho, quantidade, acabamento, prazo solicitado, necessidade de modelagem, condição de pagamento a confirmar, orçamento a realizar e próximo passo.',
-            pontosEsperados: ['Organiza todos os itens com base no que foi revelado na conversa', 'Não inventa preço, prazo ou condição ainda não confirmados', 'Indica claramente o próximo passo'],
+            "tipo": "confirmacao_pratica",
+            "competencia": "operacao_os",
+            "local": "Criação/edição de pedido",
+            "instrucao": "Abra a criação/edição de pedido e percorra os campos sem salvar um pedido real. Pra cada campo, responda mentalmente: \"de onde vem esta informação?\" e \"o que pode acontecer se eu preencher errado?\"."
           },
           {
-            tipo: 'missao', competencia: 'operacao_os',
-            titulo: 'Missão operacional',
-            objetivo: 'Associar cada ação à ferramenta correta do Valente OS e explicar o próximo passo ao cliente.',
-            contexto: 'Ações: consultar produto existente; formar orçamento; registrar pedido; consultar pagamento; acompanhar produção.',
-            tarefas: ['Indique em qual ferramenta faria cada uma dessas ações.', 'Descreva como explicaria ao cliente o próximo passo.'],
-            criterioConclusao: 'Ter associado as ações às ferramentas e descrito o próximo passo antes de marcar como concluída.',
+            "tipo": "conteudo",
+            "titulo": "Entendendo o Kanban em profundidade",
+            "texto": "Negociação indica que a oportunidade ainda está sendo tratada. Pago representa a condição de pagamento/entrada conforme a regra vigente. Modelando indica desenvolvimento/modelagem. Imprimindo indica fabricação em impressora. Pós-impressão reúne operações posteriores à impressão. Pintura indica acabamento de pintura. Preparar/envio indica conferência, embalagem ou preparação para saída. Enviado indica que o pedido seguiu para o cliente. Nem todo trabalho terá exatamente a mesma necessidade em todas as etapas — o importante é interpretar o estado mostrado e não prometer algo que o sistema não confirma. Cada cartão mostra a etapa atual da produção e a tela atualiza sozinha a cada 60 segundos."
           },
           {
-            tipo: 'multipla_escolha', competencia: 'operacao_os',
-            pergunta: 'Associe as ações às ferramentas.',
-            opcoes: ['Produto existente → Peças Próprias; preço → Orçamento; pedido/status → Pedidos; pagamento → Caixa.', 'Tudo → Caixa.', 'Tudo → Pedidos.', 'Produto → Orçamento; pagamento → Peças Próprias.'],
-            correta: 0,
-            feedbackCerto: 'A missão fecha o ciclo iniciado no tour do Dia 1.',
-            feedbackPorOpcao: [null, 'Cada ferramenta tem um propósito diferente — não é tudo a mesma — tente de novo.', 'Cada ferramenta tem um propósito diferente — não é tudo a mesma — tente de novo.', 'Essas associações estão trocadas — revise o tour do Dia 1.'],
+            "tipo": "conteudo",
+            "titulo": "Aguardando liberação e o botão Liberar",
+            "texto": "Pedido novo fica como \"Aguardando liberação\". No cartão do Kanban aparece o botão \"Liberar\": ao clicar, o sistema gera a ordem de produção, o plano e as tarefas das pessoas da produção. Se ainda não há pagamento nem empenho registrado, o botão avisa a pendência em vez de liberar. Pedido de instituição com empenho pendente também não pode ser movido para uma etapa de produção: o empenho precisa estar registrado primeiro. Liberar é o que faz o pedido sair do papel e entrar na fila da produção."
           },
           {
-            tipo: 'conteudo', titulo: 'Parabéns!',
-            texto: 'Você concluiu a Formação Comercial Valente. A classificação final considera suas competências e os erros críticos ao longo dos 10 dias — não é só uma contagem de respostas certas.',
+            "tipo": "verdadeiro_falso",
+            "competencia": "operacao_os",
+            "afirmacao": "Um pedido novo, sem pagamento nem empenho registrado, pode ser liberado normalmente: o botão Liberar gera as tarefas mesmo assim.",
+            "correta": false,
+            "feedbackCerto": "Isso mesmo: o botão avisa a pendência de pagamento ou empenho antes de liberar.",
+            "feedbackErrado": "O botão Liberar avisa a pendência quando não há pagamento nem empenho. Não force a liberação: resolva a pendência primeiro."
           },
-        ],
+          {
+            "tipo": "conteudo",
+            "titulo": "Como responder andamento",
+            "texto": "Use a sequência: CONSULTAR → INTERPRETAR → RESPONDER. Se o status não for suficiente: CONSULTAR → CONFIRMAR COM O RESPONSÁVEL → RESPONDER."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "pergunta": "O pedido aparece em \"Imprimindo\". O cliente pergunta: \"Já está sendo pintado?\"",
+            "opcoes": [
+              "Sim, porque já está em produção.",
+              "Não podemos afirmar; o sistema ainda mostra Imprimindo.",
+              "Sim, impressão e pintura são a mesma etapa.",
+              "Verificar o Caixa."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Pintura é uma etapa posterior no fluxo apresentado.",
+            "feedbackPorOpcao": [
+              "O sistema ainda não mostra Pintura — não dá pra afirmar isso — tente de novo.",
+              null,
+              "Impressão e pintura são etapas diferentes no fluxo — tente de novo.",
+              "Caixa é financeiro, não mostra etapa de produção — tente de novo."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "erroCriticoOpcoes": [
+              0,
+              2
+            ],
+            "pergunta": "O pedido aparece em \"Pintura\" e o cliente pergunta se pode retirar hoje. O que fazer?",
+            "opcoes": [
+              "Confirmar retirada imediatamente.",
+              "Verificar se concluiu as etapas necessárias e se está liberado.",
+              "Mover para Enviado.",
+              "Dizer que não sem consultar."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Estar em Pintura não significa automaticamente estar pronto pra retirada.",
+            "feedbackPorOpcao": [
+              "Confirmar sem verificar é um erro crítico — status intermediário não é liberação.",
+              null,
+              "Mover manualmente o pedido pra fingir que está pronto é um erro crítico.",
+              "Recusar sem consultar também pode estar errado — verifique antes."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "pergunta": "Qual informação deve entrar no campo prazo?",
+            "opcoes": [
+              "O prazo que o cliente gostaria, mesmo sem confirmação.",
+              "O prazo confirmado conforme o processo da empresa.",
+              "Qualquer data aproximada.",
+              "A data em que a conversa começou."
+            ],
+            "correta": 1,
+            "feedbackCerto": "O registro operacional deve representar o que foi efetivamente confirmado.",
+            "feedbackPorOpcao": [
+              "Desejo do cliente não é prazo confirmado — tente de novo.",
+              null,
+              "Uma data aproximada não é uma confirmação real — tente de novo.",
+              "A data do início da conversa não tem relação com o prazo de entrega — tente de novo."
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "operacao_os",
+            "titulo": "Missão do dia",
+            "objetivo": "Praticar quais dados mínimos um pedido precisa ter e em que etapa do Kanban ele começaria.",
+            "contexto": "Pense num pedido fictício.",
+            "tarefas": [
+              "Identifique: cliente, produto, quantidade, valor, pagamento/saldo, prazo e observações.",
+              "Indique em qual etapa do Kanban esse pedido começaria segundo o procedimento vigente. Não grave dados reais."
+            ],
+            "criterioConclusao": "Ter identificado os dados e a etapa inicial antes de marcar como concluída."
+          }
+        ]
       },
-    ],
+      {
+        "dia": 3,
+        "titulo": "O que a Valente vende?",
+        "subtitulo": "Entender os tipos de demanda para saber qual ferramenta e qual caminho usar depois",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Produto existente, personalizado e projeto novo",
+            "texto": "Produto existente: já foi desenvolvido e pode possuir cadastro/referência em Peças Próprias. Produto personalizado: parte de algo existente, mas recebe alterações. Projeto sob encomenda: nasce de foto, desenho, ideia ou necessidade e ainda exige desenvolvimento/modelagem."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Quando o cliente já possui STL",
+            "texto": "STL é um arquivo 3D usado como base para impressão. Ter um STL pode eliminar a necessidade de criar o modelo do zero, mas não elimina perguntas sobre tamanho, quantidade, acabamento, material adequado ou prazo."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Resina e FDM — visão comercial",
+            "texto": "Resina costuma ser indicada quando detalhe e acabamento são prioridade. FDM costuma ser usada em peças maiores, funcionais ou quando suas características atendem melhor ao projeto. O Comercial não deve transformar isso em regra absoluta. Dúvida técnica específica deve ser confirmada com a produção."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Quantidade muda a operação",
+            "texto": "Produzir uma unidade e produzir cem unidades não são a mesma operação. Volume pode alterar capacidade, prazo, organização, custo e logística. Por isso, grandes quantidades exigem análise antes de prometer condição ou prazo."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "produtos",
+            "pergunta": "\"Quero esse modelo do catálogo, mas com outro nome na base.\" Como classificar?",
+            "opcoes": [
+              "Produto existente sem alteração",
+              "Produto personalizado",
+              "Projeto totalmente novo",
+              "Apenas impressão de STL"
+            ],
+            "correta": 1,
+            "feedbackCerto": "Existe uma solução de base, mas haverá alteração solicitada pelo cliente.",
+            "feedbackPorOpcao": [
+              "Houve pedido de alteração — não é sem alteração — tente de novo.",
+              null,
+              "Já existe uma base pronta, não é do zero — tente de novo.",
+              "Não foi mencionado nenhum arquivo 3D enviado — tente de novo."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "produtos",
+            "pergunta": "\"Tenho STL e quero 80 unidades pintadas.\" O que o STL resolve e o que ainda precisa ser analisado?",
+            "opcoes": [
+              "Resolve tudo.",
+              "Resolve a existência do arquivo 3D; ainda é preciso analisar tamanho, quantidade, acabamento, prazo e demais condições.",
+              "Só resolve o pagamento.",
+              "Significa que deve ser FDM."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Arquivo pronto não elimina as variáveis comerciais e produtivas.",
+            "feedbackPorOpcao": [
+              "O STL só resolve o arquivo, não o resto — tente de novo.",
+              null,
+              "STL não tem relação com pagamento — tente de novo.",
+              "Ter STL não define a tecnologia de impressão — tente de novo."
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "produtos",
+            "titulo": "Missão de classificação",
+            "objetivo": "Classificar demandas e identificar o que ainda falta descobrir antes de orçar.",
+            "contexto": "Cinco demandas: peça do catálogo; peça do catálogo com personalização; STL pronto; foto sem arquivo 3D; pedido de 200 unidades.",
+            "tarefas": [
+              "Classifique cada uma das 5 demandas.",
+              "Pra cada uma, diga qual informação ainda precisaria obter antes de orçar."
+            ],
+            "criterioConclusao": "Ter classificado as 5 e identificado a informação faltante de cada uma antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 4,
+        "titulo": "Aprendendo a fazer um orçamento",
+        "subtitulo": "Conhecer a aba Orçamento, entender os caminhos disponíveis e aprender quais informações alimentam a ferramenta",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "O que é um orçamento",
+            "texto": "Orçar é transformar informações do pedido em uma proposta usando regras e ferramentas da empresa. O preço não deve ser escolhido por sensação. Material é apenas uma parte; também podem existir mão de obra, perdas, operação, acabamento, taxas, impostos e margem."
+          },
+          {
+            "tipo": "confirmacao_pratica",
+            "competencia": "ferramentas_digitais",
+            "local": "Aba Orçamento",
+            "instrucao": "Abra a aba Orçamento. Localize os caminhos \"Tenho STL\" e \"Só tenho imagem\". Observe os campos existentes em cada caminho."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Caminho: Tenho STL",
+            "texto": "Use quando o cliente fornece um arquivo 3D. A ferramenta poderá exigir informações extraídas do arquivo ou definidas no pedido, como dimensões, tecnologia, material, tempo/peso estimado, quantidade e acabamento, conforme a versão atual do sistema."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Caminho: Só tenho imagem",
+            "texto": "Use quando o cliente possui foto, desenho ou referência, mas não um modelo 3D pronto. Nessa situação pode existir uma etapa de avaliação/modelagem antes da produção. A imagem não deve ser tratada como se fosse automaticamente um STL."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "As 6 perguntas de ouro agora têm um motivo",
+            "texto": "O que deseja produzir? Tem arquivo 3D ou só imagem? Qual tamanho? Quantas unidades? Precisa de pintura/acabamento? Para quando precisa? Essas perguntas existem porque as ferramentas e a operação precisam dessas informações pra escolher o caminho, calcular e verificar viabilidade."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Orçamento calcula, Proposta apresenta",
+            "texto": "A aba Orçamento é a calculadora de custo. O documento que o cliente recebe é montado na aba Propostas: um cartão com a logo azul do Estúdio Valente Artes, os itens, a validade (padrão de 10 dias), o prazo de entrega (padrão de 30 dias), as condições de pagamento e os dados do estúdio no rodapé. Para instituição, a condição de pagamento pode ser empenho. Para enviar, use os botões Copiar como imagem, Copiar como texto, Baixar imagem, Baixar PDF ou Abrir WhatsApp. Se o prazo ou a validade padrão não servir ao caso, confirme com o responsável antes de alterar."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Propostas salvas, revisões e aprovação",
+            "texto": "Todas as propostas ficam salvas, com busca e filtro por status: rascunho, enviada, aprovada e recusada. Ao alterar uma proposta, a versão anterior é guardada nas revisões, então você sempre sabe o que foi enviado antes. Para cliente recorrente, o editor mostra o histórico de pedidos e propostas anteriores, que você pode reaproveitar. Quando o cliente aceita, o botão Aprovar na proposta cria o pedido em Negociação e a tarefa de contato para fechar a venda."
+          },
+          {
+            "tipo": "selecionar_itens",
+            "competencia": "orcamento",
+            "pergunta": "Quais destas informações fazem parte do que o sistema guarda ou faz com as propostas?",
+            "itens": [
+              "A versão anterior fica guardada quando a proposta é alterada",
+              "Aprovar a proposta cria o pedido em Negociação",
+              "Proposta enviada some da lista",
+              "Cliente recorrente mostra histórico de pedidos e propostas anteriores"
+            ],
+            "corretos": [
+              0,
+              1,
+              3
+            ],
+            "feedbackCerto": "Isso mesmo: revisões guardadas, pedido criado ao aprovar e histórico do cliente recorrente.",
+            "feedbackErrado": "Todas as propostas ficam salvas na lista, com filtro por status; só a opção que diz que a proposta enviada some está errada."
+          },
+          {
+            "tipo": "missao",
+            "competencia": "orcamento",
+            "titulo": "Exercício orientado",
+            "objetivo": "Praticar a escolha do caminho certo da calculadora.",
+            "contexto": "Caso A — STL pronto, 1 unidade. Caso B — somente fotografia. Caso C — STL pronto, 50 unidades pintadas.",
+            "tarefas": [
+              "Em cada caso, identifique o caminho da ferramenta (Tenho STL / Só tenho imagem).",
+              "Em cada caso, liste os dados que ainda faltam. Não grave dados reais."
+            ],
+            "criterioConclusao": "Ter pensado nos 3 casos antes de marcar como concluída."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "orcamento",
+            "pergunta": "Cliente envia apenas uma fotografia e pede preço. Qual caminho conceitual deve ser considerado primeiro?",
+            "opcoes": [
+              "Tratar a foto como STL.",
+              "Caminho de imagem/referência, com avaliação/modelagem quando necessário.",
+              "Usar preço de produto parecido.",
+              "Perguntar somente forma de pagamento."
+            ],
+            "correta": 1,
+            "feedbackCerto": "A aula mostrou que foto é referência visual, não arquivo 3D pronto.",
+            "feedbackPorOpcao": [
+              "Foto não é STL — tente de novo.",
+              null,
+              "Comparar com outro produto não substitui o cálculo real — tente de novo.",
+              "Forma de pagamento vem depois de orçar — tente de novo."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "orcamento",
+            "pergunta": "Por que não basta saber o custo do material para definir o preço?",
+            "opcoes": [
+              "Porque material nunca entra no preço.",
+              "Porque existem outros custos e regras que também podem compor a proposta.",
+              "Porque todo produto precisa ter o mesmo preço.",
+              "Porque o cliente escolhe o lucro."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Preço não é apenas material mais uma diferença arbitrária.",
+            "feedbackPorOpcao": [
+              "Material entra sim no preço, só não é o único custo — tente de novo.",
+              null,
+              "Cada produto tem seu próprio custo — não é sempre o mesmo preço — tente de novo.",
+              "O lucro não é escolhido pelo cliente — tente de novo."
+            ]
+          }
+        ]
+      },
+      {
+        "dia": 5,
+        "titulo": "Agora vamos atender o cliente",
+        "subtitulo": "Usar as ferramentas já conhecidas para receber, entender, confirmar, apresentar e conduzir uma demanda",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Atendimento não é decorar frases",
+            "texto": "Agora você já conhece o sistema, sabe o que é um pedido, reconhece tipos de demanda e conhece os caminhos do orçamento. O atendimento serve para obter e organizar as informações necessárias para usar essas ferramentas corretamente."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Fluxo do atendimento",
+            "texto": "RECEBER → ENTENDER → CONFIRMAR → APRESENTAR → CONDUZIR. Receber é acolher. Entender é descobrir a necessidade. Confirmar é repetir/organizar o que foi entendido. Apresentar é oferecer a solução ou proposta adequada. Conduzir é indicar o próximo passo."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Perguntar com propósito",
+            "texto": "Não faça um interrogatório. Use o que o cliente já disse e pergunte apenas o que falta. Se ele já informou quantidade, não pergunte novamente. Se mandou STL, não pergunte se tem arquivo 3D. A conversa deve parecer natural, mas produzir informação útil."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Quando não souber",
+            "texto": "Nunca transforme dúvida em certeza. Use: \"Vou confirmar essa informação e retorno para você.\" Isso vale para técnica, prazo, capacidade, desconto ou regra que não esteja clara."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Aprovar arte e aprovar orçamento",
+            "texto": "Depois do atendimento, o sistema cria tarefas para você. Em Aprovar arte, há um quadro com as imagens carregadas (a arte do mascote ou da peça) e o botão Copiar imagem, para colar no WhatsApp junto da mensagem pronta \"Olá! Segue a arte da sua peça para aprovação...\". Respostas possíveis: Aprovou (libera a impressão; dá para anexar o print da aprovação), Pediu ajustes (você descreve; o sistema cria uma tarefa de Modelagem de ajuste e conta a rodada) ou Ainda não respondeu (nova cobrança). Em Aprovar orçamento: Aprovou, Pediu ajuste de valor ou quantidade, Recusou (com motivo) ou Ainda não respondeu."
+          },
+          {
+            "tipo": "resposta_cliente",
+            "competencia": "atendimento",
+            "cliente": "Gostei da arte do mascote, mas queria o chapéu um pouco maior e outra cor na faixa.",
+            "opcoes": [
+              {
+                "label": "Marcar Aprovou, porque ele disse que gostou, e ajustar depois.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Aprovou libera a impressão. Há ajustes pedidos, então liberar seria imprimir a arte errada."
+              },
+              {
+                "label": "Marcar Ainda não respondeu e esperar novo contato.",
+                "correta": false,
+                "feedback": "Ele respondeu, e com pedidos claros. Registre isso para a modelagem trabalhar."
+              },
+              {
+                "label": "Marcar Pediu ajustes e descrever o chapéu maior e a nova cor da faixa.",
+                "correta": true,
+                "feedback": "Isso cria a tarefa de Modelagem de ajuste e conta a rodada; a aprovação volta quando a modelagem termina."
+              },
+              {
+                "label": "Pedir que ele mande tudo de novo por escrito e não registrar nada no sistema.",
+                "correta": false,
+                "feedback": "O pedido já está claro. Registrar no sistema é o que aciona a modelagem."
+              }
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "atendimento",
+            "erroCriticoOpcoes": [
+              3
+            ],
+            "pergunta": "Cliente: \"Quanto custa uma miniatura personalizada?\" Qual resposta inicia melhor o atendimento?",
+            "opcoes": [
+              "\"R$70.\"",
+              "\"Claro. Você já tem alguma referência, foto ou arquivo 3D do que gostaria de fazer?\"",
+              "\"Depende.\"",
+              "\"Me mande o pagamento primeiro.\""
+            ],
+            "correta": 1,
+            "feedbackCerto": "A resposta acolhe e começa a obter uma informação que define o caminho do orçamento.",
+            "feedbackPorOpcao": [
+              "Você deu um preço sem saber nada sobre o pedido — tente de novo.",
+              null,
+              "Resposta vaga, não conduz a nada — tente de novo.",
+              "Pedir pagamento antes de qualquer levantamento é um erro crítico."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "atendimento",
+            "erroCriticoOpcoes": [
+              2,
+              3
+            ],
+            "pergunta": "Cliente: \"Tenho STL, quero 30 unidades de 8 cm pintadas para um evento daqui a 20 dias.\" Qual atitude é melhor?",
+            "opcoes": [
+              "Repetir as seis perguntas de ouro desde o começo.",
+              "Reconhecer o que já foi informado e investigar apenas o que ainda falta, além de verificar orçamento/capacidade.",
+              "Dar desconto automático pela quantidade.",
+              "Prometer o prazo."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Bom atendimento aproveita os dados já fornecidos e evita interrogatório.",
+            "feedbackPorOpcao": [
+              "Repetir tudo que ele já disse vira interrogatório — tente de novo.",
+              null,
+              "Desconto automático fora da autonomia é erro crítico.",
+              "Prometer prazo sem verificar capacidade é erro crítico."
+            ]
+          },
+          {
+            "tipo": "texto_livre",
+            "competencia": "atendimento",
+            "pergunta": "Cliente: \"Vi uma peça de vocês no Instagram e queria fazer uma parecida para minha filha.\" Escreva sua primeira resposta.",
+            "pontosEsperados": [
+              "Acolher",
+              "Identificar qual peça/referência",
+              "Iniciar levantamento sem inventar preço ou prazo"
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "atendimento",
+            "titulo": "Missão",
+            "objetivo": "Conduzir mentalmente três atendimentos reconhecendo qual ferramenta usar depois.",
+            "contexto": "1) cliente com produto do catálogo. 2) cliente com STL. 3) cliente com apenas fotos.",
+            "tarefas": [
+              "Conduza os três atendimentos simulados.",
+              "Em cada um, identifique qual ferramenta do Valente OS será usada depois da conversa."
+            ],
+            "criterioConclusao": "Ter pensado nos 3 atendimentos e nas ferramentas correspondentes antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 6,
+        "titulo": "Da negociação ao pedido",
+        "subtitulo": "Transformar uma oportunidade aprovada em informação operacional correta, sem confundir conversa com pedido",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "O que muda quando o cliente aprova",
+            "texto": "Aprovação comercial precisa ser convertida em registro operacional. O pedido deve refletir o que foi combinado: produto, quantidade, valor, pagamento, prazo confirmado e observações relevantes. Quando a aprovação vem pela proposta ou pela tarefa Aprovar orçamento, o sistema já cria o pedido em Negociação; sua parte é conferir se ele reflete o combinado e seguir para fechar a venda."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Conferência antes do registro",
+            "texto": "Antes de concluir o pedido, compare o que está no sistema com o que foi aprovado. Uma divergência pequena pode virar erro grande na produção."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Pagamento e início do fluxo",
+            "texto": "Não invente política de entrada ou condição de pagamento. Use a regra vigente. Se houver dúvida, consulte o responsável. Ao fechar o pedido, o contato registra o combinado e a forma de pagamento: Pix, Transferência, Dinheiro/cartão e, só para instituições públicas, Empenho (pago na entrega). Quando há pagamento previsto, o sistema gera a tarefa Confirmar pagamento na data. Nela você registra o valor recebido (o pedido vai para Pago e a produção pode começar) ou reagenda se ainda não caiu (volta em 2 dias). O status financeiro deve representar o que realmente aconteceu."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Empenho: número antes de começar",
+            "texto": "Empenho é a forma de pagamento de instituições públicas, como prefeituras e a Polícia Militar: o pagamento acontece na entrega. O número do empenho precisa existir ANTES de iniciar o trabalho. Sem o número, o pedido fica \"Aguardando empenho\", a produção não começa e a tarefa Cobrar empenho volta a cada 7 dias. Também não é possível mover o pedido para uma etapa de produção com empenho pendente. Nunca invente ou estime o número só para destravar o pedido."
+          },
+          {
+            "tipo": "resposta_cliente",
+            "competencia": "operacao_os",
+            "cliente": "Sou da prefeitura. Já aprovamos o orçamento, pode começar a produzir; o número do empenho sai na semana que vem.",
+            "opcoes": [
+              {
+                "label": "Começar a produção e registrar o empenho depois.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "O número do empenho precisa existir antes de iniciar o trabalho."
+              },
+              {
+                "label": "Registrar o pedido com forma de pagamento Empenho; ele fica Aguardando empenho e a produção só começa quando o número for registrado.",
+                "correta": true,
+                "feedback": "É o fluxo do sistema, e a tarefa Cobrar empenho volta a cada 7 dias para acompanhar."
+              },
+              {
+                "label": "Registrar um número de empenho provisório para liberar.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Inventar um número é registrar informação falsa."
+              },
+              {
+                "label": "Escolher Pix para o pedido não travar.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Registrar uma forma de pagamento diferente da combinada distorce o financeiro."
+              }
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Acompanhamento depois da venda",
+            "texto": "Depois de registrado, o Comercial acompanha pelo Kanban e consulta o Caixa quando necessário. O sistema deve ser a primeira fonte antes de interromper produção ou financeiro. Depois da entrega, a tarefa de pós-compra pergunta como foi: Recebeu e está satisfeito (pede avaliação e encerra), Ainda não recebeu (você confere o rastreio; volta em 2 dias), Há um problema (você descreve e abre uma tarefa de resolução) ou Não respondeu (nova tentativa em 2 dias)."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "erroCriticoOpcoes": [
+              0,
+              2
+            ],
+            "pergunta": "Cliente diz \"pode fazer\", mas a condição de pagamento ainda não está confirmada. O que fazer?",
+            "opcoes": [
+              "Marcar como Pago para adiantar.",
+              "Seguir a regra vigente e confirmar o que faltar antes de representar o pedido como pago.",
+              "Inventar 50% de entrada.",
+              "Enviar direto para impressão."
+            ],
+            "correta": 1,
+            "feedbackCerto": "O sistema deve refletir fatos e regras confirmadas.",
+            "feedbackPorOpcao": [
+              "Marcar como pago sem o pagamento é erro crítico.",
+              null,
+              "Inventar um percentual é erro crítico.",
+              "Mandar pra produção sem confirmar pagamento foge da regra — risco operacional."
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "pergunta": "Ao registrar o pedido, você percebe que o prazo no WhatsApp era apenas um desejo do cliente e nunca foi confirmado. O que fazer?",
+            "opcoes": [
+              "Registrar como prazo fechado.",
+              "Confirmar viabilidade antes de registrar como compromisso.",
+              "Escolher uma data parecida.",
+              "Deixar a produção descobrir depois."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Desejo do cliente não é automaticamente prazo confirmado.",
+            "feedbackPorOpcao": [
+              "Isso não foi confirmado — não registre como fechado — tente de novo.",
+              null,
+              "Chutar uma data parecida é inventar informação — tente de novo.",
+              "Deixar a produção descobrir depois gera um problema evitável — tente de novo."
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "operacao_os",
+            "titulo": "Missão",
+            "objetivo": "Transformar um orçamento aprovado em pedido registrado corretamente.",
+            "contexto": "Receba um orçamento fictício aprovado.",
+            "tarefas": [
+              "Monte o conjunto de informações necessárias para criar o pedido.",
+              "Descreva como acompanharia o trabalho até Enviado."
+            ],
+            "criterioConclusao": "Ter montado as informações e descrito o acompanhamento antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 7,
+        "titulo": "Colocando um produto à venda",
+        "subtitulo": "Aprender a transformar informações confiáveis do produto em cadastro e anúncio comercial",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Antes de anunciar, a informação precisa estar certa",
+            "texto": "Um anúncio ruim não é apenas feio. Pode gerar preço errado, expectativa errada, dúvidas e retrabalho. Antes de publicar, confira a fonte das informações."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "O que um anúncio precisa responder",
+            "texto": "O que é? Para quem é? Qual tamanho? Como é feito? Quais opções existem? Quanto custa? Qual o prazo? Como comprar? Nem todo anúncio precisa ter um texto enorme, mas não deve esconder informação essencial."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Título, fotos e descrição",
+            "texto": "Título identifica o produto de forma clara. Fotos precisam representar corretamente a peça. Descrição organiza características e condições. Não invente característica apenas para deixar o anúncio mais atraente."
+          },
+          {
+            "tipo": "confirmacao_pratica",
+            "competencia": "produtos",
+            "local": "Aba Peças Próprias",
+            "instrucao": "Abra Peças Próprias e use os dados cadastrados como ponto de partida. Confirme preço, tamanho, variações e demais campos relevantes antes de publicar."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "produtos",
+            "erroCriticoOpcoes": [
+              1,
+              3
+            ],
+            "pergunta": "A foto está ótima, mas o preço do cadastro está diferente do material de divulgação antigo. O que fazer?",
+            "opcoes": [
+              "Usar o menor preço.",
+              "Publicar e corrigir depois.",
+              "Confirmar qual informação está vigente antes de publicar.",
+              "Tirar o preço e inventar no atendimento."
+            ],
+            "correta": 2,
+            "feedbackCerto": "Quando duas fontes divergem, o Comercial precisa confirmar a informação vigente.",
+            "feedbackPorOpcao": [
+              "Escolher o menor preço \"no chute\" é inventar informação — tente de novo.",
+              "Publicar errado e corrigir depois é erro crítico — informação errada pode já ter alcançado o cliente.",
+              null,
+              "Inventar preço no atendimento é erro crítico."
+            ]
+          },
+          {
+            "tipo": "texto_livre",
+            "competencia": "produtos",
+            "pergunta": "Com os dados: miniatura personalizada de pet, resina, 10 cm, pintura manual, prazo 20 dias, preço R$85 — escreva um título e uma descrição curta.",
+            "pontosEsperados": [
+              "Usa somente informações fornecidas",
+              "Identifica produto, tamanho/personalização e condições relevantes",
+              "Não inventa benefícios não informados"
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "produtos",
+            "titulo": "Missão",
+            "objetivo": "Montar e revisar criticamente um anúncio de treinamento.",
+            "contexto": "Use os dados da etapa anterior ou um produto fictício similar.",
+            "tarefas": [
+              "Monte um anúncio de treinamento.",
+              "Revise procurando 5 tipos de erro: informação faltando, preço divergente, prazo ausente, foto inadequada e promessa não confirmada."
+            ],
+            "criterioConclusao": "Ter montado e revisado o anúncio procurando os 5 tipos de erro antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 8,
+        "titulo": "Marketplaces e redes sociais",
+        "subtitulo": "Entender como o canal de venda muda preço, comunicação e condução do cliente",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Venda direta e marketplace não são iguais",
+            "texto": "Shopee, Mercado Livre e outros canais podem possuir taxas, comissões e custos próprios. Por isso, copiar o preço da venda direta pode reduzir o resultado da Valente."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "O que o Comercial precisa entender",
+            "texto": "Preço anunciado → custos/taxas do canal → líquido recebido → custo do produto → resultado/margem. Não é necessário decorar taxas. É necessário usar parâmetros atualizados da ferramenta ou consultar o responsável."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Calculadora de marketplace",
+            "texto": "⚠️ Quando o recurso estiver disponível no Valente OS, a ferramenta deve mostrar os modos reais: preservar determinado resultado, ou testar um preço de anúncio e visualizar o que sobra. Enquanto não estiver disponível, a regra é CONSULTAR RESPONSÁVEL e não inventar percentual."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "marketplace",
+            "erroCriticoOpcoes": [
+              0,
+              3
+            ],
+            "pergunta": "Preço direto é R$70. Você pode copiar automaticamente R$70 para qualquer marketplace?",
+            "opcoes": [
+              "Sim.",
+              "Não; é preciso considerar os custos atuais do canal.",
+              "Sim, se a peça for pequena.",
+              "Não, mas basta acrescentar 10%."
+            ],
+            "correta": 1,
+            "feedbackCerto": "Nem copiar o preço nem inventar um percentual substitui a ferramenta.",
+            "feedbackPorOpcao": [
+              "Copiar o preço direto ignora as taxas do canal — erro crítico.",
+              null,
+              "Tamanho do produto não muda o fato de que o canal cobra taxas — tente de novo.",
+              "Inventar um percentual fixo (10%) também é chute — erro crítico."
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Redes sociais como entrada comercial",
+            "texto": "Nas redes, nem toda interação é venda. O Comercial precisa reconhecer intenção. Um elogio é engajamento; \"vocês fazem personalizado?\" é oportunidade; \"qual prazo para 30?\" é uma oportunidade ainda mais qualificada."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Conteúdo e próximo passo",
+            "texto": "Produto mostra o que vendemos. Processo mostra fabricação/acabamento. Prova mostra resultado ou entrega. A chamada para ação indica o próximo passo: WhatsApp, orçamento ou consulta."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "redes_sociais",
+            "pergunta": "Qual interação merece prioridade comercial?",
+            "opcoes": [
+              "❤️",
+              "\"Muito bonito!\"",
+              "\"Vocês fazem 30 unidades com a logo da minha empresa?\"",
+              "🔥"
+            ],
+            "correta": 2,
+            "feedbackCerto": "A pessoa apresentou necessidade, quantidade e personalização: há intenção comercial clara.",
+            "feedbackPorOpcao": [
+              "Reação é só sinal de atenção — tente de novo.",
+              "Elogio não revela necessidade específica — tente de novo.",
+              null,
+              "Reação não revela necessidade nenhuma — tente de novo."
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "redes_sociais",
+            "titulo": "Missão",
+            "objetivo": "Praticar os formatos de conteúdo comercial e reconhecer quando uma interação vira atendimento.",
+            "contexto": "Produto fictício.",
+            "tarefas": [
+              "Prepare uma publicação, um Story, uma resposta de Direct e uma chamada para WhatsApp.",
+              "Identifique qual interação deve virar atendimento."
+            ],
+            "criterioConclusao": "Ter preparado os itens e identificado a interação antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 9,
+        "titulo": "Negociação, follow-up e prospecção",
+        "subtitulo": "Aprender a investigar objeções, respeitar limites de autonomia e continuar oportunidades",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Negociar não é dar desconto",
+            "texto": "Quando o cliente diz \"está caro\", ele pode estar comparando tamanho, acabamento, prazo, personalização, forma de pagamento ou simplesmente não ter entendido o valor da proposta. Primeiro investigue."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Comparar propostas corretamente",
+            "texto": "Preço só é comparável quando o escopo também é. Pergunte o que está incluído na outra proposta antes de atacar concorrente ou alterar preço."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Autonomia",
+            "texto": "PODE: consultar produto, enviar fotos, coletar informações, acompanhar pedido e orçar dentro das regras. CONSULTAR: prazo fora do normal, grandes quantidades, produto diferente, desconto ou condição especial. NÃO PODE: inventar preço/prazo, prometer capacidade sem verificar, conceder desconto fora da autorização ou alterar financeiro por suposição."
+          },
+          {
+            "tipo": "resposta_cliente",
+            "competencia": "negociacao",
+            "cliente": "O concorrente faz mais barato.",
+            "opcoes": [
+              {
+                "label": "\"O material dele é pior.\"",
+                "correta": false,
+                "feedback": "Evite atacar o concorrente — isso não fortalece sua proposta e pode nem ser verdade."
+              },
+              {
+                "label": "\"Então já baixo meu preço.\"",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Dar desconto automático pra \"competir\" sem avaliar está fora da autonomia padrão."
+              },
+              {
+                "label": "\"Entendo. O que está incluído na proposta dele para compararmos corretamente?\"",
+                "correta": true,
+                "feedback": "A resposta investiga a objeção sem atacar concorrente nem dar desconto automático."
+              },
+              {
+                "label": "\"Compre com ele.\"",
+                "correta": false,
+                "feedback": "Essa resposta fecha a porta pra uma venda que ainda pode acontecer."
+              }
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Follow-up",
+            "texto": "Orçamento enviado não é atendimento encerrado. Acompanhe de forma profissional: orçamento → acompanhamento → retorno → fechamento ou perda. O objetivo do follow-up é facilitar a decisão, não pressionar."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Registrar o contato: Como foi o contato?",
+            "texto": "Cada tarefa de contato termina com a pergunta \"Como foi o contato?\". As respostas são: Fechou o pedido (registra o combinado e a forma de pagamento), Cliente vai pensar e retornar (você escolhe a data do retorno), Não consegui falar com o cliente, ou Cliente desistiu (pede o motivo: achou caro, comprou com outra empresa, desistiu da ideia ou sem retorno; o pedido vira \"perdido\"). Sem resposta, o ritmo padrão é de 3 tentativas, a próxima em 1, 2 e 3 dias. Na última, o sistema pergunta se você encerra como \"Sem retorno do cliente\" ou continua."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Instituições públicas pedem mais paciência",
+            "texto": "Em instituições públicas, como prefeituras e a Polícia Militar, quem decide costuma ter muitas tarefas. Por isso o sistema permite até 6 tentativas, com intervalos maiores (3, 7, 7, 14, 14 dias). Registre também quem decide no órgão, com nome e setor, para o próximo contato falar com a pessoa certa. A cobrança de aprovação de arte também usa um ritmo mais longo para instituições."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "negociacao",
+            "pergunta": "Você contatou uma prefeitura 3 vezes sem resposta. O que o ritmo do sistema indica?",
+            "opcoes": [
+              "Encerrar como \"Sem retorno do cliente\", como em qualquer cliente.",
+              "Marcar o pedido como perdido por achar caro.",
+              "Continuar com os intervalos maiores (até 6 tentativas) e registrar quem decide no órgão.",
+              "Ligar todos os dias até atender."
+            ],
+            "correta": 2,
+            "feedbackCerto": "Instituições têm ritmo próprio, com intervalos maiores, e o registro de quem decide ajuda o próximo contato.",
+            "feedbackPorOpcao": [
+              "Para instituições o ritmo é diferente, com até 6 tentativas — tente de novo.",
+              "Não houve motivo de preço; o motivo seria inventado — tente de novo.",
+              null,
+              "Insistir diariamente foge do ritmo e pressiona quem decide — tente de novo."
+            ],
+            "erroCriticoOpcoes": [
+              1
+            ]
+          },
+          {
+            "tipo": "texto_livre",
+            "competencia": "negociacao",
+            "pergunta": "O cliente recebeu orçamento há 3 dias e não respondeu. Escreva um follow-up curto.",
+            "pontosEsperados": [
+              "Lembra o orçamento",
+              "Oferece ajuda",
+              "Evita pressão ou urgência inventada"
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Prospecção",
+            "texto": "O Comercial também busca oportunidades. Escolas, unidades militares, empresas, restaurantes, eventos, clubes, lojas e instituições podem ter demandas compatíveis. A abordagem deve ter motivo e relevância para aquele contato."
+          },
+          {
+            "tipo": "texto_livre",
+            "competencia": "prospeccao",
+            "pergunta": "Escolha um desses públicos e escreva uma abordagem inicial.",
+            "pontosEsperados": [
+              "Apresentação curta",
+              "Motivo do contato",
+              "Relevância/benefício",
+              "Convite pra conversar"
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "prospeccao",
+            "titulo": "Missão",
+            "objetivo": "Analisar contatos fictícios, escolher os de maior potencial e praticar negociação sem desconto automático.",
+            "contexto": "Cinco contatos fictícios.",
+            "tarefas": [
+              "Analise os 5 e escolha dois com maior potencial; prepare abordagem pra eles.",
+              "Pra um deles, simule uma objeção de preço e conduza sem desconto automático."
+            ],
+            "criterioConclusao": "Ter escolhido os 2 contatos, preparado a abordagem e simulado a objeção antes de marcar como concluída."
+          }
+        ]
+      },
+      {
+        "dia": 10,
+        "titulo": "Missão Comercial Valente",
+        "subtitulo": "Demonstrar que consegue usar as ferramentas e conhecimentos da trilha em uma situação integrada",
+        "etapas": [
+          {
+            "tipo": "conteudo",
+            "titulo": "Como funciona",
+            "texto": "Este dia não apresenta conteúdo novo importante. Ele verifica se você consegue combinar: consulta ao sistema, classificação da demanda, levantamento de dados, orçamento e proposta, negociação, registro, liberação e acompanhamento."
+          },
+          {
+            "tipo": "cenario",
+            "competencia": "atendimento",
+            "titulo": "Atendimento integrado",
+            "noInicial": "a",
+            "nos": {
+              "a": {
+                "cliente": "Olá. Vi vocês no Instagram. Minha empresa fará um evento e precisamos de miniaturas personalizadas. Vocês fazem?",
+                "opcoes": [
+                  {
+                    "label": "\"R$70 cada.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Você informou preço sem saber nada sobre o pedido — isso é um erro crítico.",
+                    "proximo": "b"
+                  },
+                  {
+                    "label": "\"Fazemos trabalhos personalizados. Me conta um pouco mais: o que vocês imaginam e quantas unidades precisam?\"",
+                    "correta": true,
+                    "feedback": "Usa o método de atendimento aprendido no Dia 5.",
+                    "proximo": "b"
+                  },
+                  {
+                    "label": "\"Mande o pagamento.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Pedir pagamento antes de levantar qualquer informação é um erro crítico.",
+                    "proximo": "b"
+                  },
+                  {
+                    "label": "\"Só com STL.\"",
+                    "correta": false,
+                    "feedback": "Recusar de cara sem perguntar fecha uma oportunidade real.",
+                    "proximo": "b"
+                  }
+                ]
+              },
+              "b": {
+                "cliente": "Seriam 100 miniaturas da nossa equipe. Tenho apenas algumas fotos. Pensamos em 10 cm, pintadas. O evento é daqui a 12 dias.",
+                "opcoes": [
+                  {
+                    "label": "\"Já temos tudo e podemos prometer.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Prometer sem orçamento nem verificação de capacidade é um erro crítico.",
+                    "proximo": "c"
+                  },
+                  {
+                    "label": "\"É projeto a partir de referência, com possível modelagem; quantidade, acabamento e prazo exigem orçamento e verificação de capacidade.\"",
+                    "correta": true,
+                    "feedback": "A resposta combina os Dias 3 e 4.",
+                    "proximo": "c"
+                  },
+                  {
+                    "label": "\"Foto é equivalente a STL.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Foto não é arquivo 3D — essa afirmação é tecnicamente incorreta.",
+                    "proximo": "c"
+                  },
+                  {
+                    "label": "\"Basta multiplicar um preço unitário por 100.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Produção em escala muda custo por peça — multiplicar direto é um erro crítico.",
+                    "proximo": "c"
+                  }
+                ]
+              },
+              "c": {
+                "cliente": "Se eu fizer 300, consegue melhorar o preço?",
+                "opcoes": [
+                  {
+                    "label": "\"Sim, 20%.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Prometer um percentual específico de desconto sem consultar é um erro crítico.",
+                    "proximo": "d"
+                  },
+                  {
+                    "label": "\"Volume maior pode mudar a condição, mas preciso recalcular/consultar antes de confirmar.\"",
+                    "correta": true,
+                    "feedback": "Não promete desconto fora da autonomia.",
+                    "proximo": "d"
+                  },
+                  {
+                    "label": "\"O preço nunca muda.\"",
+                    "correta": false,
+                    "feedback": "Essa afirmação fecha uma negociação que talvez pudesse avançar.",
+                    "proximo": "d"
+                  },
+                  {
+                    "label": "\"Faço metade.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Prometer 50% de desconto sem qualquer análise é um erro crítico grave.",
+                    "proximo": "d"
+                  }
+                ]
+              },
+              "d": {
+                "cliente": "Mas preciso em 5 dias.",
+                "opcoes": [
+                  {
+                    "label": "\"Tranquilo.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Prometer prazo sem checar capacidade é um erro crítico.",
+                    "proximo": "e"
+                  },
+                  {
+                    "label": "\"Vou verificar a capacidade de produção antes de confirmar se esse prazo é viável.\"",
+                    "correta": true,
+                    "feedback": "Prazo precisa de confirmação operacional.",
+                    "proximo": "e"
+                  },
+                  {
+                    "label": "\"Impossível.\"",
+                    "correta": false,
+                    "feedback": "Recusar sem verificar a capacidade pode perder uma venda viável.",
+                    "proximo": "e"
+                  },
+                  {
+                    "label": "\"Se pagar hoje eu garanto.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Condicionar uma garantia de prazo ao pagamento, sem checar capacidade, é um erro crítico.",
+                    "proximo": "e"
+                  }
+                ]
+              },
+              "e": {
+                "cliente": "Posso pagar metade agora?",
+                "opcoes": [
+                  {
+                    "label": "\"Sim, sempre 50%.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Afirmar uma política fixa sem confirmar é um erro crítico — essa condição precisa ser consultada."
+                  },
+                  {
+                    "label": "\"Pode pagar 30%.\"",
+                    "correta": false,
+                    "erroCritico": true,
+                    "feedback": "Afirmar um percentual específico sem confirmar a política vigente é um erro crítico."
+                  },
+                  {
+                    "label": "\"Vou confirmar a condição aplicável ao pedido e te explico entrada e saldo corretamente.\"",
+                    "correta": true,
+                    "feedback": "Não inventa política comercial."
+                  },
+                  {
+                    "label": "\"Só pagamento total.\"",
+                    "correta": false,
+                    "feedback": "Essa afirmação pode nem ser verdadeira e fecha uma forma de pagamento sem necessidade."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "tipo": "texto_livre",
+            "competencia": "atendimento",
+            "pergunta": "Monte o briefing final do atendimento. Organize: cliente, tipo de projeto, referência disponível, tamanho, quantidade, acabamento, prazo solicitado, necessidade de modelagem, condição de pagamento a confirmar, orçamento a realizar e próximo passo.",
+            "pontosEsperados": [
+              "Organiza todos os itens com base no que foi revelado na conversa",
+              "Não inventa preço, prazo ou condição ainda não confirmados",
+              "Indica claramente o próximo passo"
+            ]
+          },
+          {
+            "tipo": "missao",
+            "competencia": "operacao_os",
+            "titulo": "Missão operacional",
+            "objetivo": "Associar cada ação à ferramenta correta do Valente OS e explicar o próximo passo ao cliente.",
+            "contexto": "Ações: consultar produto existente; calcular o custo; montar a proposta para o cliente; registrar pedido; consultar pagamento; acompanhar produção; ver suas tarefas de contato e aprovação.",
+            "tarefas": [
+              "Indique em qual ferramenta faria cada uma dessas ações.",
+              "Descreva como explicaria ao cliente o próximo passo."
+            ],
+            "criterioConclusao": "Ter associado as ações às ferramentas e descrito o próximo passo antes de marcar como concluída."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "operacao_os",
+            "pergunta": "Associe as ações às ferramentas.",
+            "opcoes": [
+              "Produto existente → Peças Próprias; custo → Orçamento; proposta ao cliente → Propostas; pedido/status → Pedidos; pagamento → Caixa; contatos e aprovações → Tarefas.",
+              "Tudo → Caixa.",
+              "Tudo → Pedidos.",
+              "Produto → Orçamento; pagamento → Peças Próprias."
+            ],
+            "correta": 0,
+            "feedbackCerto": "A missão fecha o ciclo iniciado no tour do Dia 1.",
+            "feedbackPorOpcao": [
+              null,
+              "Cada ferramenta tem um propósito diferente — não é tudo a mesma — tente de novo.",
+              "Cada ferramenta tem um propósito diferente — não é tudo a mesma — tente de novo.",
+              "Essas associações estão trocadas — revise o tour do Dia 1."
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Parabéns!",
+            "texto": "Você concluiu a Formação Comercial Valente. A classificação final considera suas competências e os erros críticos ao longo dos 10 dias — não é só uma contagem de respostas certas."
+          }
+        ]
+      }
+    ]
   },
-
   modelagem_3d: {
     "id": "modelagem_3d",
     "nome": "Modelagem 3D",
     "descricao": "Aprenda a transformar um briefing em um modelo 3D pronto para imprimir, com escala, arquivos, conferência e entrega corretos.",
     "icone": "🗿",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Organização do trabalho de modelagem",
@@ -1559,6 +2251,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "O que compõe a sua estação",
             "texto": "Sua estação de modelagem tem quatro partes. Primeiro, o pedido ou a OT que diz o que fazer. Segundo, as referências: fotos, desenhos, medidas e links do cliente. Terceiro, o software de modelagem e os arquivos de trabalho. Quarto, as pastas onde ficam os arquivos de entrada e de saída. Saber onde cada coisa fica evita que você perca tempo procurando e, principalmente, evita que trabalhe em cima do arquivo errado."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Sua missão no topo da tarefa",
+            "texto": "Ao abrir uma tarefa, o topo mostra a caixa SUA MISSÃO em destaque, dizendo o que fazer e quanto falta. Leia essa caixa primeiro. Abaixo ficam o checklist e as fotos de referência. Os botões são Iniciar tarefa, Pausar, Retomar e Concluir tarefa. Seu PIN identifica você como executor, e seu nome fica gravado como responsável nas tarefas que você inicia e conclui. No tablet, Minhas funções abre uma fila única com as tarefas da sua função. No PC, use a Missão/Inbox de tarefas ou a aba Tarefas."
           },
           {
             "tipo": "conteudo",
@@ -1614,7 +2311,7 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "confirmacao_pratica",
             "competencia": "organizacao_trabalho",
             "local": "Valente OS > Pedidos (Kanban) e Missão/Inbox de tarefas",
-            "instrucao": "Apenas consulte, sem alterar nada: localize um pedido na etapa Modelando e a OT correspondente. Observe título, instruções, checklist e quantidade. Depois identifique onde ficam as referências e a pasta de saída. Se a estrutura de pastas e a nomenclatura oficiais não estiverem claras, anote a dúvida e consulte o responsável. Marque como feito somente depois de realmente localizar tudo."
+            "instrucao": "Apenas consulte, sem alterar nada: localize um pedido na etapa Modelando e a OT correspondente. Observe a caixa SUA MISSÃO, o título, as instruções, o checklist e a quantidade. Depois identifique onde ficam as referências e a pasta de saída. Se a estrutura de pastas e a nomenclatura oficiais não estiverem claras, anote a dúvida e consulte o responsável. Marque como feito somente depois de realmente localizar tudo."
           }
         ]
       },
@@ -2061,6 +2758,39 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Sempre que o modelo mudar, crie uma nova versão em vez de sobrescrever a antiga, e registre o motivo da mudança no pedido ou na OT. Isso preserva a rastreabilidade: dá para voltar ao que foi aprovado, saber quem mudou o quê e evitar que a produção use um arquivo desatualizado. Siga o padrão oficial de nomenclatura de versões da Valente."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Quando o cliente pede ajuste na arte",
+            "texto": "Antes de imprimir, o comercial envia ao cliente a arte da peça para aprovação, por uma tarefa chamada Aprovar arte. O cliente pode aprovar, pedir ajustes ou ainda não responder. Se ele pedir ajustes, o comercial descreve o que mudar e o sistema cria uma tarefa de Modelagem de ajuste, que chega para você, e conta mais uma rodada de aprovação. A impressão só é liberada quando a arte for aprovada. Isso é uma alteração solicitada: leia a descrição do ajuste com atenção antes de mexer no modelo."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "O ciclo do ajuste, passo a passo",
+            "texto": "Enquanto você faz o ajuste, a tarefa Aprovar arte fica bloqueada. Quando você conclui a Modelagem do ajuste, ela volta sozinha para o comercial, que envia a nova arte ao cliente. Por isso o ajuste precisa ser feito em uma nova versão do modelo, sem sobrescrever a anterior, e conferido antes de você concluir. Se a descrição do ajuste estiver confusa ou contraditória com as referências, registre a dúvida e consulte o responsável, em vez de interpretar em silêncio."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "versionamento",
+            "pergunta": "Chegou para você uma tarefa de Modelagem de ajuste: o cliente, ao ver a arte, pediu \"o escudo maior\", sem dizer quanto. O que você faz?",
+            "opcoes": [
+              "Concluo a tarefa logo para a aprovação voltar ao comercial e o cliente dizer se gostou.",
+              "Aumento o escudo em uma proporção que eu ache boa e sobrescrevo o arquivo da arte anterior.",
+              "Registro que falta a medida, consulto o responsável ou o comercial sobre quanto aumentar, faço o ajuste em nova versão e só então concluo a tarefa.",
+              "Ignoro o pedido, porque a arte já tinha sido enviada ao cliente."
+            ],
+            "correta": 2,
+            "feedbackCerto": "Correto. A medida não foi dada, então se pergunta. O ajuste vira nova versão e a tarefa só conclui com o trabalho feito, pois é a conclusão que devolve a aprovação ao comercial.",
+            "feedbackPorOpcao": [
+              "Concluir sem ter feito o ajuste devolve ao cliente a mesma arte e gasta uma rodada de aprovação à toa.",
+              "Inventar a proporção e sobrescrever perde a versão anterior e a rastreabilidade.",
+              null,
+              "O ajuste foi pedido pelo cliente e a aprovação fica parada até a modelagem concluir."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              1
+            ]
+          },
+          {
             "tipo": "selecionar_itens",
             "competencia": "versionamento",
             "pergunta": "Quais destas situações são alterações solicitadas, e não erros de modelagem?",
@@ -2142,6 +2872,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "O teste da pessoa sem contexto",
             "texto": "Um bom jeito de testar o seu pacote é pedir a outra pessoa que o interprete sem nenhuma explicação verbal. Se ela precisar adivinhar qualquer coisa, falta informação. Também vale lembrar que a avaliação do pacote não é só do arquivo: informação clara faz a impressão acontecer sem retrabalho."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Concluir a tarefa libera quem espera",
+            "texto": "No Valente OS, algumas tarefas ficam bloqueadas até que outra termine. Quando você conclui a sua tarefa de modelagem, as que dependiam dela são liberadas automaticamente. Um exemplo é a aprovação da arte, que volta para o comercial assim que a modelagem do ajuste conclui. Por isso, só toque em Concluir tarefa depois de conferir o arquivo e registrar o pacote. Concluir antes da hora manda um trabalho incompleto para o próximo setor. O Kanban mostra a etapa atual de cada pedido e se atualiza sozinho a cada 60 segundos."
           },
           {
             "tipo": "multipla_escolha",
@@ -2321,6 +3056,7 @@ var TREINAMENTO_TRILHAS = {
               "Planejar escala, espessuras, divisão de peças e encaixes, confirmando padrões com a produção",
               "Preparar e exportar o arquivo com nome e versão no padrão da Valente, conferindo escala e componentes",
               "Preencher o checklist de liberação e montar o pacote de entrega com versão, escala, quantidade e observações",
+              "Simular um pedido de ajuste da arte: tratar como tarefa de Modelagem de ajuste, criar nova versão sem sobrescrever a aprovada e concluir a tarefa só quando o ajuste estiver pronto e conferido",
               "Pedir a validação do responsável antes de considerar o trabalho Liberado"
             ],
             "criterioConclusao": "Todos os itens foram feitos com informação real, nenhuma lacuna foi preenchida com suposição, o checklist foi completado e o responsável validou a liberação."
@@ -2334,7 +3070,7 @@ var TREINAMENTO_TRILHAS = {
     "nome": "Impressão 3D",
     "descricao": "Operar a estação de impressão 3D em resina e FDM, da OT até a liberação para o pós-impressão.",
     "icone": "🖨️",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Estação e segurança",
@@ -2359,7 +3095,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Disponível não é autorizado",
-            "texto": "Uma máquina livre não significa que o trabalho é autorizado. Um material na prateleira não significa que serve para qualquer peça. A fonte da verdade do que produzir é a ordem de trabalho (OT), que você consulta no Valente OS, na Missão/Inbox de tarefas. No tablet, a OT mostra título, instruções, checklist e quantidade."
+            "texto": "Uma máquina livre não significa que o trabalho é autorizado. Um material na prateleira não significa que serve para qualquer peça. A fonte da verdade do que produzir é a ordem de trabalho (OT), no Valente OS. Ao abrir a tarefa, o topo mostra a caixa SUA MISSÃO em destaque, com o que fazer e quantas unidades faltam (por exemplo, 8 de 18, com a linha Já feitas nesta tarefa). Abaixo vêm instruções, checklist e fotos de referência. Seu PIN identifica você como executor, e seu nome fica gravado nas tarefas que você inicia e conclui."
           },
           {
             "tipo": "conteudo",
@@ -2400,8 +3136,8 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "confirmacao_pratica",
             "competencia": "estacao_seguranca",
-            "local": "Estação de impressão (área física) e Valente OS, aba Missão/Inbox",
-            "instrucao": "Sem iniciar nenhuma produção, caminhe pela estação com o líder ou responsável. Identifique impressoras, onde ficam os materiais, ferramentas e EPIs, e localize no tablet ou computador a Missão/Inbox onde as OTs aparecem. Confirme apenas quando tiver visto cada item e perguntado quais máquinas você está autorizado a operar."
+            "local": "Estação de impressão (área física) e Valente OS, aba Minha missão (PC) ou tablet",
+            "instrucao": "Sem iniciar nenhuma produção, caminhe pela estação com o líder ou responsável. Identifique impressoras, onde ficam os materiais, ferramentas e EPIs, e localize no tablet ou computador a Minha missão, onde as OTs aparecem, e a caixa SUA MISSÃO no topo de uma tarefa. Confirme apenas quando tiver visto cada item e perguntado quais máquinas você está autorizado a operar."
           }
         ]
       },
@@ -2688,12 +3424,17 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Iniciar a OT certa",
-            "texto": "No tablet, a tarefa tem três ações: Iniciar, Pausar e Concluir. Ao começar o trabalho, use Iniciar na OT correta, para que o sistema saiba o que está em produção e por quem. Confira que a máquina recebeu o arquivo da mesma OT. Iniciar na OT errada gera confusão de quantidade e de responsável."
+            "texto": "Na tarefa, as ações são Iniciar tarefa, Pausar, Retomar e Concluir tarefa. No PC existe também Pular tarefa, que não aparece no tablet. Ao começar o trabalho, use Iniciar tarefa na OT correta, para que o sistema saiba o que está em produção e por quem (o PIN identifica você). Confira que a máquina recebeu o arquivo da mesma OT e que a caixa SUA MISSÃO bate com o que você vai imprimir. Iniciar na OT errada gera confusão de quantidade e de responsável."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Sua fila no tablet",
+            "texto": "No tablet, Minhas funções abre uma fila única com todas as tarefas da sua função, com filtros por tipo, como Impressão e Pintura. O botão grande Próxima da fila leva à próxima tarefa a fazer. Outras funções mostra tarefas de funções de outras pessoas, para ajudar. Mesmo ao ajudar, o que vale é a OT e a caixa SUA MISSÃO. Tarefas bloqueadas por outra aparecem quando a anterior conclui. No PC, a aba Tarefas lista as tarefas designadas."
           },
           {
             "tipo": "conteudo",
             "titulo": "Acompanhar não é olhar sem parar",
-            "texto": "Acompanhar é fazer as verificações previstas e reconhecer sinais de problema. Os pontos de inspeção e critérios de parada oficiais: siga o procedimento definido pela Valente ou consulte o responsável. Como regra geral, a primeira camada é a mais importante, então observe o começo com atenção. Se precisar parar o trabalho para resolver algo, use Pausar na OT."
+            "texto": "Acompanhar é fazer as verificações previstas e reconhecer sinais de problema. Os pontos de inspeção e critérios de parada oficiais: siga o procedimento definido pela Valente ou consulte o responsável. Como regra geral, a primeira camada é a mais importante, então observe o começo com atenção. Se precisar parar o trabalho para resolver algo, use Pausar na OT e, quando o problema estiver resolvido, Retomar."
           },
           {
             "tipo": "conteudo",
@@ -2770,7 +3511,7 @@ var TREINAMENTO_TRILHAS = {
                 "cliente": "O responsável liberou você para reiniciar. Como registrar?",
                 "opcoes": [
                   {
-                    "label": "Reiniciar e manter a OT iniciada, retomando o acompanhamento da primeira camada.",
+                    "label": "Reiniciar usando Retomar na OT e voltar ao acompanhamento da primeira camada.",
                     "correta": true,
                     "erroCritico": false,
                     "feedback": "Certo. Retome e observe a primeira camada com atenção."
@@ -2800,8 +3541,8 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "confirmacao_pratica",
             "competencia": "preparo_acompanhamento",
-            "local": "Valente OS, tablet, Missão/Inbox de tarefas (apenas observação)",
-            "instrucao": "Sem alterar nenhuma OT real, abra uma OT no tablet e localize os botões Iniciar, Pausar e Concluir. Confirme quando souber o que cada um representa e quando usaria Pausar."
+            "local": "Valente OS, tablet, Minhas funções e tarefa de impressão (apenas observação)",
+            "instrucao": "Sem alterar nenhuma OT real, abra uma tarefa de impressão no tablet e localize a caixa SUA MISSÃO e os botões Iniciar tarefa, Pausar, Retomar e Concluir tarefa. Confirme quando souber o que cada um representa e quando usaria Pausar."
           }
         ]
       },
@@ -2823,7 +3564,12 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Registrar o que aconteceu",
-            "texto": "Registre conforme o procedimento. No tablet, Concluir só se usa quando a tarefa foi de fato realizada. O registro da fornada e, quando houver, da falha com o motivo, deve refletir a realidade: quantas peças boas, quantas reprovadas e por quê. O formato exato do registro: siga o procedimento definido pela Valente ou consulte o responsável."
+            "texto": "Registre conforme o procedimento. Concluir tarefa só se usa quando a tarefa foi de fato realizada. O registro, feito por fornada, deve refletir a realidade: quantas peças boas, quantas reprovadas e por quê. Se a tarefa pede 16 e você já fez 10, a SUA MISSÃO mostra o que falta, então um registro inflado também bagunça a próxima fornada. Detalhes do registro: siga o procedimento definido pela Valente ou consulte o responsável."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "A janela de conclusão da impressão",
+            "texto": "Ao tocar Concluir tarefa em uma impressão, o Valente OS abre uma janela própria com quatro respostas: Tudo certo, Saiu só parte, Falhou e Cancelada. Escolha a que descreve o que aconteceu de verdade. Tudo certo é para quando o que a tarefa pedia saiu bom. Saiu só parte é para resultado parcial. Falhou e Cancelada são para quando o trabalho não se completou. O registro é por fornada, com o motivo quando houve falha. Se estiver em dúvida entre duas respostas, confirme com o responsável."
           },
           {
             "tipo": "multipla_escolha",
@@ -2858,6 +3604,28 @@ var TREINAMENTO_TRILHAS = {
             "feedbackErrado": "A máquina pode terminar normalmente e ainda ter gerado peças defeituosas. A inspeção é sua."
           },
           {
+            "tipo": "multipla_escolha",
+            "competencia": "inspecao_falhas",
+            "pergunta": "A impressão de uma bandeja com 12 posições terminou: 9 peças boas e 3 com falha. Ao tocar Concluir tarefa abre a janela da impressão. Qual resposta combina com o resultado?",
+            "opcoes": [
+              "Tudo certo, porque a máquina terminou o ciclo sem erro.",
+              "Cancelada, porque nem todas as peças ficaram boas.",
+              "Saiu só parte, informando quantas ficaram boas e o motivo da falha nas demais.",
+              "Falhou, porque houve peças ruins na bandeja."
+            ],
+            "correta": 2,
+            "feedbackCerto": "Certo. O resultado foi parcial, então a resposta e o registro da fornada mostram o que realmente saiu e por que o resto falhou.",
+            "feedbackPorOpcao": [
+              "Terminar o ciclo não é aprovar. Dizer Tudo certo com 3 peças ruins é registrar o que não aconteceu.",
+              "Cancelada serve para quando o trabalho foi interrompido, não para uma bandeja que terminou com peças aproveitáveis.",
+              null,
+              "Falhou descreve um resultado sem aproveitamento. Aqui 9 peças saíram boas e isso precisa constar."
+            ],
+            "erroCriticoOpcoes": [
+              0
+            ]
+          },
+          {
             "tipo": "texto_livre",
             "competencia": "inspecao_falhas",
             "pergunta": "Você retirou uma bandeja e as peças parecem corretas, mas uma está com um canto levantado. Descreva como você contaria, inspecionaria e registraria esse resultado.",
@@ -2887,7 +3655,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Separar e comunicar",
-            "texto": "Não esconda a falha e não misture peça reprovada com peça aprovada. Separe fisicamente, identifique e registre a falha com motivo (no tablet, no registro de fornada/falha). Se a causa for fora da sua competência ou envolver reimpressão, comunique o responsável. Regras de descarte e reimpressão: siga o procedimento definido pela Valente ou consulte o responsável."
+            "texto": "Não esconda a falha e não misture peça reprovada com peça aprovada. Separe fisicamente, identifique e registre a falha com motivo (no tablet, na janela de conclusão da impressão, com a resposta Falhou ou Saiu só parte). Se a causa for fora da sua competência ou envolver reimpressão, comunique o responsável. Regras de descarte e reimpressão: siga o procedimento definido pela Valente ou consulte o responsável."
           },
           {
             "tipo": "resposta_cliente",
@@ -2945,8 +3713,8 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "confirmacao_pratica",
             "competencia": "inspecao_falhas",
-            "local": "Valente OS, registro de fornada/falha (apenas observação)",
-            "instrucao": "Sem registrar nada real, peça ao líder para mostrar onde se registra uma fornada com falha e o campo de motivo. Confirme quando souber como se registra a falha e por que o motivo importa."
+            "local": "Valente OS, janela de conclusão da impressão (apenas observação)",
+            "instrucao": "Sem registrar nada real, peça ao líder para mostrar a janela que aparece ao concluir uma tarefa de impressão e onde se informa a fornada com falha e o motivo. Confirme quando souber como se registra a falha e por que o motivo importa."
           }
         ]
       },
@@ -2968,7 +3736,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Concluir e liberar",
-            "texto": "Depois de contar, inspecionar e organizar, use Concluir na OT, que registra o término. O Concluir só entra quando o trabalho realmente terminou e a entrega está identificada. Concluir com peça faltando ou sem conferir passa o problema para o próximo setor, que depois não tem como saber a origem."
+            "texto": "Depois de contar, inspecionar e organizar, use Concluir tarefa na OT, que registra o término. Só conclua quando o trabalho realmente terminou e a entrega está identificada. Concluir com peça faltando ou sem conferir passa o problema para o próximo setor, que depois não tem como saber a origem. As tarefas que dependiam desta são liberadas automaticamente quando ela conclui."
           },
           {
             "tipo": "ordenar",
@@ -3137,8 +3905,8 @@ var TREINAMENTO_TRILHAS = {
               "Identifique a OT e confira arquivo, versão, quantidade e material.",
               "Descreva o que você conferiria na prévia do fatiamento, sem inventar parâmetros e remetendo ao perfil da Valente.",
               "Percorra o checklist da máquina e diga o que faria se algo estivesse anormal.",
-              "Simule Iniciar, acompanhe e diga quando usaria Pausar.",
-              "Inspecione o resultado apresentado, conte e registre fornada e falha com motivo.",
+              "Simule Iniciar tarefa, acompanhe e diga quando usaria Pausar e Retomar.",
+              "Inspecione o resultado apresentado, conte e, na janela de conclusão da impressão, escolha a resposta certa (Tudo certo, Saiu só parte, Falhou ou Cancelada) registrando a fornada e a falha com motivo.",
               "Decida se libera ou trata falha e como entregaria ao pós-impressão com identificação."
             ],
             "criterioConclusao": "Você apontou a inconsistência, interrompeu antes de gastar material, registrou a quantidade real e a falha com motivo, e só liberou o que estava aprovado. A liberação prática real depende de validação do responsável."
@@ -3152,7 +3920,7 @@ var TREINAMENTO_TRILHAS = {
     "nome": "Pós-impressão e Acabamento",
     "descricao": "Aprenda a tratar, inspecionar e entregar peças de resina e FDM com segurança, qualidade e organização.",
     "icone": "🧰",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Organização da bancada",
@@ -3183,6 +3951,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Bancada organizada é controle de qualidade",
             "texto": "Uma bancada bagunçada mistura componentes de pedidos diferentes, perde peças pequenas, contamina áreas limpas com poeira ou resina e causa acidentes. Pense em três zonas: onde a peça entra, onde ela fica durante cada processo (limpeza, cura, lixamento) e onde ela espera para sair. Em todas, a peça continua vinculada à OT, a tarefa do Valente OS com título, instruções, checklist e quantidade. Peça sem identificação é peça que alguém vai ter de adivinhar."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Sua tarefa no Valente OS",
+            "texto": "Cada tarefa tem os botões Iniciar tarefa, Pausar, Retomar e Concluir tarefa. O PIN do colaborador identifica quem executa: seu nome aparece no topo da tela e fica gravado como responsável pelo que você inicia e conclui. Por isso, use sempre o seu PIN e nunca o de outra pessoa. No topo da tarefa fica a caixa SUA MISSÃO, em destaque, com o que você deve fazer e a quantidade. Abaixo estão o checklist e as fotos de referência da peça."
           },
           {
             "tipo": "selecionar_itens",
@@ -3251,7 +4024,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Como agir",
-            "texto": "Leia a OT no Valente OS: título, instruções, checklist e quantidade. Conte as peças e identifique cada componente. Se a conta não fecha, não improvise e não presuma que alguém vai trazer depois. Registre a divergência e consulte o responsável pela etapa anterior ou o seu líder. Dizer que não sabe a origem da peça não é erro. Seguir adiante sem saber é."
+            "texto": "Abra a OT no Valente OS e comece pela caixa SUA MISSÃO, no topo: ela diz o que fazer e quantas unidades. Depois leia título, instruções, checklist, fotos de referência e quantidade. Conte as peças e identifique cada componente. Se a conta não fecha, não improvise e não presuma que alguém vai trazer depois. Registre a divergência e consulte o responsável pela etapa anterior ou o seu líder. Dizer que não sabe a origem da peça não é erro. Seguir adiante sem saber é."
           },
           {
             "tipo": "resposta_cliente",
@@ -3302,7 +4075,7 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "confirmacao_pratica",
             "competencia": "conferencia_recebimento",
             "local": "Valente OS > Missão/Inbox de tarefas (apenas consulta)",
-            "instrucao": "Abra uma OT em modo de consulta, sem alterar nada, e anote mentalmente título, quantidade e componentes. Explique para seu líder o que você conferiria na peça física antes de iniciar. Não clique em Iniciar nem Concluir no treinamento."
+            "instrucao": "Abra uma OT em modo de consulta, sem alterar nada, e leia a caixa SUA MISSÃO no topo, o título, a quantidade e os componentes. Explique para seu líder o que você conferiria na peça física antes de iniciar. Não clique em Iniciar nem Concluir no treinamento."
           }
         ]
       },
@@ -3618,6 +4391,11 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Teste, identifique a causa, corrija se estiver autorizado e consulte quando necessário. Limpar um resíduo ou remover uma rebarba pode estar dentro da sua competência, mas alterar medida, refazer encaixe ou usar adesivo é decisão que segue o procedimento da Valente. Adesivos exigem ventilação e luvas e cuidado com os olhos. Se a causa for deformação ou modelagem, pare e consulte."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Pegando peças no estoque",
+            "texto": "Nas tarefas de montagem aparece o botão Retirar do estoque. Ele mostra só o componente daquela tarefa, por exemplo a Saia, ou todos os componentes quando a tarefa é da peça inteira. Você informa no campo Quantas peças? e o sistema diz em qual endereço pegar (como G1-E01-P02-C03). Na Retirada guiada, os itens já pintados saem primeiro. Não pegue peça de memória nem de outro endereço: siga o que o sistema indica."
+          },
+          {
             "tipo": "multipla_escolha",
             "competencia": "qualidade_entrega",
             "pergunta": "Ao testar um encaixe, o pino entra pela metade e trava. O que fazer?",
@@ -3768,7 +4546,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Kit e conferência cruzada",
-            "texto": "Mantenha os componentes de um pedido juntos, por exemplo em um saco ou caixa identificada com a OT. Faça a conferência cruzada: você mesmo confere o kit e outra pessoa confere de novo, de forma independente, comparando com a OT. Só depois conclua a tarefa e mova o pedido para a etapa seguinte, conforme o procedimento da Valente. Peças pequenas saem em embalagem fechada para não se perderem."
+            "texto": "Mantenha os componentes de um pedido juntos, por exemplo em um saco ou caixa identificada com a OT. Faça a conferência cruzada: você mesmo confere o kit e outra pessoa confere de novo, de forma independente, comparando com a OT. Só depois toque em Concluir tarefa; o sistema abre a janela Concluir etapa e mostra qual é a próxima etapa. Peças pequenas saem em embalagem fechada para não se perderem."
           },
           {
             "tipo": "selecionar_itens",
@@ -3807,6 +4585,34 @@ var TREINAMENTO_TRILHAS = {
               "Conferir de novo é checagem, não pressa.",
               "A Pintura continua conferindo seu recebimento.",
               null
+            ]
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "A janela Concluir etapa",
+            "texto": "Ao tocar em Concluir tarefa numa etapa de produção, o sistema abre a janela Concluir etapa. Nela você informa quantas peças ficaram prontas e quantas precisam voltar para a fase anterior, com o motivo. A janela também mostra qual é a próxima etapa. Se a quantidade da tarefa é 1, aparecem só dois botões: Etapa concluída e Houve problema. Informe o que realmente aconteceu: contar como pronta uma peça com defeito é marcar como feito o que não foi feito."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "qualidade_entrega",
+            "pergunta": "A OT pede 3 conjuntos. Dois estão limpos e completos, e um tem rachadura no braço, já comunicada ao responsável. Ao tocar em Concluir tarefa, o que você informa na janela Concluir etapa?",
+            "opcoes": [
+              "3 prontas, e avisa a rachadura só por conversa",
+              "2 prontas e 0 voltando, para não atrasar o pedido",
+              "2 prontas e 1 voltando para a fase anterior, com o motivo",
+              "0 prontas, porque um conjunto tem problema"
+            ],
+            "correta": 2,
+            "feedbackCerto": "Correto. O sistema separa o que está pronto do que volta, e o motivo fica registrado.",
+            "feedbackPorOpcao": [
+              "Contar peça com defeito como pronta e avisar só de boca é esconder defeito no sistema.",
+              "Peça com defeito não pode seguir como pronta; a janela existe para registrar o que volta.",
+              null,
+              "Os dois conjuntos bons estão prontos e devem ser contados como tal."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              1
             ]
           },
           {
@@ -3914,7 +4720,7 @@ var TREINAMENTO_TRILHAS = {
                     "feedback": "Esconder defeito é erro crítico."
                   },
                   {
-                    "label": "Envia as duas aprovadas, retém a peça rachada e comunica o defeito para decisão sobre correção ou reimpressão.",
+                    "label": "Envia as duas aprovadas, retém a peça rachada, comunica o defeito para decisão e, em Concluir etapa, informa 2 prontas e 1 que volta para a fase anterior, com o motivo.",
                     "correta": true,
                     "erroCritico": false,
                     "feedback": "Correto. Parar diante do defeito e comunicar."
@@ -3946,7 +4752,7 @@ var TREINAMENTO_TRILHAS = {
               "Verificar EPIs e ventilação e descrever como seria a lavagem, a cura e o descarte conforme o procedimento da Valente",
               "Planejar a remoção de suportes, apontando pontos frágeis, e a sequência de lixamento do grão mais grosso ao mais fino",
               "Fazer teste de encaixe sem cola e inspecionar defeitos, classificando cada peça como aprovada, corrigível ou consulta",
-              "Montar o kit de entrega identificado com a OT e fazer a conferência cruzada, avisando qualquer defeito antes de avançar"
+              "Montar o kit de entrega identificado com a OT, fazer a conferência cruzada, avisar qualquer defeito antes de avançar e descrever como preencheria a janela Concluir etapa (quantas prontas, quantas voltam para a fase anterior, com motivo)"
             ],
             "criterioConclusao": "Você conferiu na entrada, usou EPI e ventilação, não inventou tempos nem produtos, parou diante dos defeitos, comunicou e entregou um kit limpo, completo e identificado."
           }
@@ -3959,7 +4765,7 @@ var TREINAMENTO_TRILHAS = {
     "nome": "Pintura",
     "descricao": "Aprenda a preparar, pintar, corrigir e inspecionar miniaturas seguindo a referência numerada da Valente.",
     "icone": "🎨",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Estação de pintura",
@@ -3984,7 +4790,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "A referência oficial é o pote",
-            "texto": "Na Valente, cada cor tem uma referência numerada, de Cor 01 a Cor 33. O número fica na etiqueta do pote. A tela de Pintura mostra a imagem de referência e o número da cor de cada parte da peça. Telas distorcem tons, então o número do pote vale mais que a cor que você vê na tela. Pode haver três tipos de verde na prateleira: confira sempre a etiqueta, nunca o olho."
+            "texto": "Na Valente, cada cor tem uma referência numerada, de Cor 01 a Cor 33. O número fica na etiqueta do pote. A tarefa de pintura traz as fotos de referência da peça, e a tela de Cores, no tablet Samsung, mostra as cores numeradas. Telas distorcem tons, então o número do pote vale mais que a cor que você vê na tela. Pode haver três tipos de verde na prateleira: confira sempre a etiqueta, nunca o olho."
           },
           {
             "tipo": "conteudo",
@@ -3999,11 +4805,11 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "multipla_escolha",
             "competencia": "preparacao_estacao",
-            "pergunta": "Na tela de Pintura, a parte da peça mostra um verde, mas na prateleira há três potes de verde diferentes. Como escolher o certo?",
+            "pergunta": "Na referência da tarefa, a parte da peça mostra um verde, mas na prateleira há três potes de verde diferentes. Como escolher o certo?",
             "opcoes": [
               "Escolher o verde que mais se parece com o que aparece na tela",
               "Misturar os três verdes até chegar perto da imagem",
-              "Usar o pote cuja etiqueta tem o mesmo número de Cor indicado na tela para aquela parte",
+              "Usar o pote cuja etiqueta tem o mesmo número de Cor indicado para aquela parte",
               "Usar o verde que você já usou em outra peça parecida"
             ],
             "correta": 2,
@@ -4040,8 +4846,8 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "confirmacao_pratica",
             "competencia": "preparacao_estacao",
-            "local": "Tela de Pintura e prateleira de tintas",
-            "instrucao": "Sem alterar nenhum trabalho real, abra a tela de Pintura, veja a imagem de referência e o número de Cor de uma parte, e localize na prateleira o pote com esse número. Localize também a área de peças aguardando pintura. Confirme que fez a consulta."
+            "local": "Tarefa de pintura, tela de Cores e prateleira de tintas",
+            "instrucao": "Sem alterar nenhum trabalho real, abra uma tarefa de pintura, veja as fotos de referência e o número de Cor de uma parte, confira a tela de Cores no tablet Samsung e localize na prateleira o pote com esse número. Localize também a área de peças aguardando pintura. Confirme que fez a consulta."
           }
         ]
       },
@@ -4054,6 +4860,16 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Pintura começa na leitura",
             "texto": "Antes de abrir qualquer tinta, entenda o trabalho. Consulte o pedido no Kanban, na etapa Pintura, e a tarefa (OT) na Missão ou Inbox de tarefas. A OT tem título, instruções, checklist e quantidade. Veja também a imagem de referência e o número de Cor de cada parte, os componentes da peça e as observações do pedido."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Sua missão na tela da tarefa",
+            "texto": "Ao abrir uma tarefa de pintura, o topo mostra a caixa SUA MISSÃO, em destaque. Exemplo: Pintar 8 de 18 unidades de Saia da peça Aluno Colégio Militar Menina. Quando a tarefa já avançou, ela mostra o que FALTA (8 de 18) e a linha Já feitas nesta tarefa: 10. Mostra também quantas unidades são necessárias para fechar o pedido, quantas já foram pintadas antes e quantas impressas estão disponíveis. O seu PIN identifica você como executor: seu nome aparece no topo e fica gravado como responsável pelo que você inicia ou conclui."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Pegar as peças e achar a próxima tarefa",
+            "texto": "Para buscar peças, use o botão 📦 Retirar do estoque dentro da tarefa. Ele mostra só o componente da tarefa (por exemplo, Saia), ou todos os componentes se a tarefa é da peça inteira, e pede Quantas peças? A retirada guiada diz o endereço de cada componente (na pintura, as sem pintura primeiro) e leva os itens para a Mesa de separação. No tablet, Minhas funções abre uma fila única com as tarefas da sua função, com filtro por tipo, como Pintura, e o botão ▶ Próxima da fila. Outras funções mostra tarefas de colegas, para ajudar."
           },
           {
             "tipo": "conteudo",
@@ -4102,12 +4918,31 @@ var TREINAMENTO_TRILHAS = {
             ]
           },
           {
+            "tipo": "multipla_escolha",
+            "competencia": "leitura_pedido",
+            "pergunta": "A SUA MISSÃO diz Pintar 8 de 18 unidades, e logo abaixo aparece Já feitas nesta tarefa: 10. Como interpretar?",
+            "opcoes": [
+              "Faltam 18 peças e 8 já foram feitas",
+              "Você deve pintar 8 hoje e 18 amanhã",
+              "Faltam 10 peças, que são as já feitas",
+              "Faltam 8 unidades; a tarefa tem 18 e 10 já foram pintadas"
+            ],
+            "correta": 3,
+            "feedbackCerto": "Correto. O primeiro número é o que falta; o segundo é o total da tarefa.",
+            "feedbackPorOpcao": [
+              "Está invertido: 8 é o que falta, não o que foi feito.",
+              "A missão mostra o que falta da tarefa, não uma divisão por dias.",
+              "As 10 já feitas são separadas do que falta.",
+              null
+            ]
+          },
+          {
             "tipo": "texto_livre",
             "competencia": "leitura_pedido",
             "pergunta": "Abra, só para consulta, a OT ou pedido em Pintura que o supervisor indicar e descreva: qual a versão, a quantidade, quais Cores aparecem e se há observação especial.",
             "pontosEsperados": [
               "Versão da peça identificada",
-              "Quantidade conferida",
+              "Quantidade conferida (total da tarefa, quanto falta e quanto já foi feito)",
               "Números de Cor por parte citados",
               "Observações do pedido lidas ou registro de que não há"
             ]
@@ -4257,8 +5092,8 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "confirmacao_pratica",
             "competencia": "fidelidade_cor",
-            "local": "Tela de Pintura",
-            "instrucao": "Na tela de Pintura, observe a imagem de referência e o número de Cor de cada parte de uma peça. Localize os potes e confirme os números nas etiquetas. Veja se a cor na tela e a do pote diferem. Apenas consulta."
+            "local": "Tarefa de pintura e tela de Cores",
+            "instrucao": "Na tarefa de pintura e na tela de Cores, observe a imagem de referência e o número de Cor de cada parte de uma peça. Localize os potes e confirme os números nas etiquetas. Veja se a cor na tela e a do pote diferem. Apenas consulta."
           }
         ]
       },
@@ -4283,6 +5118,11 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Em lotes, busque consistência: faça a mesma etapa em todas as peças antes de passar à próxima. Espere cada camada secar antes de trabalhar a vizinha, para não manchar. Se uma peça tem áreas que se tocam, pense em qual cor vem primeiro para ficar mais fácil acertar a borda."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Pintura em vários dias: Produção do dia",
+            "texto": "Lote grande raramente termina em um dia. Em tarefa de pintura com mais de uma peça, a pintura é registrada por dia: ao tocar Concluir (ou o botão 📝 Produção do dia no tablet, ou Registrar produção do turno no PC), aparece Produção do dia, com quantas peças você pintou hoje, quantas estragaram e anotações para amanhã. A tarefa fica pausada e volta no dia seguinte, somando as pintadas. Use as anotações para o próximo turno saber onde você parou, qual Cor e o que cuidar."
+          },
+          {
             "tipo": "ordenar",
             "competencia": "leitura_pedido",
             "instrucao": "Ordene as etapas de pintura de uma figura, da primeira para a última.",
@@ -4302,6 +5142,29 @@ var TREINAMENTO_TRILHAS = {
             "correta": false,
             "feedbackCerto": "Correto. Fazer a mesma etapa em todas as peças ajuda a manter a consistência.",
             "feedbackErrado": "Falso. Em lote, a mesma etapa é feita em todas as peças antes de seguir, favorecendo o padrão."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "tecnica_pintura",
+            "pergunta": "Hoje você pintou 5 peças boas de uma tarefa de 18, e 1 peça estragou ao cair. Ao tocar Concluir, o que registrar em Produção do dia?",
+            "opcoes": [
+              "18 pintadas, para a tarefa sair da fila",
+              "5 pintadas, 1 estragada e uma anotação para amanhã dizendo onde você parou",
+              "Só as 5 pintadas, sem citar a estragada, para não parecer erro",
+              "Nada: o registro é feito só quando o lote inteiro acabar"
+            ],
+            "correta": 1,
+            "feedbackCerto": "Correto. Números reais e uma anotação clara permitem que a tarefa continue amanhã.",
+            "feedbackPorOpcao": [
+              "Marcar como feito o que não foi feito é erro crítico.",
+              null,
+              "Esconder a peça estragada falseia a contagem. Registre também o que deu errado.",
+              "A tarefa pausa a cada dia justamente para acumular o que foi pintado em cada turno."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              2
+            ]
           },
           {
             "tipo": "texto_livre",
@@ -4539,6 +5402,11 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Use um checklist visual e mantenha peças aprovadas separadas das que precisam de correção, em lugares claros. Seguir para a próxima etapa do Kanban, Preparar p/ envio, é feito conforme o procedimento da Valente. Se um padrão visual exige validação, o responsável valida. Em dúvida, consulte."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Fechar a pintura",
+            "texto": "Quando todas as peças da tarefa estão pintadas, abre a janela Fechar a pintura. Ela pede quantas peças ficaram prontas no total e quantas voltam para a fase anterior, com o motivo. Marque como prontas só as que passaram na inspeção do conjunto. Peça com defeito de impressão, ou que você não consegue corrigir, volta para a fase anterior com o motivo escrito com clareza. Registrar certo mantém verdadeira a contagem de produção do pedido."
+          },
+          {
             "tipo": "resposta_cliente",
             "competencia": "inspecao_liberacao",
             "cliente": "Líder: Seu lote de 8 está pronto? O cliente espera hoje.",
@@ -4578,6 +5446,29 @@ var TREINAMENTO_TRILHAS = {
             "feedbackErrado": "Falso. Em lote, uma peça que destoa parece erro, mesmo bem pintada."
           },
           {
+            "tipo": "multipla_escolha",
+            "competencia": "inspecao_liberacao",
+            "pergunta": "Você pintou as 10 peças da tarefa. Na inspeção do conjunto, 9 passaram e 1 tem defeito de impressão no rosto. Na janela Fechar a pintura, o que registrar?",
+            "opcoes": [
+              "10 prontas, e corrigir depois se o cliente reclamar",
+              "9 prontas, sem mencionar a outra, para não atrasar o pedido",
+              "9 prontas e 1 voltando para a fase anterior, com o motivo escrito",
+              "Nenhuma pronta até o cliente avaliar o lote"
+            ],
+            "correta": 2,
+            "feedbackCerto": "Correto. Prontas são só as aprovadas; a com defeito volta com o motivo.",
+            "feedbackPorOpcao": [
+              "Liberar peça com defeito é erro crítico.",
+              "Esconder a peça falsifica a contagem e o pedido segue errado.",
+              null,
+              "O cliente não avalia antes: a inspeção é sua, e a janela pede o total pronto."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              1
+            ]
+          },
+          {
             "tipo": "confirmacao_pratica",
             "competencia": "inspecao_liberacao",
             "local": "Bancada de inspeção",
@@ -4593,7 +5484,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "O fluxo da pintura",
-            "texto": "Você recebe uma peça de treino, a referência e uma OT simulada. O fluxo: ler pedido e referência, conferir Cor 01 a 33 pelo pote, preparar a superfície, planejar a ordem base, sombras, luzes e detalhes, aplicar técnicas básicas, fazer detalhes e decalques, corrigir com método e inspecionar o conjunto."
+            "texto": "Você recebe uma peça de treino, a referência e uma OT simulada. O fluxo: ler a SUA MISSÃO e a referência, conferir Cor 01 a 33 pelo pote, preparar a superfície, planejar a ordem base, sombras, luzes e detalhes, aplicar técnicas básicas, fazer detalhes e decalques, corrigir com método, inspecionar o conjunto e, no sistema, registrar a Produção do dia e Fechar a pintura."
           },
           {
             "tipo": "conteudo",
@@ -4610,7 +5501,8 @@ var TREINAMENTO_TRILHAS = {
               "Sequência de pintura planejada",
               "Camadas finas aplicadas",
               "Detalhes conferidos",
-              "Inspeção final do conjunto"
+              "Inspeção final do conjunto",
+              "Produção do dia e Fechar a pintura entendidos (sem alterar dados reais)"
             ]
           },
           {
@@ -4620,7 +5512,7 @@ var TREINAMENTO_TRILHAS = {
             "noInicial": "a",
             "nos": {
               "a": {
-                "cliente": "OT simulada: pintar 4 soldados, uniforme conforme a referência. Você abre a OT e a tela de Pintura. A referência mostra um verde e na prateleira existem três potes de verde. O que faz primeiro?",
+                "cliente": "OT simulada: pintar 4 soldados, uniforme conforme a referência. Você abre a OT e a referência. A referência mostra um verde e na prateleira existem três potes de verde. O que faz primeiro?",
                 "opcoes": [
                   {
                     "label": "Confiro o número de Cor da referência e uso o pote com a mesma etiqueta",
@@ -4723,7 +5615,8 @@ var TREINAMENTO_TRILHAS = {
             "objetivo": "Executar o fluxo completo de pintura em uma peça de treino e decidir se ela está pronta para seguir.",
             "contexto": "Você recebeu uma peça de treino, uma imagem de referência e uma OT simulada de 1 unidade, com 3 cores e um detalhe. Nenhum dado real deve ser alterado.",
             "tarefas": [
-              "Ler a OT e a referência e anotar versão, quantidade e números de Cor",
+              "Ler a SUA MISSÃO, a OT e a referência e anotar versão, quantidade (total e quanto falta) e números de Cor",
+              "Descrever como registraria a Produção do dia e o Fechar a pintura se a OT tivesse 8 unidades feitas em dois dias (apenas explicar, sem registrar)",
               "Localizar os potes pelos números de etiqueta",
               "Inspecionar e preparar a superfície",
               "Planejar e anotar a sequência: base, sombras, luzes e detalhes",
@@ -4734,14 +5627,22 @@ var TREINAMENTO_TRILHAS = {
           }
         ]
       }
-    ]
+    ],
+    "rotulosCompetencia": {
+      "preparacao_estacao": "Estação de pintura",
+      "leitura_pedido": "Leitura do pedido",
+      "preparacao_superficie": "Preparação da superfície",
+      "fidelidade_cor": "Fidelidade à cor",
+      "tecnica_pintura": "Técnicas de pintura",
+      "inspecao_liberacao": "Inspeção e liberação"
+    }
   },
   expedicao: {
     "id": "expedicao",
     "nome": "Preparação, Embalagem e Expedição",
     "descricao": "Aprenda a conferir, embalar, identificar e despachar pedidos com segurança, registrando o envio no Valente OS.",
     "icone": "📦",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": null,
     "competencias": [
       "Conferência do pedido",
@@ -4772,6 +5673,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Um exemplo para guardar",
             "texto": "Uma embalagem bonita com produto errado continua sendo uma falha grave. O cliente não avalia a caixa se abrir e encontrar a miniatura trocada, faltando um acessório ou quebrada. Por isso, sua primeira pergunta nunca é como embalar. É: o que eu estou recebendo e está tudo certo? Manter a bancada organizada, com um pedido de cada vez, ajuda a evitar mistura entre pedidos."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Sua missão na tela da tarefa",
+            "texto": "Ao abrir uma tarefa, o topo mostra a caixa SUA MISSÃO, com o que você deve fazer e quanto falta. Seu PIN identifica você como responsável pelas tarefas que inicia e conclui. No tablet, Minhas funções abre uma fila única, e o botão Próxima da fila leva à tarefa seguinte. O Kanban atualiza sozinho a cada 60 segundos, mas a tarefa é a fonte do que fazer."
           },
           {
             "tipo": "multipla_escolha",
@@ -4825,6 +5731,19 @@ var TREINAMENTO_TRILHAS = {
             "texto": "O jeito mais seguro é montar uma lista pelo conteúdo esperado. Por exemplo: peça A, peça B, acessório da peça A, base, observação especial. Marque cada item à medida que o vê com seus olhos. Itens que você presume que estão lá, sem ver, não contam como conferidos. Se algo não aparecer, pare e consulte o responsável, em vez de seguir esperando que apareça depois."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Retirar do estoque",
+            "texto": "As peças prontas ficam guardadas em endereços, como G1-E01-P02. Na tarefa de separação, conferência, embalagem ou expedição, toque em Retirar do estoque. Ele mostra só o componente da tarefa, ou todos os componentes se a tarefa é da peça inteira, e pede Quantas peças. Na aba Estoque, a Retirada guiada diz em qual endereço pegar cada item. Ao confirmar Retirar, os itens vão para a Mesa de separação; marcar Enviado na mesa dá a baixa."
+          },
+          {
+            "tipo": "verdadeiro_falso",
+            "competencia": "conferencia_pedido",
+            "afirmacao": "Ao confirmar Retirar na Retirada guiada, o estoque já é baixado de forma definitiva, antes de qualquer outra ação.",
+            "correta": false,
+            "feedbackCerto": "Correto. Os itens vão para a Mesa de separação e a baixa acontece quando se marca Enviado na mesa.",
+            "feedbackErrado": "Falso. Retirar leva os itens para a Mesa de separação; a baixa só ocorre quando Enviado é marcado na mesa."
+          },
+          {
             "tipo": "multipla_escolha",
             "competencia": "conferencia_pedido",
             "pergunta": "O pedido registra duas miniaturas e um acessório para cada uma. Na bancada há duas caixas. Qual é a conferência correta?",
@@ -4868,12 +5787,17 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Detectar antes de fechar",
-            "texto": "Esta etapa existe para detectar troca, falta ou dano antes de fechar a embalagem. Depois de lacrada, a caixa esconde o problema, e o cliente o descobrirá. Se uma peça apresenta quebra, não a embale esperando que o cliente aceite. Separe a peça, não envie e acione o fluxo de correção definido pela Valente, avisando o responsável."
+            "texto": "Esta etapa existe para detectar troca, falta ou dano antes de fechar a embalagem. Depois de lacrada, a caixa esconde o problema, e o cliente o descobrirá. Se uma peça apresenta quebra, não a embale esperando que o cliente aceite. Separe a peça, não envie, registre Encontrei problema na tarefa e avise o responsável, que aciona o fluxo de correção definido pela Valente."
           },
           {
             "tipo": "conteudo",
             "titulo": "Uma decisão de qualidade",
             "texto": "Aprovar para embalagem é uma decisão de qualidade, não um passo burocrático. Se você aprova, está dizendo que aquele produto pode chegar ao cliente. Se estiver em dúvida, a dúvida é um sinal para parar e consultar, não para seguir. Parar e avisar não é erro. Esconder ou ignorar um defeito é."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Tudo certo ou Encontrei problema",
+            "texto": "Ao concluir a tarefa de Conferência, o tablet abre uma janela com duas respostas. Tudo certo libera o pedido para a Embalagem. Encontrei problema pede o motivo e quantas peças são afetadas, e o pedido não segue enquanto o problema não for resolvido. Responda Tudo certo apenas depois de passar pelos seis pontos com a peça em mãos."
           },
           {
             "tipo": "resposta_cliente",
@@ -4887,10 +5811,10 @@ var TREINAMENTO_TRILHAS = {
                 "feedback": "Embalar um defeito conhecido é esconder o problema. O cliente notará."
               },
               {
-                "label": "Separo a peça, não embalo e aciono o fluxo de correção, avisando o responsável.",
+                "label": "Separo a peça, não embalo, registro Encontrei problema na tarefa e aviso o responsável.",
                 "correta": true,
                 "erroCritico": false,
-                "feedback": "Certo. Quebra ou rachadura não segue; você separa e aciona o fluxo de correção."
+                "feedback": "Certo. Quebra ou rachadura não segue: você registra Encontrei problema, o pedido para e o responsável aciona a correção."
               },
               {
                 "label": "Embalo, mas coloco um bilhete avisando da rachadura para o cliente.",
@@ -4904,6 +5828,29 @@ var TREINAMENTO_TRILHAS = {
                 "erroCritico": true,
                 "feedback": "Marcar como feito sem resolver passa o defeito adiante e engana o registro."
               }
+            ]
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "conferencia_final",
+            "pergunta": "Ao terminar a conferência, você encontrou uma peça com tinta descascada em um pedido de três peças. Como responde na janela da tarefa?",
+            "opcoes": [
+              "Tudo certo, pois duas das três peças estão boas",
+              "Tudo certo, e aviso o cliente por bilhete dentro da caixa",
+              "Concluo a tarefa sem responder, deixando para a Embalagem decidir",
+              "Encontrei problema, com o motivo e a quantidade de peças afetadas"
+            ],
+            "correta": 3,
+            "feedbackCerto": "Correto. O problema registrado impede o pedido de seguir sem resolução.",
+            "feedbackPorOpcao": [
+              "Aprovar com defeito conhecido é esconder o problema.",
+              "Transferir o defeito ao cliente não resolve a falha.",
+              "Deixar para outra etapa é passar o defeito adiante.",
+              null
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              2
             ]
           },
           {
@@ -4992,6 +5939,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Padrões aprovados",
             "texto": "Use materiais e padrões aprovados para cada categoria quando disponíveis. Não invente embalagens improvisadas se existir um padrão definido. Se não houver padrão para aquele caso, consulte o responsável em vez de decidir sozinho. Depois de embalar, balance levemente a caixa fechada: se ouvir ou sentir a peça se mexendo, a imobilização não está boa."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Janela de Embalagem",
+            "texto": "Ao concluir a tarefa de Embalagem, o tablet abre uma janela com duas respostas: Tudo certo ou Encontrei problema. Se algo estiver errado, como peça trincada, proteção insuficiente ou item faltando, toque em Encontrei problema e informe o motivo e quantas peças. O problema impede o pedido de seguir até ser resolvido. Tudo certo só vale se você realmente conferiu."
           },
           {
             "tipo": "multipla_escolha",
@@ -5212,7 +6164,12 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "O que o tablet faz",
-            "texto": "Ainda na tarefa de Expedição, você confirma o saldo e toca em Marcar como enviado. Esse toque move o pedido para Enviado no Kanban e cria automaticamente a tarefa de Pós-compra para o Comercial, para 5 dias depois. Ou seja, o seu registro dispara o contato com o cliente. Por isso ele só pode ser feito quando o pacote saiu de verdade."
+            "texto": "Ainda na tarefa de Expedição, você informa se o saldo está quitado ou combinado e toca em Marcar como enviado. Esse toque move o pedido para Enviado no Kanban e cria automaticamente a tarefa de Pós-compra para o Comercial, para 5 dias depois. Concluir a tarefa sem marcar como enviado não é o caminho. Por isso o toque só pode ser feito quando o pacote saiu de verdade."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Saldo e pagamento na entrega",
+            "texto": "Na hora de marcar como enviado, o saldo pode estar quitado ou combinado. Pedidos de instituições públicas podem ter pagamento por empenho, pago na entrega, e o número do empenho precisa existir antes de a produção começar. Nesse caso o saldo pode ficar como combinado, em vez de quitado. Confira o que o pedido registra e, se algo não bater, consulte o Comercial. Você não cobra nem negocia pagamento."
           },
           {
             "tipo": "multipla_escolha",
@@ -5239,6 +6196,14 @@ var TREINAMENTO_TRILHAS = {
             ]
           },
           {
+            "tipo": "verdadeiro_falso",
+            "competencia": "despacho_kanban",
+            "afirmacao": "Na tarefa de Expedição, basta tocar em Concluir tarefa depois de embalar; marcar como enviado é opcional.",
+            "correta": false,
+            "feedbackCerto": "Correto. O caminho da Expedição é Marcar como enviado, depois do despacho real.",
+            "feedbackErrado": "Falso. Concluir a Expedição sem marcar como enviado não é o caminho: o pedido não vai para Enviado e a Pós-compra não é criada."
+          },
+          {
             "tipo": "ordenar",
             "competencia": "despacho_kanban",
             "instrucao": "Coloque na ordem correta as ações de despacho e registro.",
@@ -5246,7 +6211,7 @@ var TREINAMENTO_TRILHAS = {
               "Conferir dados de envio e identificação do pacote",
               "Entregar o pacote à transportadora ou realizar o envio",
               "Informar transportadora/forma de envio e código de rastreio na tarefa",
-              "Confirmar o saldo",
+              "Informar o saldo (quitado ou combinado)",
               "Tocar em Marcar como enviado"
             ],
             "feedbackCerto": "Correto. Primeiro o fato, depois o registro.",
@@ -5279,6 +6244,30 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Regra de ouro",
             "texto": "Atualize somente quando a condição real da etapa estiver atendida. Isso vale também para as outras etapas do Kanban e para marcar tarefas como concluídas. Marcar como feito algo que não foi feito é erro crítico. Se você marcou Enviado por engano, avise o responsável imediatamente; não tente esconder."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "O que vem depois do envio",
+            "texto": "Depois do envio, o Comercial faz o contato de Pós-compra e registra uma de quatro respostas. Recebeu e está satisfeito: pede a avaliação e encerra. Ainda não recebeu: confere o rastreio e volta a falar em 2 dias. Há um problema: descreve e abre uma tarefa de resolução. Não respondeu: tenta de novo em 2 dias. Seu registro de rastreio é o que o Comercial usa para responder o cliente."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "despacho_kanban",
+            "pergunta": "Na Pós-compra, o cliente diz que ainda não recebeu o pedido. O que o Comercial consulta primeiro para responder?",
+            "opcoes": [
+              "A foto da peça pintada, para provar a qualidade",
+              "A tarefa de Pintura, para ver quem executou",
+              "O código de rastreio e a transportadora registrados na Expedição",
+              "O Kanban de Negociação, para ver o valor do pedido"
+            ],
+            "correta": 2,
+            "feedbackCerto": "Correto. Por isso o rastreio registrado na expedição precisa estar certo.",
+            "feedbackPorOpcao": [
+              "A qualidade da peça não responde onde o pacote está.",
+              "A pintura não diz nada sobre o paradeiro do pacote.",
+              null,
+              "O valor não ajuda a localizar o pacote."
+            ]
           },
           {
             "tipo": "verdadeiro_falso",
@@ -5350,7 +6339,7 @@ var TREINAMENTO_TRILHAS = {
                     "feedback": "Esconder a falta é erro crítico. A diferença deve ser tratada, não omitida."
                   },
                   {
-                    "label": "Paro a conferência, registro o que falta e aviso o responsável para corrigir antes de embalar.",
+                    "label": "Paro a conferência, toco em Encontrei problema com o motivo e as peças afetadas e aviso o responsável antes de embalar.",
                     "correta": true,
                     "erroCritico": false,
                     "feedback": "Certo. Você detectou a falta antes de fechar.",
@@ -5444,10 +6433,10 @@ var TREINAMENTO_TRILHAS = {
             "contexto": "Você recebeu um pedido finalizado simulado com duas miniaturas pintadas e acessórios. Este exercício é uma simulação: não altere dados reais nem marque pedidos reais como enviados.",
             "tarefas": [
               "Consultar o pedido e montar um checklist por conteúdo, comparando o físico com o registro",
-              "Identificar o erro proposital (falta, troca ou dano) e separar o pedido, avisando o responsável",
+              "Identificar o erro proposital (falta, troca ou dano), separar o pedido, simular o registro de Encontrei problema (motivo e quantas peças) e avisar o responsável",
               "Escolher a embalagem pelo padrão aprovado e imobilizar a peça",
               "Conferir os dados de envio e a identificação do pacote, sem presumir nada",
-              "Simular o registro do despacho: transportadora/forma de envio, rastreio, saldo e Marcar como enviado, somente depois do envio real simulado",
+              "Simular o registro do despacho: transportadora/forma de envio, rastreio, saldo (quitado ou combinado) e Marcar como enviado, somente depois do envio real simulado",
               "Aguardar a conferência do responsável para a liberação prática"
             ],
             "criterioConclusao": "Você identificou o erro, parou em vez de enviar algo duvidoso, escolheu embalagem e identificação adequadas, conferiu os dados e o registro de despacho só foi simulado após o envio. A liberação prática depende da conferência do responsável."
@@ -5461,7 +6450,7 @@ var TREINAMENTO_TRILHAS = {
     "nome": "Gestão da Produção",
     "descricao": "Aprenda a ler o Kanban, priorizar, planejar capacidade, tratar gargalos e retrabalho, distribuir trabalho e usar indicadores com gestão enxuta.",
     "icone": "📊",
-    "versao": 1,
+    "versao": 2,
     "cargosPermitidos": [
       "admin",
       "supervisor"
@@ -5485,6 +6474,11 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "O Kanban é um retrato da operação",
             "texto": "Kanban é um quadro visual em que cada pedido é um cartão e cada coluna é uma etapa do trabalho. No Valente OS, a aba Pedidos mostra as colunas Negociação, Pago, Modelando, Imprimindo, Pós-impressão, Pintura, Preparar p/ envio e Enviado. O objetivo do quadro não é ficar bonito. É representar a operação real. Se o cartão diz Imprimindo, mas a peça já está na bancada de acabamento, o quadro está mentindo, e qualquer decisão tomada em cima dele nasce errada."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "O que o cartão mostra hoje",
+            "texto": "Cada cartão do Kanban mostra a etapa atual da produção do pedido, como modelagem, impressão ou pintura, e a tela se atualiza sozinha a cada 60 segundos. Você não precisa recarregar. Isso facilita ler o quadro, mas o cartão depende do que foi registrado no sistema. Observe também que pedido novo aparece em Aguardando liberação, e que pedido de instituição sem empenho registrado não pode ser movido para uma etapa de produção."
           },
           {
             "tipo": "conteudo",
@@ -5525,6 +6519,14 @@ var TREINAMENTO_TRILHAS = {
             ]
           },
           {
+            "tipo": "verdadeiro_falso",
+            "competencia": "leitura_kanban",
+            "afirmacao": "Como o Kanban se atualiza sozinho a cada 60 segundos, o cartão sempre mostra exatamente onde a peça está na bancada.",
+            "correta": false,
+            "feedbackCerto": "Correto. A tela atualiza o que está registrado, mas a bancada ainda precisa ser conferida.",
+            "feedbackErrado": "Falso. A atualização automática só traz o que foi registrado. Se o registro atrasou, o cartão atrasa. Confira a peça."
+          },
+          {
             "tipo": "selecionar_itens",
             "competencia": "leitura_kanban",
             "pergunta": "Quais destes itens são sinais no quadro que merecem investigação?",
@@ -5547,7 +6549,7 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "confirmacao_pratica",
             "competencia": "leitura_kanban",
             "local": "Valente OS, aba Pedidos (Kanban)",
-            "instrucao": "Apenas observando, sem mover nenhum cartão, olhe o quadro e anote em um papel: duas colunas com mais cartões, um cartão que parece parado, uma hipótese para cada um e o dado que você precisaria confirmar. Não altere nada no sistema."
+            "instrucao": "Apenas observando, sem mover nenhum cartão, olhe o quadro, incluindo a etapa atual mostrada em cada cartão, e anote em um papel: duas colunas com mais cartões, um cartão que parece parado, uma hipótese para cada um e o dado que você precisaria confirmar. Não altere nada no sistema."
           }
         ]
       },
@@ -5569,7 +6571,35 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Pedidos e OTs falando a mesma língua",
-            "texto": "O pedido é o que o cliente comprou e aparece como cartão no Kanban. A OT, ordem de tarefa, é o trabalho que alguém executa, com título, instruções, checklist e quantidade, e no tablet tem Iniciar, Pausar e Concluir. Ao priorizar, confira se a ordem dos cartões e a ordem das OTs contam a mesma história. Quem define os critérios oficiais de prioridade e quem pode alterá-los é a Valente: siga o procedimento definido pela Valente ou consulte o responsável."
+            "texto": "O pedido é o que o cliente comprou e aparece como cartão no Kanban. A OT, ordem de tarefa, é o trabalho que alguém executa, com título, instruções, checklist e quantidade, e no tablet tem Iniciar tarefa, Pausar, Retomar e Concluir tarefa. Ao priorizar, confira se a ordem dos cartões e a ordem das OTs contam a mesma história. Quem define os critérios oficiais de prioridade e quem pode alterá-los é a Valente: siga o procedimento definido pela Valente ou consulte o responsável."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Do pedido novo à produção: o botão Liberar",
+            "texto": "Pedido novo fica em Aguardando liberação. No cartão do Kanban há o botão Liberar, que gera a ordem de produção, o plano e as tarefas. Se falta pagamento ou empenho, o botão avisa a pendência. Ao priorizar, lembre que pedido sem liberação ainda não tem tarefas na fila da produção. Quem decide liberar e em que condição segue o procedimento da Valente ou o responsável."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "priorizacao",
+            "pergunta": "Um pedido aparece em Aguardando liberação e o Comercial pede para pô-lo na frente da fila. Qual é o melhor primeiro passo?",
+            "opcoes": [
+              "Começar a peça pela conversa, sem liberar, para ganhar tempo",
+              "Mover o cartão à mão para Imprimindo",
+              "Ver se há pagamento ou empenho e usar Liberar; se o botão apontar pendência, tratar com o Comercial antes de priorizar",
+              "Deixar o pedido parado até alguém lembrar de liberar"
+            ],
+            "correta": 2,
+            "feedbackCerto": "Certo. Primeiro a pendência, depois a prioridade.",
+            "feedbackPorOpcao": [
+              "Sem liberação não existem tarefas nem registro. O trabalho fica fora do sistema.",
+              "O cartão não é o jeito de pular a liberação, e a produção precisa das tarefas.",
+              null,
+              "Esperar sem ação cria um atraso evitável. Veja a pendência."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              1
+            ]
           },
           {
             "tipo": "resposta_cliente",
@@ -5650,6 +6680,19 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Aumentar a impressão sem capacidade de pós-processo apenas desloca o gargalo. As peças saem mais rápido, mas ficam empilhadas esperando limpeza, cura e acabamento. Os cartões se acumulam em Pós-impressão e o pedido não anda mais rápido. Por isso, a regra é planejar fluxo, não utilização de máquina. Uma impressora parada pode ser a decisão certa se a etapa seguinte já está lotada."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Pintura: ritmo por dia e estoque",
+            "texto": "Na pintura de várias peças, ao tocar Concluir aparece a Produção do dia: quantas peças foram pintadas, quantas estragaram e anotações para amanhã. A tarefa fica pausada e volta no dia seguinte acumulando as pintadas, e a SUA MISSÃO mostra o que falta, por exemplo 8 de 18, com Já feitas 10. Use isso para enxergar o ritmo real, sem inventar meta. Já a aba Estoque guarda peças por endereço, sem pintura ou pintado, e a Retirada guiada diz onde pegar. Estoque físico é diferente da contagem de produção."
+          },
+          {
+            "tipo": "verdadeiro_falso",
+            "competencia": "capacidade_fluxo",
+            "afirmacao": "Quando uma pintura de várias peças não termina no dia, o certo é registrar a Produção do dia, e a tarefa volta no dia seguinte acumulando as já pintadas.",
+            "correta": true,
+            "feedbackCerto": "Certo. A produção por dia dá ao gestor o ritmo real da pintura.",
+            "feedbackErrado": "Verdadeiro. A tarefa fica pausada e volta no outro dia somando as pintadas. Isso mostra o ritmo real."
+          },
+          {
             "tipo": "multipla_escolha",
             "competencia": "capacidade_fluxo",
             "pergunta": "A equipe quer ligar todas as impressoras ao máximo porque há três paradas. A pós-impressão já tem peças esperando. O que isso provavelmente causará?",
@@ -5709,7 +6752,12 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Fila: quanto trabalho vem antes",
-            "texto": "Fila é o conjunto de trabalhos esperando antes do seu pedido. Quanto maior a fila, maior o tempo de espera, mesmo que cada tarefa seja rápida. Um pedido novo não passa a ser feito na hora só porque entrou: ele entra no fim da fila, a menos que se decida por prioridade. Para estimar um prazo, some o tempo das etapas, inclua a espera entre elas e use dados do fluxo, não palpite."
+            "texto": "Fila é o conjunto de trabalhos esperando antes do seu pedido. Quanto maior a fila, maior o tempo de espera, mesmo que cada tarefa seja rápida. Um pedido novo não passa a ser feito na hora só porque entrou: ele só entra na produção depois de liberado e, então, no fim da fila, a menos que se decida por prioridade. Para estimar um prazo, some o tempo das etapas, inclua a espera entre elas e use dados do fluxo, não palpite."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Pagamento e empenho antes da produção",
+            "texto": "Um pedido só vira trabalho depois de liberado, e a produção depende do pagamento. Quando o pagamento é Pix, transferência ou dinheiro, a tarefa Confirmar pagamento registra o valor e o pedido vai para Pago. Instituições públicas podem pagar por empenho, na entrega, mas o número do empenho precisa existir antes de iniciar. Sem ele, o pedido fica Aguardando empenho, o Kanban bloqueia mover para etapa de produção e a tarefa Cobrar empenho volta a cada 7 dias. Ao estimar prazo, considere se esse pedido já pode começar."
           },
           {
             "tipo": "conteudo",
@@ -5744,6 +6792,37 @@ var TREINAMENTO_TRILHAS = {
                 "correta": false,
                 "erroCritico": true,
                 "feedback": "Sinalizar risco precisa acontecer antes do vencimento, não depois."
+              }
+            ]
+          },
+          {
+            "tipo": "resposta_cliente",
+            "competencia": "capacidade_fluxo",
+            "cliente": "Comercial: Fechei com a prefeitura, pagamento por empenho, mas o número ainda não chegou. A prefeitura quer rápido. Move o cartão para Imprimindo para a gente adiantar?",
+            "opcoes": [
+              {
+                "label": "Movo, assim ganhamos tempo e o número chega depois.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Sem número do empenho não se inicia o trabalho, e o Kanban bloqueia essa movimentação."
+              },
+              {
+                "label": "Não dá para começar sem o número. Mantenho Aguardando empenho, deixo a cobrança em andamento e aviso que o prazo depende dele.",
+                "correta": true,
+                "erroCritico": false,
+                "feedback": "Certo. Você respeita o bloqueio e sinaliza o risco de prazo cedo."
+              },
+              {
+                "label": "Aviso o cliente de que todos os pedidos vão atrasar.",
+                "correta": false,
+                "erroCritico": false,
+                "feedback": "O problema é só este pedido. Avisar tudo gera ruído sem dados."
+              },
+              {
+                "label": "Prometo começar em dois dias de qualquer forma.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "É promessa sem dado e contra a regra do empenho."
               }
             ]
           },
@@ -5788,6 +6867,33 @@ var TREINAMENTO_TRILHAS = {
             "tipo": "conteudo",
             "titulo": "Como investigar",
             "texto": "Siga um caminho simples. Observe onde o trabalho espera mais. Pergunte a quem executa o que está impedindo, sem acusar. Confirme com a OT, o arquivo e o pedido. Teste a hipótese: se a causa fosse essa, o que mudaria ao resolver? Por fim, trate a causa e registre. Um bom truque é perguntar cinco vezes o porquê, até chegar em algo que dá para consertar, como um processo ou uma informação que faltava."
+          },
+          {
+            "tipo": "conteudo",
+            "titulo": "Gargalos que não estão na bancada",
+            "texto": "Nem todo pedido parado está esperando uma máquina. Um pedido novo pode estar em Aguardando liberação. Um pedido de instituição pública pode estar em Aguardando empenho, sem produção até existir o número. A arte pode esperar a aprovação do cliente. Quando o cliente pede ajustes, nasce uma tarefa de Modelagem de ajuste, e Aprovar arte fica bloqueada até ela concluir; então é liberada automaticamente. Antes de cobrar a produção, olhe o cartão e as tarefas do pedido para saber em qual desses casos ele está."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "gargalos",
+            "pergunta": "O cliente pediu ajustes na arte. Surgiu a tarefa Modelagem de ajuste e Aprovar arte está bloqueada. O que acontece quando a modelagem do ajuste conclui?",
+            "opcoes": [
+              "Alguém precisa reabrir manualmente a tarefa Aprovar arte",
+              "A arte é considerada aprovada e a impressão é liberada",
+              "O pedido volta para Negociação e recomeça",
+              "Aprovar arte é liberada automaticamente, para o cliente ver a nova versão"
+            ],
+            "correta": 3,
+            "feedbackCerto": "Certo. A tarefa bloqueada é liberada automaticamente quando a anterior conclui.",
+            "feedbackPorOpcao": [
+              "O sistema libera sozinho. Esperar alguém reabrir cria um gargalo que não existe.",
+              "Só o cliente aprova a arte. Considerar aprovada sem resposta libera impressão com versão errada.",
+              "Nada manda o pedido para trás. A aprovação apenas volta para ser refeita.",
+              null
+            ],
+            "erroCriticoOpcoes": [
+              1
+            ]
           },
           {
             "tipo": "multipla_escolha",
@@ -5865,6 +6971,34 @@ var TREINAMENTO_TRILHAS = {
             "texto": "São duas coisas diferentes. A correção imediata resolve o pedido de agora: reimprimir, repintar, refazer. A ação preventiva trata a causa para não repetir, como revisar o suporte do modelo, conferir o nivelamento, checar o estado do material ou ajustar a instrução da OT. Faça as duas. Só a primeira apaga o incêndio. A segunda evita o próximo. Procedimentos específicos de reimpressão seguem o que a Valente definir ou o responsável."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Como o sistema registra falha e retrabalho",
+            "texto": "Cada janela de conclusão guarda dados que o gestor usa para achar padrões. Na impressão, as respostas são Tudo certo, Saiu só parte, Falhou e Cancelada, com registro por fornada. Nas etapas de produção, Concluir etapa pergunta quantas ficaram prontas e quantas voltam para a fase anterior, com motivo. Na pintura, a Produção do dia e o Fechar a pintura registram peças estragadas e as que voltam. Na Conferência e Embalagem, Encontrei problema pede motivo e quantidade. Leia esses motivos antes de decidir a ação preventiva."
+          },
+          {
+            "tipo": "multipla_escolha",
+            "competencia": "qualidade_melhoria",
+            "pergunta": "Ao concluir uma etapa de 10 peças, 3 estão com defeito e precisam voltar. Como o registro deve ficar?",
+            "opcoes": [
+              "10 prontas, e o defeito se corrige depois sem registro",
+              "7 prontas e 3 voltando para a fase anterior, com o motivo",
+              "Deixar a etapa aberta e não registrar nada até resolver",
+              "Contar as 3 como prontas e avisar só por conversa"
+            ],
+            "correta": 1,
+            "feedbackCerto": "Certo. Quantidade e motivo ficam registrados, e o padrão pode ser achado depois.",
+            "feedbackPorOpcao": [
+              "Marcar como pronto o que não está pronto esconde o defeito e deixa ele avançar.",
+              null,
+              "Sem registro, o motivo some e o padrão nunca aparece.",
+              "Conversa não deixa rastro. Defeito avançando como pronto é erro crítico."
+            ],
+            "erroCriticoOpcoes": [
+              0,
+              3
+            ]
+          },
+          {
             "tipo": "resposta_cliente",
             "competencia": "qualidade_melhoria",
             "cliente": "Colega: Falhou de novo a peça do lote. Eu só aperto reimprimir e pronto, né? Não vou ficar anotando que falhou, senão vão achar que errei.",
@@ -5938,6 +7072,42 @@ var TREINAMENTO_TRILHAS = {
             "texto": "Quando o sistema estiver implementado, use os status de competência: Não iniciado, Em capacitação, Prática supervisionada, Liberado e Reciclagem. Quem está em Prática supervisionada pode executar, mas com acompanhamento. Quem está em Reciclagem precisa rever o conteúdo. Se faltar o dado, consulte o responsável. Quem define as regras de liberação é a Valente. Não presuma que uma pessoa está liberada."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Quem fez e onde ver o trabalho",
+            "texto": "O PIN identifica o executor: o nome aparece no topo da tela e fica gravado como responsável nas tarefas que a pessoa inicia ou conclui. Por isso o registro só é fiel se cada um usa o seu PIN. No tablet, Minhas funções abre uma fila única com as tarefas da função da pessoa, com filtros por tipo e o botão Próxima da fila. Outras funções mostra tarefas de colegas, para ajudar. No PC, a aba Tarefas lista as tarefas designadas, e cada tarefa abre com a caixa SUA MISSÃO, que diz o que falta fazer."
+          },
+          {
+            "tipo": "resposta_cliente",
+            "competencia": "distribuicao_trabalho",
+            "cliente": "Colega: O tablet ficou com o PIN do Pedro, então vou iniciar essa pintura por ele mesmo. Ele está ocupado e nem vai notar.",
+            "opcoes": [
+              {
+                "label": "Pode usar, o importante é a tarefa andar.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "O responsável gravado seria o Pedro, que não executou. O registro fica falso."
+              },
+              {
+                "label": "Peça para o Pedro iniciar quando puder e deixe a tarefa parada até lá.",
+                "correta": false,
+                "erroCritico": false,
+                "feedback": "Parar o trabalho sem necessidade atrasa o fluxo. Quem vai executar deve entrar com o próprio PIN."
+              },
+              {
+                "label": "Entre com o seu PIN e pegue a tarefa por Outras funções, se for ajudar. Assim fica gravado quem fez de verdade.",
+                "correta": true,
+                "erroCritico": false,
+                "feedback": "Certo. O PIN identifica o executor, e Outras funções existe justamente para ajudar."
+              },
+              {
+                "label": "Inicie com o PIN do Pedro e conclua com o seu, que fica equilibrado.",
+                "correta": false,
+                "erroCritico": true,
+                "feedback": "Misturar PINs mistura os responsáveis e esconde quem fez cada parte."
+              }
+            ]
+          },
+          {
             "tipo": "multipla_escolha",
             "competencia": "distribuicao_trabalho",
             "pergunta": "O Pedro, que está sem tarefa, é Em capacitação em pintura. Chegou uma peça de pintura com prazo apertado. O que fazer?",
@@ -6008,6 +7178,19 @@ var TREINAMENTO_TRILHAS = {
             "texto": "O gestor deve definir quem pode validar competências e trabalhos críticos. Em uma equipe pequena, isso evita que a mesma pessoa execute e libere sem olhar de novo. Quais são os pontos de controle e os responsáveis por liberação na Valente? Siga o procedimento definido pela Valente ou consulte o responsável. Não crie regra própria."
           },
           {
+            "tipo": "conteudo",
+            "titulo": "Conferência, embalagem e o botão Liberar",
+            "texto": "No tablet, Conferência e Embalagem terminam com duas respostas: Tudo certo ou Encontrei problema, com o motivo e quantas peças. Um problema registrado impede o pedido de seguir. Na Expedição, o caminho é Marcar como enviado, com forma de envio e rastreio; concluir sem marcar enviado não é o certo. Cuidado com a palavra liberar: o botão Liberar do Kanban libera o pedido novo para a produção, gerando as tarefas. Não é a liberação de qualidade. Quem confere e quem libera cada etapa segue o procedimento da Valente."
+          },
+          {
+            "tipo": "verdadeiro_falso",
+            "competencia": "qualidade_melhoria",
+            "afirmacao": "Se na Conferência alguém registra Encontrei problema, o pedido não segue para a próxima etapa até o problema ser tratado.",
+            "correta": true,
+            "feedbackCerto": "Certo. O registro de problema é um ponto de controle: impede o pedido de seguir com defeito.",
+            "feedbackErrado": "Verdadeiro. Encontrei problema, com motivo e quantidade, impede o pedido de seguir. É isso que protege o cliente."
+          },
+          {
             "tipo": "resposta_cliente",
             "competencia": "qualidade_melhoria",
             "cliente": "Colega: Terminei a pintura do lote. Pode marcar como liberado e seguir para embalagem, ninguém precisa olhar de novo.",
@@ -6062,7 +7245,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "Indicador serve para decidir",
-            "texto": "Indicador é uma medida que ajuda a tomar decisão. Os mais comuns em produção são prazo (entregas no dia combinado), retrabalho, gargalos, produtividade, qualidade e capacidade. Eles só são úteis quando os dados são confiáveis. Se o quadro está desatualizado, qualquer indicador sai errado. Não crie métricas apenas porque são fáceis de contar."
+            "texto": "Indicador é uma medida que ajuda a tomar decisão. Os mais comuns em produção são prazo (entregas no dia combinado), retrabalho, gargalos, produtividade, qualidade e capacidade. Eles só são úteis quando os dados são confiáveis. Se o quadro está desatualizado, qualquer indicador sai errado. Não crie métricas apenas porque são fáceis de contar. Vale também para o registro: executor, falhas e produção do dia só viram bom dado se forem registrados com cuidado em cada tarefa."
           },
           {
             "tipo": "conteudo",
@@ -6138,7 +7321,7 @@ var TREINAMENTO_TRILHAS = {
           {
             "tipo": "conteudo",
             "titulo": "O roteiro do gestor",
-            "texto": "Use a sequência do curso. Primeiro levante os fatos: o que parou, o que está em andamento, quem está presente. Proteja segurança e qualidade. Identifique o gargalo atual. Priorize com critério e registre o motivo. Redistribua apenas para pessoas qualificadas. Comunique o impacto de prazo antes do vencimento. Quando faltar informação, consulte a fonte e o responsável. Não invente."
+            "texto": "Use a sequência do curso. Primeiro levante os fatos: o que parou, o que está em andamento, quem está presente. Confira se o pedido novo já foi liberado e se tem pagamento ou empenho registrado. Proteja segurança e qualidade. Identifique o gargalo atual. Priorize com critério e registre o motivo. Redistribua apenas para pessoas qualificadas. Comunique o impacto de prazo antes do vencimento. Quando faltar informação, consulte a fonte e o responsável. Não invente."
           },
           {
             "tipo": "cenario",
@@ -6251,6 +7434,7 @@ var TREINAMENTO_TRILHAS = {
             "contexto": "Treinamento fictício. Uma impressora parou, há um pedido urgente, uma reimpressão em andamento, um colega faltou e entraram novos pedidos. A equipe é pequena e as funções são delegadas.",
             "tarefas": [
               "Liste os fatos conhecidos e o que ainda precisa ser confirmado, indicando a fonte",
+              "Confira no Kanban se o pedido urgente já foi liberado e se o pagamento ou o empenho está registrado, antes de encaixá-lo",
               "Descreva os critérios de prioridade que usou e o motivo de cada decisão",
               "Identifique o gargalo atual e a causa provável antes de cobrar velocidade",
               "Redistribua tarefas apenas para pessoas qualificadas, citando o status de competência",
@@ -6261,12 +7445,16 @@ var TREINAMENTO_TRILHAS = {
           }
         ]
       }
-    ]
-  },
-  // Trilhas futuras entram aqui do mesmo jeito, por exemplo:
-  // producao: { id: 'producao', nome: 'Produção 3D', cargosPermitidos: ['producao'], dias: [...] },
-  // pintura:  { id: 'pintura',  nome: 'Pintura',       cargosPermitidos: ['producao','pintura'], dias: [...] },
-  // etc. — nenhuma mudança necessária em treinamento.js pra isso funcionar.
+    ],
+    "rotulosCompetencia": {
+      "leitura_kanban": "Leitura do Kanban",
+      "priorizacao": "Priorização",
+      "capacidade_fluxo": "Capacidade e fluxo",
+      "gargalos": "Gargalos",
+      "qualidade_melhoria": "Qualidade e melhoria",
+      "distribuicao_trabalho": "Distribuição de trabalho"
+    }
+  }
 };
 
 // Rótulos das competências dos cursos novos (usados na tela de resultado).
