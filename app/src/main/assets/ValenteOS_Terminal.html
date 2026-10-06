@@ -1058,6 +1058,7 @@ function renderDetalhe() {
     botoesHtml += '<button class="btn btn-ret" onclick="acaoOT(\'retomada\',\'retomada\')">▶ Retomar Tarefa</button>';
   }
   botoesHtml += '<button class="btn btn-ref" onclick="imprimirDetalhe()">🖨️ Imprimir ficha</button>';
+  if (codTipo() === 'separacao' && S.ot && S.ot.peca_id) { botoesHtml += '<button class="btn btn-ref" onclick="abrirOndePegar()">📍 Onde pegar</button>'; }
   botoesHtml += '<button class="btn btn-vol" onclick="voltarInbox()">← Voltar</button>';
   botoesHtml += '</div>';
 
@@ -1439,6 +1440,101 @@ function concluirPorTipo() {
   if (cod === 'expedicao' && S.pedido && S.pedido.status !== 'enviado') { toast('Use o botão "Marcar como enviado", mais acima.', true); return true; }
   for (i = 0; i < TIPOS_ETAPA.length; i++) { if (TIPOS_ETAPA[i] === cod) { fimEtapa(); return true; } }
   return false;
+}
+
+
+/* ─────────────────────────────────────────
+   Estoque guiado (v155) — "Onde pegar" na tarefa de Separação (ES5)
+   Mostra o endereço de cada componente e, ao confirmar, leva para a MESA-SEPARACAO.
+───────────────────────────────────────── */
+function abrirOndePegar() {
+  var ot = S.ot;
+  if (!ot || !ot.peca_id) { toast('Esta tarefa não está ligada a uma peça.', true); return; }
+  var qtd = ot.quantidade || 1;
+  janelaFim('ONDE PEGAR', esc(ot.titulo || ''), '<div style="color:#94a3b8;font-size:.9rem">Buscando endereços…</div>', 'Retirei tudo', function() {});
+  sbGet('peca_componentes', 'peca_id=eq.' + ot.peca_id + '&select=id,nome&order=created_at', function(e1, comps) {
+    if (e1 || !comps) { toast('Erro ao buscar componentes.', true); fecharJanelaFim(); return; }
+    if (!comps.length) { fecharJanelaFim(); toast('Esta peça não tem componentes cadastrados.', true); return; }
+    var ids = [], i;
+    for (i = 0; i < comps.length; i++) { ids.push(comps[i].id); }
+    sbGet('inventario_fisico', 'entity_type=eq.componente&entity_id=in.(' + ids.join(',') + ')&quantidade=gt.0&select=id,endereco_id,entity_id,quantidade,etapa_id', function(e2, inv) {
+      if (e2 || !inv) { fecharJanelaFim(); toast('Estoque guiado ainda não configurado (rodar SQL passo 9).', true); return; }
+      sbGet('enderecos', 'select=id,codigo', function(e3, ends) {
+        sbGet('etapas_processo', 'select=id,codigo,processos_produtivos(codigo)', function(e4, ets) {
+          var cod = {}, mesaId = null, pint = null, brut = null, k;
+          for (k = 0; k < (ends || []).length; k++) { cod[ends[k].id] = ends[k].codigo; if (ends[k].codigo === 'MESA-SEPARACAO') { mesaId = ends[k].id; } }
+          for (k = 0; k < (ets || []).length; k++) {
+            if (ets[k].processos_produtivos && ets[k].processos_produtivos.codigo === 'pintura') {
+              if (ets[k].codigo === 'pintado') { pint = ets[k].id; }
+              if (ets[k].codigo === 'bruto') { brut = ets[k].id; }
+            }
+          }
+          var plano = [], total = 0, h = '';
+          for (i = 0; i < comps.length; i++) {
+            var falta = qtd, pegar = [], pass, j;
+            var ordem = [pint, brut];
+            for (pass = 0; pass < 2; pass++) {
+              var lst = [];
+              for (j = 0; j < inv.length; j++) {
+                if (inv[j].entity_id === comps[i].id && (inv[j].etapa_id || null) === (ordem[pass] || null) && inv[j].endereco_id !== mesaId) { lst.push(inv[j]); }
+              }
+              lst.sort(function(a, b) { return b.quantidade - a.quantidade; });
+              for (j = 0; j < lst.length && falta > 0; j++) {
+                var t = Math.min(falta, parseFloat(lst[j].quantidade) || 0);
+                if (t > 0) { pegar.push({ row: lst[j], qtd: t, pintado: pass === 0 }); falta -= t; total += t; }
+              }
+            }
+            plano.push({ comp: comps[i], pegar: pegar, falta: falta });
+            h += '<div style="padding:8px 0;border-bottom:1px solid #1e293b"><div style="font-weight:700;color:#f1f5f9">' + esc(String(comps[i].nome || '').replace(/\s+$/, '')) + ' — ' + qtd + ' un.</div>';
+            if (!pegar.length) { h += '<div style="color:#fbbf24;font-size:.85rem">Sem endereço registrado. Procure e avise o supervisor.</div>'; }
+            for (j = 0; j < pegar.length; j++) {
+              h += '<div style="color:#cbd5e1;font-size:.95rem">📍 <b style="color:#4ade80">' + esc(cod[pegar[j].row.endereco_id] || '?') + '</b> · pegue <b>' + pegar[j].qtd + '</b> <span style="color:#64748b;font-size:.75rem">(' + (pegar[j].pintado ? 'pintado' : 'sem pintura') + ')</span></div>';
+            }
+            if (falta > 0 && pegar.length) { h += '<div style="color:#fbbf24;font-size:.8rem">Faltam ' + falta + ' sem endereço registrado.</div>'; }
+            h += '</div>';
+          }
+          var ov = document.getElementById('fech-overlay');
+          if (!ov) { return; }
+          ov.firstChild.childNodes[1].innerHTML = h + '<div style="font-size:.75rem;color:#64748b;margin-top:10px">Ao confirmar, os itens vão para a Mesa de separação.</div>' +
+            '<div style="display:flex;gap:12px;margin-top:14px"><button id="op-c" style="flex:1;padding:14px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem">Fechar</button>' +
+            (total > 0 && mesaId ? '<button id="op-ok" style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700">Retirei tudo</button>' : '') + '</div>';
+          document.getElementById('op-c').onclick = fecharJanelaFim;
+          var okb = document.getElementById('op-ok');
+          if (okb) {
+            okb.onclick = function() {
+              okb.disabled = true;
+              var fila = [], p, q;
+              for (p = 0; p < plano.length; p++) { for (q = 0; q < plano[p].pegar.length; q++) { fila.push({ comp: plano[p].comp, it: plano[p].pegar[q] }); } }
+              levarParaMesa(fila, mesaId, 0);
+            };
+          }
+        });
+      });
+    });
+  });
+}
+
+/* tira da prateleira (zera/subtrai), soma na mesa e registra a movimentação — um item por vez */
+function levarParaMesa(fila, mesaId, idx) {
+  if (idx >= fila.length) { fecharJanelaFim(); toast('Itens levados para a Mesa de separação. ✅'); return; }
+  var it = fila[idx].it, row = it.row, resta = Math.round(((parseFloat(row.quantidade) || 0) - it.qtd) * 1000) / 1000;
+  var seguir = function() { levarParaMesa(fila, mesaId, idx + 1); };
+  sbGet('inventario_fisico', 'endereco_id=eq.' + mesaId + '&entity_type=eq.componente&entity_id=eq.' + row.entity_id + '&select=id,quantidade,etapa_id', function(e1, ja) {
+    var existente = null, i;
+    for (i = 0; i < (ja || []).length; i++) { if ((ja[i].etapa_id || null) === (row.etapa_id || null)) { existente = ja[i]; } }
+    var gravaMesa = function(cb) {
+      if (existente) { sbPatch('inventario_fisico', 'id=eq.' + existente.id, { quantidade: (parseFloat(existente.quantidade) || 0) + it.qtd }, function(err) { cb(err); }); }
+      else { sbPost('inventario_fisico', { id: uuidT(), endereco_id: mesaId, entity_type: 'componente', entity_id: row.entity_id, quantidade: it.qtd, etapa_id: row.etapa_id || null }, function(err) { cb(err); }); }
+    };
+    gravaMesa(function(err) {
+      if (err) { toast('Erro: ' + err.message, true); return; }
+      sbPatch('inventario_fisico', 'id=eq.' + row.id, { quantidade: resta < 0 ? 0 : resta }, function(err2) {
+        if (err2) { toast('Erro: ' + err2.message, true); return; }
+        sbPost('movimentacoes_fisicas', { id: uuidT(), entity_type: 'componente', entity_id: row.entity_id, endereco_origem_id: row.endereco_id, endereco_destino_id: mesaId, quantidade: it.qtd,
+          etapa_origem_id: row.etapa_id || null, etapa_destino_id: row.etapa_id || null, motivo: 'transferencia', responsavel: S.colaborador ? S.colaborador.nome : null, observacao: 'Retirada guiada (terminal)' }, function() { seguir(); });
+      });
+    });
+  });
 }
 
 
