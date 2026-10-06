@@ -1450,18 +1450,19 @@ function concluirPorTipo() {
 var TIPOS_RETIRA = ['separacao', 'pintura', 'montagem', 'conferencia', 'embalagem', 'expedicao'];
 function podeRetirarEstoque() {
   var i, c = codTipo();
-  if (!S.ot || !S.ot.peca_id) { return false; }
+  if (!S.ot || !((S.peca && S.peca.id) || S.ot.peca_id)) { return false; }
   for (i = 0; i < TIPOS_RETIRA.length; i++) { if (TIPOS_RETIRA[i] === c) { return true; } }
   return false;
 }
 function abrirOndePegar(qtdManual) {
   var ot = S.ot;
-  if (!ot || !ot.peca_id) { toast('Esta tarefa não está ligada a uma peça.', true); return; }
+  var pecaId = (S.peca && S.peca.id) || (ot && ot.peca_id);
+  if (!ot || !pecaId) { toast('Esta tarefa não está ligada a uma peça.', true); return; }
   var ehPint = codTipo() === 'pintura';
   var qtd = qtdManual || (ehPint ? Math.max(1, (ot.quantidade || 1) - (ot.quantidade_concluida || 0) - (ot.quantidade_perdida_acumulada || 0)) : (ot.quantidade || 1));
   janelaFim('ONDE PEGAR', esc(ot.titulo || ''), '<div style="color:#94a3b8;font-size:.9rem">Buscando endereços…</div>', 'Retirei tudo', function() {});
   document.getElementById('jf-ok').style.display = 'none';
-  sbGet('peca_componentes', 'peca_id=eq.' + ot.peca_id + '&select=id,nome&order=created_at', function(e1, comps) {
+  sbGet('peca_componentes', 'peca_id=eq.' + pecaId + '&select=id,nome&order=created_at', function(e1, comps) {
     if (e1 || !comps) { toast('Erro ao buscar componentes.', true); fecharJanelaFim(); return; }
     if (!comps.length) { fecharJanelaFim(); toast('Esta peça não tem componentes cadastrados.', true); return; }
     var ids = [], i;
