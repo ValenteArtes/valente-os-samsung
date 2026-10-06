@@ -1465,6 +1465,9 @@ function abrirOndePegar(qtdManual) {
   sbGet('peca_componentes', 'peca_id=eq.' + pecaId + '&select=id,nome&order=created_at', function(e1, comps) {
     if (e1 || !comps) { toast('Erro ao buscar componentes.', true); fecharJanelaFim(); return; }
     if (!comps.length) { fecharJanelaFim(); toast('Esta peça não tem componentes cadastrados.', true); return; }
+    var alvoT = String(ot.titulo || '').toLowerCase().replace(/[\u0300-\u036f]/g, ''), so = [], bestLen = 0, m0;
+    for (m0 = 0; m0 < comps.length; m0++) { var nn = String(comps[m0].nome || '').toLowerCase().replace(/^\s+|\s+$/g, ''); if (nn && alvoT.indexOf(nn) >= 0) { if (nn.length > bestLen) { bestLen = nn.length; } } }
+    if (bestLen > 0) { for (m0 = 0; m0 < comps.length; m0++) { var n2 = String(comps[m0].nome || '').toLowerCase().replace(/^\s+|\s+$/g, ''); if (n2.length === bestLen && alvoT.indexOf(n2) >= 0) { so.push(comps[m0]); } } if (so.length) { comps = so; } }
     var ids = [], i;
     for (i = 0; i < comps.length; i++) { ids.push(comps[i].id); }
     sbGet('inventario_fisico', 'entity_type=eq.componente&entity_id=in.(' + ids.join(',') + ')&quantidade=gt.0&select=id,endereco_id,entity_id,quantidade,etapa_id', function(e2, inv) {
@@ -1507,7 +1510,7 @@ function abrirOndePegar(qtdManual) {
           if (!ov) { return; }
           ov.firstChild.childNodes[1].innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:#94a3b8;font-size:.85rem">Quantas peças?</span><input id="op-q" type="number" min="1" value="' + qtd + '" style="width:80px;padding:8px;text-align:center;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;font-size:1.1rem"></div>' + h + '<div style="font-size:.75rem;color:#64748b;margin-top:10px">Ao confirmar, os itens vão para a mesa de trabalho.</div>' +
             '<div style="display:flex;gap:12px;margin-top:14px"><button id="op-c" style="flex:1;padding:14px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem">Fechar</button>' +
-            (total > 0 && mesaId ? '<button id="op-ok" style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700">Retirei tudo</button>' : '') + '</div>';
+            (total > 0 && mesaId ? '<button id="op-ok" style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700">Retirar ' + qtd + '</button>' : '') + '</div>';
           document.getElementById('op-c').onclick = fecharJanelaFim;
           document.getElementById('op-q').onchange = function() { var n = nInt(this.value); if (n > 0) { abrirOndePegar(n); } };
           var okb = document.getElementById('op-ok');
