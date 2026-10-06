@@ -1263,14 +1263,13 @@ function missaoHtml() {
   if (mNec) linhas.push('Para fechar o pedido são necessárias <b>' + mNec[1] + '</b> un. de ' + esc(m[2]));
   if (mPint && verbo === 'Pintar') linhas.push('Já pintadas antes: <b>' + mPint[1] + '</b>');
   if (mImp && verbo === 'Pintar') linhas.push('Impressas disponíveis: <b>' + mImp[1] + '</b>');
-  if (feito > 0 || perd > 0) linhas.push('Registrado nesta tarefa: <b>' + feito + '</b> feitas' + (perd ? ' · <b>' + perd + '</b> perdidas' : ''));
+  if (feito > 0 || perd > 0) linhas.push('Já feitas nesta tarefa: <b>' + feito + '</b> feitas' + (perd ? ' · <b>' + perd + '</b> perdidas' : ''));
   var h = '<div class="card" style="text-align:center;border:2px solid #7c3aed;background:#1e1b4b;">' +
     '<div style="font-size:.7rem;letter-spacing:.14em;font-weight:700;color:#a78bfa;margin-bottom:6px">SUA MISSÃO</div>' +
     '<div style="font-size:1.4rem;font-weight:800;line-height:1.35;color:#f1f5f9">' + verbo +
-    ' <span style="background:#7c3aed;border-radius:8px;padding:0 10px">' + total + '</span> unidade' + (total === 1 ? '' : 's') +
+    ' <span style="background:#7c3aed;border-radius:8px;padding:0 10px">' + (falta > 0 && falta !== total ? falta : total) + '</span>' + (falta > 0 && falta !== total ? ' de ' + total : '') + ' unidade' + ((falta > 0 && falta !== total ? total : total) === 1 ? '' : 's') +
     ' de <span style="color:#c4b5fd">' + esc(m[2]) + '</span>' +
     (S.peca && S.peca.modelo ? ' da peça <span style="color:#c4b5fd">' + esc(S.peca.modelo) + '</span>' : '') + '</div>' +
-    (falta !== total ? '<div style="margin-top:8px;color:#cbd5e1">Faltam <b>' + falta + '</b> de ' + total + ' nesta tarefa</div>' : '') +
     (linhas.length ? '<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #6d28d9;font-size:.85rem;color:#cbd5e1;line-height:1.6">' + linhas.join('<br>') + '</div>' : '') +
     '</div>';
   return h;
