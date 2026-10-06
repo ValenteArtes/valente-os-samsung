@@ -1051,8 +1051,10 @@ function renderDetalhe() {
   if (isExec(s)) {
     botoesHtml += '<button class="btn btn-conc" onclick="confirmarConcluir()">✅ Concluir Tarefa</button>';
     botoesHtml += '<button class="btn btn-paus" onclick="acaoOT(\'pausada\',\'pausa\')">⏸ Pausar</button>';
+    if (ehPorTurno()) { botoesHtml += '<button class="btn btn-ref" onclick="producaoDoDia()">📝 Produção do dia</button>'; }
   }
   if (s === 'pausada') {
+    if (ehPorTurno()) { botoesHtml += '<button class="btn btn-ref" onclick="producaoDoDia()">📝 Produção do dia</button>'; }
     botoesHtml += '<button class="btn btn-ret" onclick="acaoOT(\'retomada\',\'retomada\')">▶ Retomar Tarefa</button>';
   }
   botoesHtml += '<button class="btn btn-ref" onclick="imprimirDetalhe()">🖨️ Imprimir ficha</button>';
@@ -1073,7 +1075,7 @@ function renderDetalhe() {
       ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>'
       : '') +
     '</div>' +
-    opcoesPecaHtml() + fotoHtml + pinturaHtmlBloco() + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
+    missaoHtml() + opcoesPecaHtml() + fotoHtml + pinturaHtmlBloco() + fichaHtmlBloco() + envioHtmlBloco() + posCompraHtmlBloco() + comercialHtmlBloco() + instrHtml + checkHtml + botoesHtml;
 }
 
 function confirmarFoto(el) {
@@ -1171,8 +1173,279 @@ function acaoOT(novoStatus, tipoEvento) {
 }
 
 /* ── FECHAMENTO COMPLETO DA OT (igual ao PC) ─────────────────────────── */
+function fmtDataT(d){var p=String(d||"").slice(0,10).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:"";}
+/* ─────────────────────────────────────────
+   v151 — Janelas por tipo de tarefa (comum aos dois tablets, ES5)
+   Missão em destaque · Produção do dia (pintura) · Concluir etapa ·
+   Conferência/Embalagem · Envio · liberar tarefas bloqueadas
+───────────────────────────────────────── */
+var TIPOS_ETAPA = ['lavagem', 'cura', 'pintura', 'montagem', 'separacao', 'escultura', 'modelagem'];
+
+function nInt(v) { var n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
+function uuidT() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function codTipo() { return S.tipo ? S.tipo.codigo : ''; }
+function ehPorTurno() {
+  var ot = S.ot;
+  if (!ot || !(ot.quantidade > 1)) return false;
+  var cod = codTipo();
+  if (cod === 'impressao') return false;
+  return /^\s*pintar/i.test(ot.titulo || '') || (S.tipo && /pint/i.test(S.tipo.nome || ''));
+}
+
+/* Busca o pedido da OT; se as colunas novas ainda não existem no banco, tenta de novo só com as antigas. */
+function buscarPedidoT(id, cb) {
+  var base = 'id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em,data_entrega,modelo_nome,quantidade';
+  var extra = ',cnpj_tomador,numero_processo,numero_empenho,forma_pagamento,pagamento_previsto,acordo_comercial,responsavel_decisao,observacoes,valor_unitario';
+  sbGet('pedidos', 'id=eq.' + id + '&select=' + base + extra, function(err, d) {
+    if (err || !d) {
+      sbGet('pedidos', 'id=eq.' + id + '&select=' + base, function(err2, d2) {
+        cb((!err2 && d2 && d2.length) ? d2[0] : null);
+      });
+      return;
+    }
+    cb(d.length ? d[0] : null);
+  });
+}
+
+/* ── janela (overlay escuro, mesmo estilo do fechamento) ── */
+var JF_LBL = 'font-size:.75rem;font-weight:700;color:#94a3b8;margin:12px 0 6px;letter-spacing:.06em;';
+var JF_IN  = 'width:100%;padding:10px;font-size:1.1rem;text-align:center;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;box-sizing:border-box;';
+function janelaFim(titulo, sub, corpo, okTxt, okFn) {
+  var velho = document.getElementById('fech-overlay');
+  if (velho && velho.parentNode) velho.parentNode.removeChild(velho);
+  var overlay = document.createElement('div');
+  overlay.id = 'fech-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:9999;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0;';
+  overlay.innerHTML =
+    '<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;max-width:380px;width:92%;margin:auto;">' +
+      '<div style="background:#1e293b;border-radius:12px 12px 0 0;padding:16px 20px;">' +
+        '<div style="font-size:.7rem;font-weight:700;color:#94a3b8;letter-spacing:.1em;">' + titulo + '</div>' +
+        '<div style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-top:4px;">' + sub + '</div>' +
+      '</div>' +
+      '<div style="padding:16px 20px;">' + corpo +
+        '<div style="display:flex;gap:12px;margin-top:18px;">' +
+          '<button id="jf-cancel" style="flex:1;padding:14px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem;cursor:pointer;">Cancelar</button>' +
+          '<button id="jf-ok" style="flex:2;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">' + okTxt + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('jf-cancel').onclick = fecharJanelaFim;
+  document.getElementById('jf-ok').onclick = okFn;
+  return overlay;
+}
+function fecharJanelaFim() {
+  var o = document.getElementById('fech-overlay');
+  if (o && o.parentNode) o.parentNode.removeChild(o);
+}
+function jfVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+
+/* ── Missão em destaque ── */
+function missaoHtml() {
+  var ot = S.ot;
+  if (!ot) return '';
+  var m = String(ot.titulo || '').match(/^\s*(Imprimir|Pintar)\s+(.+?)\s*[×xX]\s*(\d+)\s*$/i);
+  if (!m) return '';
+  var verbo = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+  var total = nInt(m[3]) || ot.quantidade || 0;
+  var feito = ot.quantidade_concluida || 0, perd = ot.quantidade_perdida_acumulada || 0;
+  var falta = Math.max(0, (ot.quantidade || total) - feito - perd);
+  var instr = String(ot.instrucoes || '');
+  var mNec = instr.match(/Necess[áa]rio:\s*(\d+)/i);
+  var mPint = instr.match(/Pintados?:\s*(\d+)/i);
+  var mImp = instr.match(/(?:Impressos dispon[íi]veis|impressos):\s*(\d+)/i);
+  var linhas = [];
+  if (mNec) linhas.push('Para fechar o pedido são necessárias <b>' + mNec[1] + '</b> un. de ' + esc(m[2]));
+  if (mPint && verbo === 'Pintar') linhas.push('Já pintadas antes: <b>' + mPint[1] + '</b>');
+  if (mImp && verbo === 'Pintar') linhas.push('Impressas disponíveis: <b>' + mImp[1] + '</b>');
+  if (feito > 0 || perd > 0) linhas.push('Registrado nesta tarefa: <b>' + feito + '</b> feitas' + (perd ? ' · <b>' + perd + '</b> perdidas' : ''));
+  var h = '<div class="card" style="text-align:center;border:2px solid #7c3aed;background:#1e1b4b;">' +
+    '<div style="font-size:.7rem;letter-spacing:.14em;font-weight:700;color:#a78bfa;margin-bottom:6px">SUA MISSÃO</div>' +
+    '<div style="font-size:1.4rem;font-weight:800;line-height:1.35;color:#f1f5f9">' + verbo +
+    ' <span style="background:#7c3aed;border-radius:8px;padding:0 10px">' + total + '</span> unidade' + (total === 1 ? '' : 's') +
+    ' de <span style="color:#c4b5fd">' + esc(m[2]) + '</span>' +
+    (S.peca && S.peca.modelo ? ' da peça <span style="color:#c4b5fd">' + esc(S.peca.modelo) + '</span>' : '') + '</div>' +
+    (falta !== total ? '<div style="margin-top:8px;color:#cbd5e1">Faltam <b>' + falta + '</b> de ' + total + ' nesta tarefa</div>' : '') +
+    (linhas.length ? '<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #6d28d9;font-size:.85rem;color:#cbd5e1;line-height:1.6">' + linhas.join('<br>') + '</div>' : '') +
+    '</div>';
+  return h;
+}
+function qtdCardHtml() {
+  var ot = S.ot, conc = ot.quantidade_concluida || 0, perd = ot.quantidade_perdida_acumulada || 0, total = ot.quantidade || 0;
+  var falt = Math.max(0, total - conc - perd);
+  return '<div class="card"><div class="card-label">Quantidade</div>' +
+    '<span class="qtd-num">' + total + '</span><span class="qtd-unit">unidades</span>' +
+    (conc > 0 || perd > 0 ? '<div class="qtd-sub">Concluídas: ' + conc + ' · Perdidas: ' + perd + ' · Faltam: ' + falt + '</div>' : '') + '</div>';
+}
+
+/* ── tarefas bloqueadas por esta (ex.: aprovação aguardando ajuste da modelagem) ── */
+function liberarBloqueadas(otId) {
+  sbGet('ordens_trabalho', 'ot_desbloqueadora_id=eq.' + otId + '&status=eq.bloqueada&select=id', function(err, d) {
+    if (err || !d) return;
+    var i;
+    for (i = 0; i < d.length; i++) {
+      sbPatch('ordens_trabalho', 'id=eq.' + d[i].id, { status: 'pendente', ot_desbloqueadora_id: null, bloqueio_motivo: null }, function() {});
+      sbPost('ot_eventos', { ot_id: d[i].id, tipo: 'desbloqueio', descricao: 'Liberada automaticamente após conclusão da OT ' + otId + ' (terminal)', estacao_id: null, motivo: null }, function() {});
+    }
+  });
+}
+
+/* ── próxima etapa do plano ── */
+function proximaEtapaT(cb) {
+  var ot = S.ot;
+  if (!ot || !ot.plano_id || ot.ordem_execucao == null) { cb(''); return; }
+  sbGet('ordens_trabalho', 'plano_id=eq.' + ot.plano_id + '&ordem_execucao=gt.' + ot.ordem_execucao +
+    '&status=not.in.(concluida,cancelada)&order=ordem_execucao&limit=1&select=tipo_ot_id', function(err, d) {
+    if (err || !d) { cb(''); return; }
+    if (!d.length) { cb('Esta é a última etapa do pedido.'); return; }
+    var t = S.tipos ? S.tipos[d[0].tipo_ot_id] : null;
+    cb('Próxima etapa: ' + (t && t.nome ? t.nome : 'a próxima etapa') + '.');
+  });
+}
+
+/* ── Pintura: produção do dia (não fecha; soma ao acumulado e pausa) ── */
+function producaoDoDia() {
+  var ot = S.ot; if (!ot) return;
+  var ja = ot.quantidade_concluida || 0, ap = ot.quantidade_perdida_acumulada || 0;
+  var rest = Math.max(0, ot.quantidade - ja - ap);
+  var box = '<div style="display:flex;gap:8px;text-align:center;margin-bottom:6px">' +
+    '<div style="flex:1;background:#1e293b;border-radius:8px;padding:8px"><div style="font-size:1.2rem;font-weight:700;color:#f1f5f9">' + ot.quantidade + '</div><div style="font-size:.65rem;color:#94a3b8">meta</div></div>' +
+    '<div style="flex:1;background:#1e293b;border-radius:8px;padding:8px"><div style="font-size:1.2rem;font-weight:700;color:#f1f5f9">' + ja + '</div><div style="font-size:.65rem;color:#94a3b8">já pintadas</div></div>' +
+    '<div style="flex:1;background:#1e293b;border-radius:8px;padding:8px"><div style="font-size:1.2rem;font-weight:700;color:#f1f5f9">' + rest + '</div><div style="font-size:.65rem;color:#94a3b8">faltam</div></div></div>' +
+    '<div style="' + JF_LBL + '">QUANTAS PEÇAS VOCÊ PINTOU HOJE?</div><input id="pd-f" type="number" min="0" max="' + rest + '" placeholder="0" style="' + JF_IN + 'font-size:1.5rem;">' +
+    '<div style="' + JF_LBL + '">ALGUMA PEÇA ESTRAGOU NA PINTURA?</div><input id="pd-e" type="number" min="0" value="0" style="' + JF_IN + '">' +
+    '<div style="font-size:.7rem;color:#64748b;margin-top:3px">Conte só as que precisam ser repintadas ou descartadas.</div>' +
+    '<div style="' + JF_LBL + '">ANOTAÇÕES PARA AMANHÃ (OPCIONAL)</div><textarea id="pd-o" rows="2" placeholder="Ex: faltou tinta Cor 07, 12 peças secando" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;font-size:.9rem;resize:none;box-sizing:border-box;"></textarea>' +
+    '<div id="pd-r" style="margin-top:10px;background:#1e1b4b;color:#c4b5fd;border-radius:8px;padding:8px 10px;font-size:.85rem"></div>';
+  janelaFim('PRODUÇÃO DO DIA', esc(ot.titulo || ''), box, 'Salvar produção do dia', salvarProducaoDoDia);
+  var calc = function() {
+    var f = nInt(jfVal('pd-f')), e = nInt(jfVal('pd-e')), r = rest - f - e;
+    document.getElementById('pd-r').innerHTML = r > 0 ? 'Ao salvar, faltam ' + r + '. A tarefa fica pausada e volta amanhã.' :
+      (r === 0 ? 'Com isso, tudo fica pronto. Você segue para fechar a pintura.' : 'Essa soma passa do que falta (' + rest + ').');
+  };
+  document.getElementById('pd-f').oninput = calc; document.getElementById('pd-e').oninput = calc; calc();
+}
+function salvarProducaoDoDia() {
+  var ot = S.ot; if (!ot) return;
+  var ja = ot.quantidade_concluida || 0, ap = ot.quantidade_perdida_acumulada || 0;
+  var rest = Math.max(0, ot.quantidade - ja - ap);
+  var f = nInt(jfVal('pd-f')), e = nInt(jfVal('pd-e')), obs = String(jfVal('pd-o')).replace(/^\s+|\s+$/g, '');
+  if (f + e === 0) { toast('Informe quantas peças você pintou hoje.', true); return; }
+  if (f + e > rest) { toast('Essa soma (' + (f + e) + ') passa do que falta (' + rest + ').', true); return; }
+  var novaC = ja + f, novaP = ap + e, resta = ot.quantidade - novaC - novaP;
+  var colab = S.colaborador ? S.colaborador.id : null;
+  var upd = { quantidade_concluida: novaC, quantidade_perdida_acumulada: novaP };
+  if (colab) upd.responsavel_id = colab;
+  if (obs) upd.instrucoes = String((ot.instrucoes || '') + '\n[' + fmtDataT(new Date().toISOString()) + '] Fim do dia: ' + obs).replace(/^\s+/, '');
+  sbPatch('ordens_trabalho', 'id=eq.' + ot.id, upd, function(err) {
+    if (err) { toast('Erro: ' + err.message, true); return; }
+    ot.quantidade_concluida = novaC; ot.quantidade_perdida_acumulada = novaP;
+    if (upd.instrucoes) ot.instrucoes = upd.instrucoes;
+    sbPost('ot_eventos', { ot_id: ot.id, tipo: 'fornada', descricao: 'Produção do dia — pintadas: ' + f + ', estragadas: ' + e + ' (acumulado ' + novaC + '/' + ot.quantidade + ')' + (obs ? ' · ' + obs : '') + ' (terminal)', estacao_id: null, motivo: null }, function() {});
+    fecharJanelaFim();
+    if (resta > 0) {
+      sbPatch('ordens_trabalho', 'id=eq.' + ot.id, { status: 'pausada' }, function() {
+        sbPost('ot_eventos', { ot_id: ot.id, tipo: 'pausada', descricao: 'Fim do dia — pausada. Faltam ' + resta + ' (terminal)', estacao_id: null, motivo: null }, function() {});
+        toast('Produção do dia salva: ' + f + ' pintadas. Faltam ' + resta + ' — continue amanhã.');
+        voltarInbox();
+      });
+      return;
+    }
+    toast('Tudo pintado! Agora feche a pintura.');
+    S.ot.status = ot.status;
+    fimEtapa();
+  });
+}
+
+/* ── Etapas de produção: concluir etapa ── */
+function fimEtapa() {
+  var ot = S.ot; if (!ot) return;
+  var ehPint = codTipo() === 'pintura';
+  var qtd = ot.quantidade || 1, perdAc = ot.quantidade_perdida_acumulada || 0;
+  var corpo =
+    '<div style="' + JF_LBL + '">' + (ehPint ? 'QUANTAS PEÇAS FICARAM PRONTAS NO TOTAL?' : 'QUANTAS FICARAM PRONTAS?') + '</div>' +
+    '<input id="fe-b" type="number" min="0" max="' + qtd + '" value="' + Math.max(0, qtd - perdAc) + '" style="' + JF_IN + 'font-size:1.5rem;">' +
+    '<div style="' + JF_LBL + '">ALGUMA PRECISA VOLTAR PARA A FASE ANTERIOR?</div>' +
+    '<input id="fe-v" type="number" min="0" max="' + qtd + '" value="' + perdAc + '" style="' + JF_IN + '">' +
+    '<div id="fe-mbox" style="display:none"><div style="' + JF_LBL + '">MOTIVO</div>' +
+    '<select id="fe-m" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;font-size:1rem"><option>Peça com defeito</option><option>Faltou material</option><option>Outro</option></select></div>' +
+    '<div style="' + JF_LBL + '">ANOTAÇÕES (OPCIONAL)</div><textarea id="fe-o" rows="2" placeholder="' + (ehPint ? 'Ex: 2 peças com respingo na base' : 'Ex: 2 peças com rebarba') + '" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;font-size:.9rem;resize:none;box-sizing:border-box;"></textarea>' +
+    '<div id="fe-p" style="margin-top:10px;font-size:.8rem;color:#94a3b8"></div>';
+  janelaFim(ehPint ? 'FECHAR A PINTURA' : 'CONCLUIR ETAPA', esc(ot.titulo || ''), corpo, ehPint ? 'Fechar pintura' : 'Concluir etapa', function() {
+    var boa = nInt(jfVal('fe-b')), volta = nInt(jfVal('fe-v')), obs = String(jfVal('fe-o')).replace(/^\s+|\s+$/g, '');
+    if (boa + volta !== qtd) { toast('As prontas (' + boa + ') mais as que voltam (' + volta + ') precisam somar ' + qtd + '.', true); return; }
+    if (volta > 0) obs = ('Voltam para a fase anterior: ' + volta + ' (' + jfVal('fe-m') + '). ' + obs).replace(/\s+$/, '');
+    fecharJanelaFim();
+    fecharOT(volta > 0 ? 'parcial' : 'sucesso', boa, volta, obs);
+  });
+  var ib = document.getElementById('fe-b'), iv = document.getElementById('fe-v');
+  var mostra = function() { document.getElementById('fe-mbox').style.display = nInt(iv.value) > 0 ? '' : 'none'; };
+  ib.oninput = function() { iv.value = Math.max(0, qtd - nInt(ib.value)); mostra(); };
+  iv.oninput = function() { ib.value = Math.max(0, qtd - nInt(iv.value)); mostra(); };
+  mostra();
+  proximaEtapaT(function(t) { var el = document.getElementById('fe-p'); if (el) el.innerHTML = esc(t); });
+}
+
+/* ── Conferência e Embalagem ── */
+function fimConferencia() {
+  var ot = S.ot; if (!ot) return;
+  var ehEmb = codTipo() === 'embalagem', qtd = ot.quantidade || 1;
+  S.confOk = true;
+  var corpo =
+    '<div style="' + JF_LBL + '">RESULTADO</div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<button id="fc-ok" style="flex:1;padding:12px 6px;border:2px solid #22c55e;background:#052e16;color:#22c55e;border-radius:8px;font-size:.9rem;font-weight:700">' + (ehEmb ? 'Tudo certo, pronto para envio' : 'Tudo certo, liberar') + '</button>' +
+      '<button id="fc-pb" style="flex:1;padding:12px 6px;border:2px solid #334155;background:#0f172a;color:#94a3b8;border-radius:8px;font-size:.9rem;font-weight:700">Encontrei problema</button>' +
+    '</div>' +
+    '<div id="fc-box" style="display:none"><div style="' + JF_LBL + '">QUAL O PROBLEMA?</div>' +
+    '<select id="fc-m" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;font-size:1rem"><option>Peça errada</option><option>Item faltando</option><option>Defeito visual</option><option>Embalagem danificada</option><option>Outro</option></select>' +
+    '<div style="' + JF_LBL + '">QUANTAS ESTÃO COM PROBLEMA?</div><input id="fc-n" type="number" min="1" max="' + qtd + '" value="1" style="' + JF_IN + '"></div>' +
+    '<div style="' + JF_LBL + '">ANOTAÇÕES (OPCIONAL)</div><textarea id="fc-o" rows="2" placeholder="Ex: faltou o suporte da base" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;font-size:.9rem;resize:none;box-sizing:border-box;"></textarea>' +
+    '<div id="fc-i" style="margin-top:10px;font-size:.8rem;color:#94a3b8">O pedido segue para a próxima etapa.</div>';
+  janelaFim(ehEmb ? 'EMBALAGEM FINAL' : 'CONFERÊNCIA FINAL', esc(ot.titulo || ''), corpo, 'Confirmar', function() {
+    var obs = String(jfVal('fc-o')).replace(/^\s+|\s+$/g, '');
+    fecharJanelaFim();
+    if (S.confOk) { fecharOT('sucesso', qtd, ot.quantidade_perdida_acumulada || 0, obs); return; }
+    var n = Math.min(qtd, Math.max(1, nInt(jfVal('fc-n'))));
+    obs = ('Problema na ' + (ehEmb ? 'embalagem' : 'conferência') + ': ' + jfVal('fc-m') + ' (' + n + '). ' + obs).replace(/\s+$/, '');
+    fecharOT(n >= qtd ? 'falha' : 'parcial', Math.max(0, qtd - n), n, obs);
+  });
+  var alterna = function(v) {
+    S.confOk = v;
+    var a = document.getElementById('fc-ok'), b = document.getElementById('fc-pb');
+    a.style.borderColor = v ? '#22c55e' : '#334155'; a.style.background = v ? '#052e16' : '#0f172a'; a.style.color = v ? '#22c55e' : '#94a3b8';
+    b.style.borderColor = v ? '#334155' : '#f59e0b'; b.style.background = v ? '#0f172a' : '#1c1403'; b.style.color = v ? '#94a3b8' : '#f59e0b';
+    document.getElementById('fc-box').style.display = v ? 'none' : '';
+    document.getElementById('fc-i').innerHTML = v ? 'O pedido segue para a próxima etapa.' : 'Marca o retrabalho das peças com problema. O pedido não segue enquanto não for resolvido.';
+  };
+  document.getElementById('fc-ok').onclick = function() { alterna(true); };
+  document.getElementById('fc-pb').onclick = function() { alterna(false); };
+}
+
+/* ── despacho do botão Concluir por tipo de tarefa ── */
+function concluirPorTipo() {
+  var cod = codTipo(), ot = S.ot;
+  if (!ot || !cod) return false;
+  var i, pend = false;
+  for (i = 0; i < S.checklist.length; i++) { if (S.checklist[i].obrigatorio && !S.checklist[i].concluido) pend = true; }
+  if (pend) { toast('Complete os itens obrigatórios (*) antes de concluir.', true); return true; }
+  var rest = Math.max(0, (ot.quantidade || 0) - (ot.quantidade_concluida || 0) - (ot.quantidade_perdida_acumulada || 0));
+  if (ehPorTurno() && rest > 0) { producaoDoDia(); return true; }
+  if (cod === 'conferencia' || cod === 'embalagem') { fimConferencia(); return true; }
+  if (cod === 'expedicao' && S.pedido && S.pedido.status !== 'enviado') { toast('Use o botão "Marcar como enviado", mais acima.', true); return true; }
+  for (i = 0; i < TIPOS_ETAPA.length; i++) { if (TIPOS_ETAPA[i] === cod) { fimEtapa(); return true; } }
+  return false;
+}
+
+
 function confirmarConcluir() {
-  if (ehOtComercial()) { abrirDesfechoComercial(); return; }
+  if (concluirPorTipo()) { return; }
+  if (concluirComercial()) { return; }
   for (var i = 0; i < S.checklist.length; i++) {
     var c = S.checklist[i];
     if (c.obrigatorio && !c.concluido) {
@@ -1320,6 +1593,7 @@ function fecharOT(resultado, qtdBoa, qtdPerd, obs) {
       return;
     }
     S.ot.status = novoStatus;
+    if (novoStatus === 'concluida') { liberarBloqueadas(ot.id); }
 
     var descEvento = 'Fechamento: ' + resultado +
       ' · Boas: ' + payload.qtd_boa +
@@ -1444,13 +1718,8 @@ function carregarPedidoEDetalhe() {
     });
     return;
   }
-  if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra' || ehOtComercial())) {
-    sbGet('pedidos', 'id=eq.' + S.ot.pedido_id +
-      '&select=id,cliente,contato,valor_total,valor_entrada,status,transportadora,codigo_rastreio,enviado_em,data_entrega,modelo_nome,quantidade',
-      function(err, d) {
-        S.pedido = (!err && d && d.length) ? d[0] : null;
-        renderDetalhe();
-      });
+  if (S.ot && S.ot.pedido_id && (cod === 'expedicao' || cod === 'pos_compra' || cod === 'cobrar_empenho' || cod === 'cobranca' || cod === 'confirmacao_pagamento' || cod === 'aprovacao_arte' || cod === 'aprovacao_orcamento' || ehOtComercial())) {
+    buscarPedidoT(S.ot.pedido_id, function(p) { S.pedido = p; renderDetalhe(); });
   } else {
     renderDetalhe();
   }
@@ -1606,58 +1875,381 @@ function comercialHtmlBloco() {
   return h;
 }
 
-/* Desfecho comercial (espelha o app completo): fechado / retornar depois / desistiu */
-function abrirDesfechoComercial() {
-  var cont = document.getElementById('cont');
-  cont.innerHTML = '<div class="nav-tit">Como ficou o contato?</div>' +
-    '<button class="btn btn-conc" onclick="desfechoFechado()" style="margin-bottom:10px">✅ Fechado / resolvido</button>' +
-    '<button class="btn btn-paus" onclick="desfechoReagendar(1)" style="margin-bottom:10px">📅 Cliente pediu para retornar depois</button>' +
-    '<button class="btn btn-ref" onclick="desfechoDesistiu(1)" style="margin-bottom:10px">🚫 Cliente desistiu</button>' +
-    '<button class="btn btn-vol" onclick="renderDetalhe()">← Cancelar</button>';
+/* Desfecho comercial v151 (Samsung, EXTRAS): janelas por tipo de tarefa, espelhando o app completo */
+var T_BTN = 'display:block;width:100%;text-align:left;padding:12px;margin-bottom:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#f1f5f9;font-size:.95rem;line-height:1.35;cursor:pointer;';
+function isoDia(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function diaMais(n) { var d = new Date(); d.setDate(d.getDate() + n); return d; }
+function ehInstT(p) {
+  if (!p) return false;
+  if (p.cnpj_tomador || p.numero_processo || p.forma_pagamento === 'empenho') return true;
+  return /pol[ií]cia|militar|prefeitura|secretaria|c[âa]mara|governo|minist[ée]rio|tribunal|ex[ée]rcito|bombeiro|batalh[ãa]o|comando|universidade|instituto/i.test(p.cliente || '');
 }
-function desfechoFechado() { fecharOT('sucesso', 1, 0, 'Desfecho comercial: fechado (terminal)'); }
-function desfechoReagendar(etapa) {
-  var cont = document.getElementById('cont');
-  if (etapa === 1) {
-    var hoje = new Date(), d = new Date(hoje.getTime() + 2 * 86400000);
-    var iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-    cont.innerHTML = '<div class="nav-tit">Retornar em qual dia?</div>' +
-      '<input class="ficha-in" id="reagData" type="date" value="' + iso + '">' +
-      '<button class="btn btn-conc" onclick="desfechoReagendar(2)" style="margin-bottom:10px">Confirmar</button>' +
-      '<button class="btn btn-vol" onclick="abrirDesfechoComercial()">← Voltar</button>';
-    return;
+function aCom(arr, i) { return arr[Math.min(i, arr.length - 1)]; }
+
+/* menu de opções em janela escura */
+function menuT(titulo, sub, itens, extraTopo) {
+  var h = (extraTopo || ''), i;
+  for (i = 0; i < itens.length; i++) {
+    h += '<button id="mt' + i + '" style="' + T_BTN + (itens[i].cor ? 'color:' + itens[i].cor + ';' : '') + '">' + itens[i].t +
+      (itens[i].s ? '<br><span style="font-size:.75rem;color:#94a3b8">' + itens[i].s + '</span>' : '') + '</button>';
   }
-  var v = cont.querySelector('#reagData').value;
-  if (!v) { toast('Escolha uma data.', true); return; }
-  var dt = v + 'T08:00:00';
-  var iso2 = new Date(dt).toISOString();
-  sbPatch('ordens_trabalho', 'id=eq.' + S.ot.id, { status: 'pendente', disponivel_em: iso2 }, function(err) {
-    if (err) { toast('Erro: ' + err.message, true); return; }
-    sbPost('ot_eventos', { ot_id: S.ot.id, tipo: 'reagendamento', descricao: 'Contato reagendado para ' + fmtData(v) + ' (terminal)', estacao_id: null, motivo: null }, function() {});
-    toast('📅 Contato reagendado.');
-    voltarInbox();
+  var velho = document.getElementById('fech-overlay');
+  if (velho && velho.parentNode) velho.parentNode.removeChild(velho);
+  var o = document.createElement('div');
+  o.id = 'fech-overlay';
+  o.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:9999;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px 0;';
+  o.innerHTML = '<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;max-width:380px;width:92%;margin:auto;">' +
+    '<div style="background:#1e293b;border-radius:12px 12px 0 0;padding:16px 20px;"><div style="font-size:.7rem;font-weight:700;color:#94a3b8;letter-spacing:.1em;">' + titulo + '</div>' +
+    '<div style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-top:4px;">' + sub + '</div></div>' +
+    '<div style="padding:16px 20px;">' + h +
+    '<button id="mtc" style="flex:1;width:100%;padding:12px;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:1rem;cursor:pointer;">Cancelar</button></div></div>';
+  document.body.appendChild(o);
+  document.getElementById('mtc').onclick = fecharJanelaFim;
+  for (i = 0; i < itens.length; i++) { (function(it, n) { document.getElementById('mt' + n).onclick = it.fn; })(itens[i], i); }
+}
+
+function subT(p) { return esc((S.ot && S.ot.titulo) || '') + (p && p.cliente ? '' : ''); }
+function comPedido(cb) {
+  if (S.pedido && S.ot && S.pedido.id === S.ot.pedido_id) { cb(S.pedido); return; }
+  if (!S.ot || !S.ot.pedido_id) { cb(null); return; }
+  buscarPedidoT(S.ot.pedido_id, function(p) { S.pedido = p; cb(p); });
+}
+function otExtra(cb) {
+  sbGet('ordens_trabalho', 'id=eq.' + S.ot.id + '&select=tentativas,instrucoes', function(err, d) {
+    cb((!err && d && d.length) ? d[0] : { tentativas: 0, instrucoes: S.ot.instrucoes });
   });
 }
-function desfechoDesistiu(etapa) {
-  var cont = document.getElementById('cont'), i;
-  if (etapa === 1) {
-    var h = '<div class="nav-tit">Motivo da desistência</div>';
-    for (i = 0; i < MOTIVOS_PERDA.length; i++) {
-      h += '<div class="check-item" onclick="selMotivo(\'' + MOTIVOS_PERDA[i].id + '\')" id="mot_' + MOTIVOS_PERDA[i].id + '"><div class="check-box"></div><div class="check-txt">' + esc(MOTIVOS_PERDA[i].label) + '</div></div>';
+function anotarT(txt, cb) {
+  var nova = (String(S.ot.instrucoes || '') + '\n[' + fmtDataT(new Date().toISOString()) + '] ' + txt).replace(/^\s+/, '');
+  S.ot.instrucoes = nova;
+  sbPatch('ordens_trabalho', 'id=eq.' + S.ot.id, { instrucoes: nova }, function() { if (cb) cb(); });
+}
+/* reagenda a tarefa (volta a pendente numa data) */
+function agendarT(dias, dataIso, evento, extra, cb) {
+  var q = dataIso ? new Date(dataIso + 'T08:00:00') : diaMais(dias);
+  if (!dataIso) q.setHours(8, 0, 0, 0);
+  var upd = { status: 'pendente', disponivel_em: q.toISOString() }, k;
+  if (extra) { for (k in extra) { upd[k] = extra[k]; } }
+  sbPatch('ordens_trabalho', 'id=eq.' + S.ot.id, upd, function(err) {
+    if (err) { toast('Erro ao agendar: ' + err.message, true); return; }
+    sbPost('ot_eventos', { ot_id: S.ot.id, tipo: 'reagendamento', descricao: evento + ' (volta em ' + fmtDataT(q.toISOString()) + ') (terminal)', estacao_id: null, motivo: null }, function() {});
+    cb(q);
+  });
+}
+function criarOTCom(codigo, pedido, quando, sufixo, cb) {
+  var tipo = null, k;
+  for (k in S.tipos) { if (S.tipos[k].codigo === codigo) { tipo = S.tipos[k]; break; } }
+  if (!tipo || !pedido) { toast('Tipo "' + codigo + '" não encontrado. Avise o supervisor.', true); cb(false); return; }
+  var tit = String(tipo.titulo_template || (tipo.nome + ': {item}')).replace('{item}', pedido.cliente || 'cliente') + (sufixo ? ' ' + sufixo : '');
+  sbPost('ordens_trabalho', { id: uuidT(), titulo: tit, status: 'pendente', tipo_ot_id: tipo.id, subsetor_id: tipo.subsetor_id,
+    pedido_id: pedido.id, quantidade: 1, ordem_execucao: 0, disponivel_em: quando ? quando.toISOString() : null }, function(err) {
+    if (err) { toast('Erro ao criar tarefa: ' + err.message, true); cb(false); return; }
+    cb(true);
+  });
+}
+function concluirCom(desc, msg) {
+  if (msg) { S.msgExtra = msg; }
+  fecharJanelaFim();
+  fecharOT('sucesso', 1, 0, desc);
+}
+function voltaCom(msg) { fecharJanelaFim(); toast(msg); voltarInbox(); }
+
+/* ── ponto de entrada: tipo da tarefa decide a janela ── */
+function concluirComercial() {
+  var cod = codTipo();
+  if (!EXTRAS || !S.ot) return false;
+  var i;
+  for (i = 0; i < S.checklist.length; i++) { if (S.checklist[i].obrigatorio && !S.checklist[i].concluido) { toast('Complete os itens obrigatórios (*) antes de concluir.', true); return true; } }
+  if (cod === 'pos_compra') { comPedido(function(p) { abrirPosCompraT(p); }); return true; }
+  if (cod === 'cobrar_empenho') { comPedido(function(p) { abrirCobrarEmpenhoT(p); }); return true; }
+  if (cod === 'confirmacao_pagamento') { comPedido(function(p) { abrirPagamentoT(p, false); }); return true; }
+  if (cod === 'cobranca') { comPedido(function(p) { abrirPagamentoT(p, true); }); return true; }
+  if (cod === 'aprovacao_arte') { comPedido(function(p) { abrirAprovarArteT(p); }); return true; }
+  if (cod === 'aprovacao_orcamento') { comPedido(function(p) { abrirAprovarOrcT(p); }); return true; }
+  if (ehOtComercial()) { comPedido(function(p) { abrirDesfechoT(p); }); return true; }
+  return false;
+}
+function abrirDesfechoComercial() { comPedido(function(p) { abrirDesfechoT(p); }); }
+
+/* 1. Como foi o contato */
+function abrirDesfechoT(p) {
+  var inst = ehInstT(p);
+  menuT('COMO FOI O CONTATO?', subT(p), [
+    { t: 'Fechou o pedido', s: 'Registra o combinado e a forma de pagamento', fn: function() { abrirFechouT(p); } },
+    { t: 'Cliente vai pensar e retornar', s: 'A tarefa volta no dia que você escolher', fn: function() { abrirRetornoT(p); } },
+    { t: 'Não consegui falar com o cliente', s: 'Conta a tentativa e agenda a próxima' + (inst ? ' (instituição: até 6)' : ''), fn: function() { abrirTentativaT(p); } },
+    { t: 'Cliente desistiu', s: 'Registra o motivo e arquiva como perdido', cor: '#f87171', fn: function() { abrirDesistiuT(p, null); } }
+  ]);
+}
+
+/* 2a. Fechou o pedido */
+function abrirFechouT(p) {
+  var inst = ehInstT(p), formas = [['pix', 'Pix'], ['transferencia', 'Transferência'], ['dinheiro', 'Dinheiro/cartão']], i, bh = '';
+  if (inst) { formas.push(['empenho', 'Empenho (paga na entrega)']); }
+  S.fcForma = inst ? 'empenho' : 'pix';
+  for (i = 0; i < formas.length; i++) {
+    bh += '<button id="ff_' + formas[i][0] + '" style="padding:10px;margin:0 6px 6px 0;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#f1f5f9;font-size:.9rem">' + formas[i][1] + '</button>';
+  }
+  var corpo = '<div style="' + JF_LBL + '">O QUE FICOU COMBINADO?</div><textarea id="fc-a" rows="2" placeholder="Ex: 50% de entrada, entrega em 30 dias" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none">' + esc((p && p.acordo_comercial) || '') + '</textarea>' +
+    '<div style="' + JF_LBL + '">FORMA DE PAGAMENTO</div><div>' + bh + '</div>' +
+    '<div id="fc-pag"><div style="' + JF_LBL + '">PAGAMENTO PREVISTO PARA</div><input id="fc-d" type="date" value="' + ((p && p.pagamento_previsto) || isoDia(diaMais(1))) + '" style="' + JF_IN + '"></div>' +
+    '<div id="fc-emp" style="display:none"><div style="' + JF_LBL + '">NÚMERO DO EMPENHO</div><input id="fc-n" type="text" value="' + esc((p && p.numero_empenho) || '') + '" placeholder="Ex: 2026NE000123" style="' + JF_IN + '"><div id="fc-av" style="font-size:.75rem;color:#94a3b8;margin-top:6px"></div></div>' +
+    (inst ? '<div style="' + JF_LBL + '">QUEM DECIDE NO ÓRGÃO? (NOME E SETOR)</div><input id="fc-r" type="text" value="' + esc((p && p.responsavel_decisao) || '') + '" style="' + JF_IN + '">' : '');
+  janelaFim('FECHOU O PEDIDO', subT(p), corpo, 'Salvar fechamento', function() { salvarFechouT(p, inst); });
+  var pinta = function() {
+    var j, b;
+    for (j = 0; j < formas.length; j++) {
+      b = document.getElementById('ff_' + formas[j][0]);
+      b.style.background = formas[j][0] === S.fcForma ? '#7c3aed' : '#1e293b';
     }
-    h += '<button class="btn btn-conc" onclick="desfechoDesistiu(2)" style="margin:10px 0">Confirmar desistência</button>' +
-      '<button class="btn btn-vol" onclick="abrirDesfechoComercial()">← Voltar</button>';
-    S.motivoSel = null;
-    cont.innerHTML = h;
-    return;
+    document.getElementById('fc-pag').style.display = S.fcForma === 'empenho' ? 'none' : '';
+    document.getElementById('fc-emp').style.display = S.fcForma === 'empenho' ? '' : 'none';
+    var tem = String(jfVal('fc-n')).replace(/\s/g, '');
+    document.getElementById('fc-av').innerHTML = tem ? 'Com o número registrado, a produção pode começar. O saldo fica para a entrega.' : 'Sem o número, o pedido fica aguardando empenho e a tarefa Cobrar empenho volta em 7 dias.';
+  };
+  for (i = 0; i < formas.length; i++) { (function(f) { document.getElementById('ff_' + f).onclick = function() { S.fcForma = f; pinta(); }; })(formas[i][0]); }
+  document.getElementById('fc-n').oninput = pinta;
+  pinta();
+}
+function salvarFechouT(p, inst) {
+  if (!p) { toast('Pedido não encontrado.', true); return; }
+  var forma = S.fcForma, acordo = String(jfVal('fc-a')).replace(/^\s+|\s+$/g, '');
+  var upd = { forma_pagamento: forma, acordo_comercial: acordo || null }, pos = null, resumo = '';
+  if (inst) { upd.responsavel_decisao = String(jfVal('fc-r')).replace(/^\s+|\s+$/g, '') || null; }
+  if (forma === 'empenho') {
+    var num = String(jfVal('fc-n')).replace(/^\s+|\s+$/g, '');
+    upd.numero_empenho = num || null; upd.pagamento_previsto = null;
+    if (num) { resumo = 'empenho ' + num + ' registrado'; } else { resumo = 'aguardando empenho'; pos = 'cobrar_empenho'; }
+  } else {
+    var prev = jfVal('fc-d');
+    if (!prev) { toast('Informe quando o pagamento está previsto.', true); return; }
+    upd.pagamento_previsto = prev; resumo = 'pagamento previsto para ' + fmtDataT(prev) + ' (' + forma + ')'; pos = 'confirmacao_pagamento';
   }
-  if (!S.motivoSel) { toast('Escolha um motivo.', true); return; }
-  sbPatch('pedidos', 'id=eq.' + S.ot.pedido_id, { perdido: true, motivo_perda: S.motivoSel, perdido_em: new Date().toISOString() }, function(err) {
-    if (err) { toast('Erro: ' + err.message, true); return; }
-    S.msgExtra = 'Desistência registrada.';
-    fecharOT('sucesso', 1, 0, 'Desfecho comercial: desistiu (' + S.motivoSel + ') (terminal)');
+  sbPatch('pedidos', 'id=eq.' + p.id, upd, function(err) {
+    if (err) { toast('Erro ao salvar o pedido: ' + err.message + ' (rodou o SQL do passo 5?)', true); return; }
+    var k; for (k in upd) { p[k] = upd[k]; }
+    var fim = function() {
+      concluirCom('Contato: pedido fechado — ' + resumo + (acordo ? '. Combinado: ' + acordo : '') + ' (terminal)', 'Libere o pedido no Kanban do computador.');
+    };
+    if (pos === 'cobrar_empenho') { criarOTCom('cobrar_empenho', p, diaMais(7), '', function() { fim(); }); }
+    else if (pos === 'confirmacao_pagamento') { criarOTCom('confirmacao_pagamento', p, new Date(upd.pagamento_previsto + 'T08:00:00'), '', function() { fim(); }); }
+    else { fim(); }
   });
 }
+
+/* 2b. Cliente vai retornar */
+function abrirRetornoT(p) {
+  var corpo = '<div style="' + JF_LBL + '">O QUE O CLIENTE DISSE?</div><textarea id="rt-n" rows="2" placeholder="Ex: vai falar com a diretoria na sexta" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>' +
+    '<div style="' + JF_LBL + '">VOLTAR A FALAR EM</div>' +
+    '<div><button id="rt1" style="padding:10px;margin:0 6px 6px 0;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#f1f5f9">Amanhã</button><button id="rt3" style="padding:10px;margin:0 6px 6px 0;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#f1f5f9">3 dias</button><button id="rt7" style="padding:10px;margin:0 6px 6px 0;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#f1f5f9">1 semana</button></div>' +
+    '<input id="rt-d" type="date" value="' + isoDia(diaMais(1)) + '" style="' + JF_IN + '">';
+  janelaFim('CLIENTE VAI RETORNAR', subT(p), corpo, 'Agendar retorno', function() {
+    var d = jfVal('rt-d'), n = String(jfVal('rt-n')).replace(/^\s+|\s+$/g, '');
+    if (!d) { toast('Escolha uma data.', true); return; }
+    var go = function() { agendarT(0, d, 'Cliente vai retornar' + (n ? ': ' + n : ''), null, function() { voltaCom('Retorno agendado.'); }); };
+    if (n) { anotarT('Cliente disse: ' + n, go); } else { go(); }
+  });
+  var dd = [1, 3, 7], i;
+  for (i = 0; i < dd.length; i++) { (function(n) { document.getElementById('rt' + n).onclick = function() { document.getElementById('rt-d').value = isoDia(diaMais(n)); }; })(dd[i]); }
+}
+
+/* 2c. Não consegui falar */
+function abrirTentativaT(p) {
+  var inst = ehInstT(p), interv = inst ? [3, 7, 7, 14, 14] : [1, 2, 3], limite = inst ? 6 : 3;
+  otExtra(function(ex) {
+    var feitas = nInt(ex.tentativas), num = feitas + 1, prox = aCom(interv, feitas);
+    S.tnMeio = 'Ligação';
+    var meios = ['Ligação', 'WhatsApp', 'E-mail'], i, bh = '';
+    for (i = 0; i < meios.length; i++) { bh += '<button id="tm' + i + '" style="padding:10px;margin:0 6px 6px 0;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#f1f5f9">' + meios[i] + '</button>'; }
+    var corpo = '<div style="' + JF_LBL + '">COMO TENTOU? (TENTATIVA ' + num + ' DE ' + limite + ')</div><div>' + bh + '</div>' +
+      '<div style="' + JF_LBL + '">NOVA TENTATIVA EM</div><input id="tn-d" type="date" value="' + isoDia(diaMais(prox)) + '" style="' + JF_IN + '">' +
+      (inst ? '<div style="' + JF_LBL + '">QUEM DECIDE NO ÓRGÃO? (NOME E SETOR)</div><input id="tn-r" type="text" value="' + esc((p && p.responsavel_decisao) || '') + '" style="' + JF_IN + '">' : '') +
+      (num >= limite ? '<div style="margin-top:10px;color:#fbbf24;font-size:.8rem">Última tentativa do ritmo. Depois dela você decide se encerra como sem retorno.</div>' : '');
+    janelaFim('NÃO CONSEGUI FALAR', subT(p), corpo, 'Registrar tentativa', function() {
+      var d = jfVal('tn-d'); if (!d) { toast('Escolha a data.', true); return; }
+      var resp = inst ? String(jfVal('tn-r')).replace(/^\s+|\s+$/g, '') : '';
+      if (resp && p) { sbPatch('pedidos', 'id=eq.' + p.id, { responsavel_decisao: resp }, function() {}); }
+      anotarT('Tentativa ' + num + ' (' + S.tnMeio + '): sem resposta', function() {
+        agendarT(0, d, 'Tentativa ' + num + ' de ' + limite + ' por ' + S.tnMeio + ' sem resposta', { tentativas: num }, function() {
+          if (num >= limite) {
+            menuT('TENTATIVAS ESGOTADAS', subT(p), [
+              { t: 'Continuar tentando', fn: function() { fecharJanelaFim(); voltarInbox(); } },
+              { t: 'Encerrar como sem retorno', cor: '#f87171', fn: function() { abrirDesistiuT(p, 'sem_retorno'); } }
+            ]);
+            return;
+          }
+          voltaCom('Tentativa ' + num + ' registrada. Próxima em ' + fmtDataT(d) + '.');
+        });
+      });
+    });
+    var pinta = function() { var j; for (j = 0; j < meios.length; j++) { document.getElementById('tm' + j).style.background = meios[j] === S.tnMeio ? '#7c3aed' : '#1e293b'; } };
+    for (i = 0; i < meios.length; i++) { (function(m) { document.getElementById('tm' + m).onclick = function() { S.tnMeio = meios[m]; pinta(); }; })(i); }
+    pinta();
+  });
+}
+
+/* 2d. Desistiu / sem retorno / recusou */
+function abrirDesistiuT(p, pre) {
+  var i, h = '<div style="' + JF_LBL + '">MOTIVO</div>';
+  S.motivoSel = pre;
+  for (i = 0; i < MOTIVOS_PERDA.length; i++) {
+    h += '<div class="check-item" onclick="selMotivo(\'' + MOTIVOS_PERDA[i].id + '\')" id="mot_' + MOTIVOS_PERDA[i].id + '"><div class="check-box"></div><div class="check-txt">' + esc(MOTIVOS_PERDA[i].label) + '</div></div>';
+  }
+  h += '<div style="' + JF_LBL + '">ANOTAÇÃO (OPCIONAL)</div><textarea id="ds-o" rows="2" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>';
+  janelaFim('CLIENTE DESISTIU', subT(p), h, 'Confirmar', function() {
+    if (!S.motivoSel) { toast('Escolha um motivo.', true); return; }
+    var obs = String(jfVal('ds-o')).replace(/^\s+|\s+$/g, ''), rot = S.motivoSel;
+    var j; for (j = 0; j < MOTIVOS_PERDA.length; j++) { if (MOTIVOS_PERDA[j].id === S.motivoSel) { rot = MOTIVOS_PERDA[j].label; } }
+    var fim = function() { fecharJanelaFim(); S.msgExtra = 'Pedido arquivado como perdido.'; if (S.recusaProp) { sbPatch('propostas', 'id=eq.' + S.recusaProp.id, { status: 'recusada' }, function() {}); S.recusaProp = null; } fecharOT('cancelada', 0, 0, 'Desistência: ' + rot + (obs ? ' — ' + obs : '') + ' (terminal)'); };
+    if (!S.ot.pedido_id) { fim(); return; }
+    sbPatch('pedidos', 'id=eq.' + S.ot.pedido_id, { perdido: true, motivo_perda: S.motivoSel, perdido_em: new Date().toISOString() }, function(err) {
+      if (err) { toast('Erro: ' + err.message, true); return; }
+      fim();
+    });
+  });
+  if (pre) { selMotivo(pre); }
+}
+
+/* 3. Cobrar empenho */
+function abrirCobrarEmpenhoT(p) {
+  var corpo = '<div style="font-size:.85rem;color:#cbd5e1">' + (p && p.responsavel_decisao ? 'Quem decide: ' + esc(p.responsavel_decisao) : 'Peça o número do empenho ao órgão.') + '</div>' +
+    '<div style="' + JF_LBL + '">NÚMERO DO EMPENHO (SE JÁ SAIU)</div><input id="ep-n" type="text" placeholder="Ex: 2026NE000123" style="' + JF_IN + '">' +
+    '<div style="font-size:.75rem;color:#94a3b8;margin-top:6px">Se ainda não saiu, deixe em branco: a tarefa volta em 7 dias.</div>';
+  janelaFim('COBRAR EMPENHO', subT(p), corpo, 'Salvar', function() {
+    var num = String(jfVal('ep-n')).replace(/^\s+|\s+$/g, '');
+    if (num) {
+      sbPatch('pedidos', 'id=eq.' + p.id, { numero_empenho: num }, function(err) {
+        if (err) { toast('Erro: ' + err.message, true); return; }
+        concluirCom('Empenho ' + num + ' registrado — produção pode ser liberada (terminal)', 'Libere o pedido no Kanban do computador.');
+      });
+      return;
+    }
+    otExtra(function(ex) {
+      anotarT('Empenho ainda não emitido', function() {
+        agendarT(7, null, 'Empenho ainda não emitido', { tentativas: nInt(ex.tentativas) + 1 }, function() { voltaCom('Nova cobrança em 7 dias.'); });
+      });
+    });
+  });
+}
+
+/* 4. Confirmar pagamento / cobrança */
+function abrirPagamentoT(p, cobr) {
+  var sug = p ? ((parseFloat(p.valor_entrada) || 0) || ((parseFloat(p.valor_total) || 0) / 2)) : 0;
+  menuT(cobr ? 'COBRANÇA' : 'CONFIRMAR PAGAMENTO', subT(p), [
+    { t: 'Pagamento recebido', s: 'Registra o valor e libera a produção', fn: function() {
+      var v = parseFloat(String(jfVal('pg-v')).replace(',', '.')) || 0;
+      if (v <= 0) { toast('Informe o valor recebido.', true); return; }
+      var antes = parseFloat(p.valor_entrada) || 0, delta = Math.max(0, v - antes);
+      sbPatch('pedidos', 'id=eq.' + p.id, { valor_entrada: v }, function(err) {
+        if (err) { toast('Erro: ' + err.message, true); return; }
+        p.valor_entrada = v;
+        npAlocarEntrada(delta, function() { concluirCom('Pagamento recebido: ' + fmtMoeda(v) + ' (terminal)', 'Libere o pedido no Kanban do computador.'); });
+      });
+    } },
+    { t: cobr ? 'Cliente prometeu pagar numa data' : 'Ainda não caiu', s: cobr ? 'Escolha a data abaixo' : 'A tarefa volta em 2 dias', fn: function() {
+      var d = cobr ? jfVal('pg-d') : null;
+      agendarT(2, d, cobr ? 'Cliente prometeu pagar' : 'Pagamento ainda não caiu', null, function() { voltaCom('Tarefa reagendada.'); });
+    } }
+  ], '<div style="' + JF_LBL + '">VALOR RECEBIDO (R$)</div><input id="pg-v" type="number" step="0.01" min="0" value="' + sug.toFixed(2) + '" style="' + JF_IN + '">' +
+    (cobr ? '<div style="' + JF_LBL + '">DATA PROMETIDA</div><input id="pg-d" type="date" value="' + isoDia(diaMais(3)) + '" style="' + JF_IN + 'margin-bottom:12px">' : '<div style="height:12px"></div>'));
+}
+
+/* 5. Pós-compra */
+function abrirPosCompraT(p) {
+  var adiar = function(txt) { agendarT(2, null, txt, null, function() { voltaCom('Nova checagem em 2 dias.'); }); };
+  menuT('COMO FOI O PÓS-COMPRA?', subT(p), [
+    { t: 'Recebeu e está satisfeito', s: 'Peça uma avaliação e encerre', fn: function() { concluirCom('Pós-compra: cliente recebeu e está satisfeito (terminal)'); } },
+    { t: 'Ainda não recebeu', s: 'Confira o rastreio. Volta em 2 dias', fn: function() { adiar('Cliente ainda não recebeu'); } },
+    { t: 'Há um problema', s: 'Descreva e abre tarefa de resolução', cor: '#f87171', fn: function() {
+      janelaFim('PROBLEMA NO PÓS-COMPRA', subT(p), '<div style="' + JF_LBL + '">QUAL É O PROBLEMA?</div><textarea id="pc-t" rows="3" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>', 'Abrir tarefa de resolução', function() {
+        var t = String(jfVal('pc-t')).replace(/^\s+|\s+$/g, '');
+        if (!t) { toast('Descreva o problema.', true); return; }
+        criarOTCom('contato_cliente', p, null, '— resolver problema', function(ok) { if (ok) { concluirCom('Pós-compra: problema relatado — ' + t + ' (terminal)', 'Tarefa de resolução aberta.'); } });
+      });
+    } },
+    { t: 'Não respondeu', s: 'Nova tentativa em 2 dias', fn: function() { adiar('Cliente não respondeu ao pós-compra'); } }
+  ]);
+}
+
+/* 6. Aprovar arte (só visualização; imagens para copiar ficam no computador) */
+function abrirAprovarArteT(p) {
+  var q = 'select=id,nome,imagem_base64&order=created_at&limit=6&' + (S.ot.pedido_id ? 'or=(ot_id.eq.' + S.ot.id + ',pedido_id.eq.' + S.ot.pedido_id + ')' : 'ot_id=eq.' + S.ot.id);
+  sbGet('ot_anexos', q, function(err, imgs) {
+    imgs = (!err && imgs) ? imgs : [];
+    sbGet('ot_eventos', 'ot_id=eq.' + S.ot.id + '&descricao=ilike.Ajuste de arte*&select=id', function(e2, evs) {
+      var rodada = ((!e2 && evs) ? evs.length : 0) + 1, inst = ehInstT(p), i, th = '';
+      for (i = 0; i < imgs.length; i++) { if (imgs[i].imagem_base64) { th += '<img src="' + imgs[i].imagem_base64 + '" style="width:30%;max-height:90px;object-fit:cover;border-radius:6px;margin:0 2% 6px 0">'; } }
+      var topo = '<div style="font-size:.8rem;color:#94a3b8;margin-bottom:8px">Rodada ' + rodada + ' · ' + imgs.length + ' imagem(ns). Para copiar e enviar ao cliente, use o computador.</div>' + th;
+      menuT('RESPOSTA DO CLIENTE À ARTE', subT(p), [
+        { t: 'Aprovou', s: 'Libera a impressão', fn: function() {
+          concluirCom('Arte aprovada pelo cliente (rodada ' + rodada + ') (terminal)');
+        } },
+        { t: 'Pediu ajustes', s: 'Volta para a Modelagem e conta a rodada', fn: function() { abrirAjusteArteT(p, rodada); } },
+        { t: 'Ainda não respondeu', s: 'Agenda nova cobrança' + (inst ? ' (ritmo longo)' : ''), fn: function() {
+          otExtra(function(ex) {
+            var f = nInt(ex.tentativas), dias = aCom(inst ? [3, 7, 7, 14, 14] : [1, 2, 3], f);
+            agendarT(dias, null, 'Arte enviada, cliente ainda não respondeu (cobrança ' + (f + 1) + ')', { tentativas: f + 1 }, function() { voltaCom('Nova cobrança em ' + dias + ' dia(s).'); });
+          });
+        } }
+      ], topo);
+    });
+  });
+}
+function abrirAjusteArteT(p, rodada) {
+  janelaFim('PEDIU AJUSTES NA ARTE', subT(p), '<div style="' + JF_LBL + '">O QUE O CLIENTE PEDIU PARA MUDAR?</div><textarea id="aj-t" rows="3" placeholder="Ex: trocar a cor do uniforme" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>', 'Enviar para a Modelagem', function() {
+    var t = String(jfVal('aj-t')).replace(/^\s+|\s+$/g, '');
+    if (!t) { toast('Descreva o ajuste pedido.', true); return; }
+    var tipo = null, k, ot = S.ot;
+    for (k in S.tipos) { if (S.tipos[k].codigo === 'modelagem') { tipo = S.tipos[k]; break; } }
+    if (!tipo) { toast('Tipo Modelagem não encontrado.', true); return; }
+    var nid = uuidT();
+    sbPost('ordens_trabalho', { id: nid, titulo: 'Ajustar arte (rodada ' + rodada + '): ' + ((p && p.cliente) || 'cliente'),
+      instrucoes: 'Pedido do cliente: ' + t, status: 'pendente', tipo_ot_id: tipo.id, subsetor_id: tipo.subsetor_id,
+      plano_id: ot.plano_id || null, pedido_id: ot.pedido_id || null, quantidade: 1, ordem_execucao: Math.max(0, (ot.ordem_execucao || 1) - 1) }, function(err) {
+      if (err) { toast('Erro: ' + err.message, true); return; }
+      sbPatch('ordens_trabalho', 'id=eq.' + ot.id, { status: 'bloqueada', ot_desbloqueadora_id: nid, bloqueio_motivo: 'Aguardando ajuste da arte (rodada ' + rodada + ')' }, function() {
+        sbPost('ot_eventos', { ot_id: ot.id, tipo: 'reagendamento', descricao: 'Ajuste de arte solicitado (rodada ' + rodada + '): ' + t + ' (terminal)', estacao_id: null, motivo: null }, function() {});
+        voltaCom('Ajuste enviado para a Modelagem. Esta tarefa volta quando ele terminar.');
+      });
+    });
+  });
+}
+
+/* 7. Aprovar orçamento */
+function abrirAprovarOrcT(p) {
+  var m = String((S.ot && S.ot.instrucoes) || '').match(/\[proposta:([0-9a-f-]{36})\]/i);
+  var seguir = function(prop) {
+    var inst = ehInstT(p) || !!(prop && prop.instituicao);
+    var txt = prop ? 'Proposta ' + (prop.numero ? 'nº ' + prop.numero : '') + (prop.versao > 1 ? ' · rev. ' + prop.versao : '') : 'Proposta não encontrada';
+    menuT('RESPOSTA DO CLIENTE AO ORÇAMENTO', subT(p), [
+      { t: 'Aprovou', s: 'Conclui. Crie o pedido no computador (Propostas → Aprovar)', fn: function() {
+        var fim = function() { concluirCom('Orçamento aprovado pelo cliente (terminal)', 'Crie o pedido da proposta no computador.'); };
+        if (prop) { sbPatch('propostas', 'id=eq.' + prop.id, { status: 'aprovada' }, function() { fim(); }); } else { fim(); }
+      } },
+      { t: 'Pediu ajuste de valor ou quantidade', s: 'Anote o pedido; a revisão é feita no computador', fn: function() {
+        janelaFim('PEDIU AJUSTE', subT(p), '<div style="' + JF_LBL + '">O QUE O CLIENTE PEDIU?</div><textarea id="oj-t" rows="3" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>', 'Registrar e agendar', function() {
+          var t = String(jfVal('oj-t')).replace(/^\s+|\s+$/g, '');
+          if (!t) { toast('Descreva o ajuste pedido.', true); return; }
+          anotarT('Cliente pediu ajuste: ' + t, function() { agendarT(2, null, 'Cliente pediu ajuste no orçamento: ' + t, null, function() { voltaCom('Registrado. Revise a proposta no computador.'); }); });
+        });
+      } },
+      { t: 'Recusou', s: 'Escolha o motivo', cor: '#f87171', fn: function() {
+        S.recusaProp = prop; abrirDesistiuT(p, null);
+      } },
+      { t: 'Ainda não respondeu', s: 'Nova cobrança' + (inst ? ' (ritmo longo)' : ''), fn: function() {
+        otExtra(function(ex) {
+          var f = nInt(ex.tentativas), dias = aCom(inst ? [3, 7, 7, 14, 14] : [1, 2, 3], f);
+          agendarT(dias, null, 'Orçamento enviado, sem resposta (cobrança ' + (f + 1) + ')', { tentativas: f + 1 }, function() { voltaCom('Nova cobrança em ' + dias + ' dia(s).'); });
+        });
+      } }
+    ], '<div style="font-size:.8rem;color:#94a3b8;margin-bottom:10px">' + esc(txt) + '</div>');
+  };
+  var id = m ? m[1] : null;
+  if (id) { sbGet('propostas', 'id=eq.' + id + '&select=*', function(e, d) { seguir((!e && d && d.length) ? d[0] : null); }); return; }
+  if (S.ot && S.ot.pedido_id) { sbGet('propostas', 'pedido_id=eq.' + S.ot.pedido_id + '&order=created_at.desc&limit=1&select=*', function(e, d) { seguir((!e && d && d.length) ? d[0] : null); }); return; }
+  seguir(null);
+}
+
 function selMotivo(id) {
   var i, el;
   S.motivoSel = id;
