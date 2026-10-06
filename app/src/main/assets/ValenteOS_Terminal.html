@@ -763,9 +763,35 @@ function tileHtml(ico, tit, sub, n, acao) {
 }
 
 function navIr(mod, sub) { S.formBuilt = false; S.nav = { mod: mod, sub: sub || null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); }
+
+/* Fila da estação: todas as tarefas da minha função, com filtro por tipo e botão para abrir a próxima */
+function navFiltro(cod) { S.nav.sub = cod || null; S.nav.lim = 15; renderModalidades(); }
+function chipHtml(rot, n, cod, ativo) {
+  return '<span onclick="navFiltro(' + (cod ? "'" + cod + "'" : 'null') + ')" style="display:inline-block;margin:0 6px 6px 0;padding:8px 12px;border-radius:18px;font-size:.85rem;font-weight:700;border:1px solid ' + (ativo ? '#7c3aed' : '#475569') + ';background:' + (ativo ? '#7c3aed' : '#1e293b') + ';color:#f1f5f9">' + rot + ' (' + n + ')</span>';
+}
+function filaHtml(nav) {
+  var lista = listaDaModalidade(nav.mod), j, cont = {}, ordem = [], k, h = '';
+  var tit = nav.mod === 'outras' ? 'Outras funções' : ((S.meusSubs && S.meusSubs.length) ? 'Minha estação' : 'Produção');
+  h += '<button class="nav-back" onclick="navVoltar()">← Voltar</button><div class="nav-tit">' + esc(tit) + ' (' + lista.length + ')</div>';
+  for (j = 0; j < lista.length; j++) { var t = tipoDe(lista[j]); k = t.codigo; if (!cont[k]) { cont[k] = { t: t, n: 0 }; ordem.push(k); } cont[k].n++; }
+  ordem.sort(function(a, b) { return cont[b].n - cont[a].n; });
+  if (ordem.length > 1) {
+    h += '<div style="margin:4px 0 10px">' + chipHtml('Todas', lista.length, null, !nav.sub);
+    for (j = 0; j < ordem.length; j++) { h += chipHtml(icoTipo(cont[ordem[j]].t) + ' ' + esc(cont[ordem[j]].t.nome), cont[ordem[j]].n, ordem[j], nav.sub === ordem[j]); }
+    h += '</div>';
+  }
+  var items = [];
+  for (j = 0; j < lista.length; j++) { if (!nav.sub || tipoDe(lista[j]).codigo === nav.sub) { items.push(lista[j]); } }
+  if (!items.length) { return h + '<div class="vazio"><div class="vazio-titulo">Nada por aqui</div><div class="vazio-sub">Sem tarefas nesta fila no momento.</div></div>'; }
+  h += '<button class="btn btn-ini" onclick="abrirDetalhe(\'' + items[0].id + '\')" style="margin-bottom:12px">▶ Próxima da fila<br><span style="font-size:.8rem;font-weight:400">' + esc(items[0].titulo || '') + '</span></button>';
+  for (j = 0; j < items.length && j < nav.lim; j++) { h += cardModHtml(items[j]); }
+  if (items.length > nav.lim) { h += '<button class="mais-btn" onclick="navMais()">Mostrar mais (' + (items.length - nav.lim) + ')</button>'; }
+  return h;
+}
 function navMais() { S.nav.lim += 15; renderModalidades(); }
 function navVoltar() {
   var m = S.nav.mod; S.formBuilt = false;
+  if (m === 'prod' || m === 'outras') { S.nav = { mod: null, sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (m === 'com_t') { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (m === 'cores' && !S.nav.sub && !podeComercial()) { S.nav = { mod: null, sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
   if (m === 'caixa' || m === 'orcs' || m === 'conf' || m === 'novoped' || (m === 'cores' && !S.nav.sub) || ((m === 'pedidos' || m === 'pecas') && !S.nav.sub)) { S.nav = { mod: 'com', sub: null, lim: 15 }; renderModalidades(); window.scrollTo(0, 0); return; }
@@ -842,6 +868,8 @@ function renderModalidades() {
     html += comNavHtml(nav);
   } else if (nav.mod === 'semfoto') {
     html += '<button class="nav-back" onclick="navVoltar()">← Voltar</button>' + listaSemFotoHtml();
+  } else if (nav.mod === 'prod' || nav.mod === 'outras') {
+    html += filaHtml(nav);
   } else {
     var lista = listaDaModalidade(nav.mod);
     var titulos = { prod: (S.meusSubs && S.meusSubs.length) ? 'Minhas funções' : 'Produção',
@@ -1363,10 +1391,35 @@ function salvarProducaoDoDia() {
 }
 
 /* ── Etapas de produção: concluir etapa ── */
+
+/* Tarefa de 1 unidade: um toque para concluir, ou relatar problema */
+function fimEtapaUm(ot, ehPint) {
+  var b1 = 'display:block;width:100%;padding:16px;margin-bottom:10px;border-radius:10px;border:none;background:#22c55e;color:#fff;font-size:1.1rem;font-weight:700;';
+  var b2 = 'display:block;width:100%;padding:14px;border-radius:10px;border:1px solid #f59e0b;background:#1c1403;color:#f59e0b;font-size:1rem;font-weight:700;';
+  var corpo = '<button id="u-ok" style="' + b1 + '">✅ ' + (ehPint ? 'Pintura concluída' : 'Etapa concluída') + '</button>' +
+    '<button id="u-pb" style="' + b2 + '">⚠️ Houve problema</button>' +
+    '<div id="u-box" style="display:none"><div style="' + JF_LBL + '">QUAL O PROBLEMA?</div>' +
+    '<select id="u-m" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:8px;font-size:1rem"><option>Peça com defeito</option><option>Faltou material</option><option>Outro</option></select>' +
+    '<div style="' + JF_LBL + '">ANOTAÇÕES (OPCIONAL)</div><textarea id="u-o" rows="2" style="width:100%;padding:10px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;box-sizing:border-box;resize:none"></textarea>' +
+    '<button id="u-reg" style="' + b2 + 'margin-top:12px">Registrar problema</button></div>' +
+    '<div id="u-p" style="margin-top:10px;font-size:.8rem;color:#94a3b8"></div>';
+  janelaFim(ehPint ? 'FECHAR A PINTURA' : 'CONCLUIR ETAPA', esc(ot.titulo || ''), corpo, 'x', function() {});
+  document.getElementById('jf-ok').style.display = 'none';
+  document.getElementById('u-ok').onclick = function() { fecharJanelaFim(); fecharOT('sucesso', 1, 0, ''); };
+  document.getElementById('u-pb').onclick = function() { document.getElementById('u-box').style.display = ''; this.style.display = 'none'; };
+  document.getElementById('u-reg').onclick = function() {
+    var o = String(jfVal('u-o')).replace(/^\s+|\s+$/g, '');
+    fecharJanelaFim();
+    fecharOT('parcial', 0, 1, ('Voltou para a fase anterior: 1 (' + jfVal('u-m') + '). ' + o).replace(/\s+$/, ''));
+  };
+  proximaEtapaT(function(t) { var el = document.getElementById('u-p'); if (el) { el.innerHTML = esc(t); } });
+}
+
 function fimEtapa() {
   var ot = S.ot; if (!ot) return;
   var ehPint = codTipo() === 'pintura';
   var qtd = ot.quantidade || 1, perdAc = ot.quantidade_perdida_acumulada || 0;
+  if (qtd === 1) { fimEtapaUm(ot, ehPint); return; }
   var corpo =
     '<div style="' + JF_LBL + '">' + (ehPint ? 'QUANTAS PEÇAS FICARAM PRONTAS NO TOTAL?' : 'QUANTAS FICARAM PRONTAS?') + '</div>' +
     '<input id="fe-b" type="number" min="0" max="' + qtd + '" value="' + Math.max(0, qtd - perdAc) + '" style="' + JF_IN + 'font-size:1.5rem;">' +
