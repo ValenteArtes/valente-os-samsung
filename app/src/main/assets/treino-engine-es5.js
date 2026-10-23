@@ -1,3 +1,4 @@
+/* v166 — motor ES5 integrado, voz nativa e reforço. */
 /* ═══════════════════════════════════════════════════════════════════════
    VALENTE OS — CENTRO DE CAPACITAÇÃO — MOTOR ES5 (tablets antigos)
    Porte de treinamento.js pra ES5 puro: sem const/let, sem arrow function,
@@ -31,8 +32,8 @@ var TREIN_MISSAO_MIN_CHARS_ES5 = 5;
 var TREIN_LIMIAR_VERDE_ES5 = 0.8;
 var TREIN_LIMIAR_AMARELO_ES5 = 0.5;
 var TREIN_CLASSIFICACAO_LABEL_ES5 = {
-  liberado: '🟢 LIBERADO PARA OPERAÇÃO',
-  funcional_supervisao: '🟡 FUNCIONAL COM SUPERVISÃO',
+  liberado: '🟢 DESEMPENHO TEÓRICO SATISFATÓRIO — autorização operacional separada',
+  funcional_supervisao: '🟡 DESEMPENHO TEÓRICO PARCIAL — revisão necessária',
   precisa_acompanhamento: '🔴 PRECISA DE ACOMPANHAMENTO'
 };
 var TREIN_COMPETENCIA_NOME_ES5 = {
@@ -81,28 +82,29 @@ function trTrilhasDoColaborador() {
 function trBox() { return document.getElementById('treinoApp'); }
 
 /* ── entrada / saída ── */
-function TreinoAbrir(colaborador, aoFechar) {
-  T.colaborador = colaborador;
-  T.trilha = null; T.diaAberto = null; T.progresso = [];
-  T.view = 'trilhas';
-  T.aoFechar = aoFechar || null;
-  var box = trBox();
-  if (box) box.style.display = 'block';
-  treinoRender();
+function TreinoAbrir(colaborador,aoFechar) {
+  if(!colaborador || !colaborador.id){toast('Identifique-se antes de abrir a capacitação.',true);return;}
+  T._sessao=(T._sessao||0)+1;T._tela=(T._tela||0)+1;
+  T.colaborador=colaborador;T.trilha=null;T.diaAberto=null;T.progresso=[];T.ativo=true;T._etapaViva=null;
+  T.view='trilhas';T.aoFechar=aoFechar||null;
+  var box=trBox();if(box)box.style.display='block';treinoRender();
 }
 function TreinoFechar() {
-  var box = trBox();
-  if (box) box.style.display = 'none';
-  if (T.aoFechar) T.aoFechar();
+  if(typeof ValenteApoio!=='undefined')ValenteApoio.parar();
+  var cb=T.aoFechar;T._sessao=(T._sessao||0)+1;T._tela=(T._tela||0)+1;T.ativo=false;T.colaborador=null;T.trilha=null;T.progresso=[];T._etapaViva=null;T.aoFechar=null;
+  var box=trBox();if(box)box.style.display='none';if(cb)cb();
 }
 
 /* ── persistência ── */
 function trCarregarProgresso(cb) {
-  var qs = 'colaborador_id=eq.' + T.colaborador.id + '&trilha=eq.' + T.trilha + '&versao=eq.' + trVersaoAtual();
-  sbGet('treinamento_progresso', qs, function(err, data) {
-    if (err) { toast('Não consegui carregar seu progresso: ' + err.message, true); if (cb) cb(false); return; }
-    T.progresso = data || [];
-    if (cb) cb(true);
+  T.progresso=[];
+  if(!trPodeAcessar()){if(cb)cb(false);return;}
+  var pessoa=T.colaborador.id,trilha=T.trilha,versao=trVersaoAtual(),sessao=T._sessao;
+  var qs='colaborador_id=eq.'+encodeURIComponent(pessoa)+'&trilha=eq.'+encodeURIComponent(trilha)+'&versao=eq.'+versao;
+  sbGet('treinamento_progresso',qs,function(err,data){
+    if(!T.ativo||T._sessao!==sessao||!T.colaborador||T.colaborador.id!==pessoa||T.trilha!==trilha){if(cb)cb(false);return;}
+    if(err){toast('Não consegui carregar seu progresso: '+err.message,true);if(cb)cb(false);return;}
+    T.progresso=data||[];if(cb)cb(true);
   });
 }
 function trStatusDoDia(dia) {
@@ -128,44 +130,40 @@ function trAvisoSequencia(trilha, dia) {
 /* Grava status/etapa_atual/respostas (merge) de um dia. patch (opcional) é
    mesclado em cima de `respostas` já salvo. novoStatus (opcional) troca o
    status; sem ele mantém o que já existia (ou 'em_andamento' se é novo). */
-function trSalvar(dia, etapaAtual, patch, novoStatus, cb) {
-  var existente = trFindRow(dia);
-  var respostas = {};
-  if (existente && existente.respostas) { for (var k in existente.respostas) respostas[k] = existente.respostas[k]; }
-  if (patch) { for (var k2 in patch) respostas[k2] = patch[k2]; }
-  var payload = {
-    colaborador_id: T.colaborador.id,
-    trilha: T.trilha,
-    versao: trVersaoAtual(),
-    dia: dia,
-    status: novoStatus || (existente ? existente.status : 'em_andamento'),
-    etapa_atual: etapaAtual,
-    respostas: respostas,
-    updated_at: new Date().toISOString()
-  };
-  if (payload.status === 'em_andamento' && (!existente || !existente.iniciado_em)) payload.iniciado_em = new Date().toISOString();
-  if (payload.status === 'concluido') payload.concluido_em = new Date().toISOString();
-
-  function depois(err) {
-    if (err) { toast('Erro ao salvar progresso: ' + err.message, true); if (cb) cb(false); return; }
-    trCarregarProgresso(function() { if (cb) cb(true); });
+function trSalvar(dia,etapaAtual,patch,novoStatus,cb) {
+  if(!trPodeAcessar()){if(cb)cb(false);return;}
+  var existente=trFindRow(dia),respostas={},k,sessao=T._sessao;
+  if(existente&&existente.respostas)for(k in existente.respostas)if(existente.respostas.hasOwnProperty(k))respostas[k]=existente.respostas[k];
+  if(patch)for(k in patch)if(patch.hasOwnProperty(k))respostas[k]=patch[k];
+  var payload={colaborador_id:T.colaborador.id,trilha:T.trilha,versao:trVersaoAtual(),dia:dia,status:novoStatus||(existente?existente.status:'em_andamento'),etapa_atual:etapaAtual,respostas:respostas,updated_at:new Date().toISOString()};
+  if(payload.status==='em_andamento'&&(!existente||!existente.iniciado_em))payload.iniciado_em=new Date().toISOString();
+  if(payload.status==='concluido')payload.concluido_em=new Date().toISOString();
+  function depois(err){
+    if(err){toast('Erro ao salvar progresso: '+err.message,true);if(cb)cb(false);return;}
+    if(!T.ativo||T._sessao!==sessao||!T.colaborador||T.colaborador.id!==payload.colaborador_id||T.trilha!==payload.trilha){if(cb)cb(false);return;}
+    var row={},j; if(existente)for(j in existente)if(existente.hasOwnProperty(j))row[j]=existente[j];
+    for(j in payload)if(payload.hasOwnProperty(j))row[j]=payload[j];
+    row._gravado=true;
+    var novas=[];for(var i=0;i<T.progresso.length;i++)if(T.progresso[i].dia!==dia)novas.push(T.progresso[i]);
+    novas.push(row);T.progresso=novas;if(cb)cb(true);
   }
-  if (existente && existente.id) {
-    sbPatch('treinamento_progresso', 'id=eq.' + existente.id, payload, depois);
-  } else {
-    sbPost('treinamento_progresso', payload, depois);
-  }
+  if(existente&&(existente.id||existente._gravado)){
+    var filtro=existente.id?'id=eq.'+encodeURIComponent(existente.id):'colaborador_id=eq.'+encodeURIComponent(payload.colaborador_id)+'&trilha=eq.'+encodeURIComponent(payload.trilha)+'&versao=eq.'+payload.versao+'&dia=eq.'+dia;
+    sbPatch('treinamento_progresso',filtro,payload,depois);
+  }else sbPost('treinamento_progresso',payload,depois);
 }
 
 /* ── dispatcher ── */
 function treinoRender() {
-  var box = trBox();
-  if (!box) return;
-  if (T.view === 'trilhas') { treinoRenderTrilhas(box); return; }
-  if (T.view === 'inicio') { treinoRenderInicio(box); return; }
-  if (T.view === 'aula') { treinoRenderAula(box); return; }
-  if (T.view === 'resultado') { treinoRenderResultado(box); return; }
-  if (T.view === 'central') { treinoRenderCentral(box); return; }
+  T._tela=(T._tela||0)+1;
+  if(typeof ValenteApoio!=='undefined')ValenteApoio.parar();
+  var box=trBox();if(!box||!T.ativo||!T.colaborador)return;
+  if(T.trilha&&!trPodeAcessar()){T.trilha=null;T.progresso=[];T.view='trilhas';}
+  if(T.view==='trilhas')treinoRenderTrilhas(box);
+  else if(T.view==='inicio')treinoRenderInicio(box);
+  else if(T.view==='aula')treinoRenderAula(box);
+  else if(T.view==='resultado')treinoRenderResultado(box);
+  else if(T.view==='central')treinoRenderCentral(box);
 }
 
 /* ── tela: escolha de trilha ── */
@@ -210,7 +208,7 @@ function treinoRenderTrilhas(box) {
     (function(card) {
       card.onclick = function() {
         T.trilha = card.getAttribute('data-trilha');
-        trCarregarProgresso(function() { T.view = 'inicio'; treinoRender(); });
+        trCarregarProgresso(function(ok) { if(ok) { T.view = 'inicio'; treinoRender(); } });
       };
     })(cards[c]);
   }
@@ -305,119 +303,80 @@ function treinoRenderAula(box) {
     treinoRenderAulaPlaceholder(box, trilha, dia, info);
   }
 }
-function treinoRenderAulaPlaceholder(box, trilha, dia, info) {
-  var status = trStatusDoDia(dia);
-  box.innerHTML =
-    '<div class="trein-aula">' +
-    '<button class="btn-icon" id="treinBtnVoltar">← Voltar</button>' +
-    '<div class="trein-aula-dia">' + trEsc(trilha.nome.toUpperCase()) + ' — DIA ' + dia + ' / ' + trilha.dias.length + '</div>' +
-    '<h2>' + trEsc(info.titulo) + '</h2><p class="hint">' + trEsc(info.subtitulo || '') + '</p>' +
-    '<div class="trein-placeholder"><p>🚧 Esta aula ainda não tem conteúdo interativo.</p></div>' +
-    (status !== 'concluido'
-      ? '<button class="btn-primary" id="treinBtnConcluir">Marcar aula como concluída</button>'
-      : '<p class="trein-concluido-msg">✓ Aula concluída</p>') +
-    '</div>';
-  box.querySelector('#treinBtnVoltar').onclick = function() { T.view = 'inicio'; T.diaAberto = null; treinoRender(); };
-  var btnConcluir = box.querySelector('#treinBtnConcluir');
-  if (btnConcluir) {
-    btnConcluir.onclick = function() {
-      trSalvar(dia, 0, {}, 'concluido', function(ok) {
-        if (ok) { toast('✓ Dia ' + dia + ' concluído!'); T.view = 'inicio'; T.diaAberto = null; treinoRender(); }
-      });
-    };
-  } else if (status === 'nao_iniciado') {
-    trSalvar(dia, 0, {}, 'em_andamento');
-  }
+function treinoRenderAulaPlaceholder(box,trilha,dia,info) {
+  box.innerHTML='<button id="treinBtnVoltar" class="btn-icon">Voltar às aulas</button><h2>'+trEsc(info.titulo)+'</h2><p>Esta aula ainda não tem conteúdo disponível e não pode ser concluída.</p>';
+  box.querySelector('#treinBtnVoltar').onclick=function(){T.view='inicio';T.diaAberto=null;treinoRender();};
 }
 
 /* ── motor de etapas ── */
-function treinoRenderAulaEtapas(box, trilha, dia, info) {
-  var row = trFindRow(dia);
-  var statusAtual = trStatusDoDia(dia);
-  var totalEtapas = info.etapas.length;
-
-  if (statusAtual === 'concluido') {
-    box.innerHTML =
-      '<div class="trein-aula">' +
-      '<button class="btn-icon" id="treinBtnVoltar">← Voltar</button>' +
-      '<div class="trein-aula-dia">' + trEsc(trilha.nome.toUpperCase()) + ' — DIA ' + dia + ' / ' + trilha.dias.length + '</div>' +
-      '<h2>' + trEsc(info.titulo) + '</h2>' +
-      '<div class="trein-placeholder"><p class="trein-concluido-msg">✓ Aula concluída</p>' +
-      '<p class="hint">Você já completou todas as ' + totalEtapas + ' etapas desta aula.</p></div>' +
-      '</div>';
-    box.querySelector('#treinBtnVoltar').onclick = function() { T.view = 'inicio'; T.diaAberto = null; treinoRender(); };
-    return;
+function treinoRenderAulaEtapas(box,trilha,dia,info) {
+  var row=trFindRow(dia),total=info.etapas.length;
+  T._etapaViva=null;
+  if(row&&row.status==='concluido'){
+    box.innerHTML='<button class="btn-icon" id="treinBtnVoltar">Voltar</button><h2>'+trEsc(info.titulo)+'</h2><p>Atividades da aula concluídas. Isso não concede autorização operacional.</p><button class="btn-icon" id="treinBtnRever">Rever sem alterar o progresso</button>';
+    box.querySelector('#treinBtnVoltar').onclick=function(){T.view='inicio';T.diaAberto=null;treinoRender();};
+    box.querySelector('#treinBtnRever').onclick=function(){treinoRenderEtapaAtual(box,trilha,dia,info,0,row.respostas||{},true);};return;
   }
-
-  var etapaInicial = Math.min((row && row.etapa_atual) ? row.etapa_atual : 0, totalEtapas - 1);
-  var respostas = (row && row.respostas) || {};
-  if (!row || statusAtual === 'nao_iniciado') trSalvar(dia, etapaInicial, {}, 'em_andamento');
-  treinoRenderEtapaAtual(box, trilha, dia, info, etapaInicial, respostas);
+  var indice=row&&typeof row.etapa_atual==='number'&&isFinite(row.etapa_atual)?Math.floor(row.etapa_atual):0;
+  indice=Math.max(0,Math.min(indice,total-1));
+  treinoRenderEtapaAtual(box,trilha,dia,info,indice,(row&&row.respostas)||{},false);
 }
 
-function treinoRenderEtapaAtual(box, trilha, dia, info, etapaIndex, respostas) {
-  var totalEtapas = info.etapas.length;
-  var etapa = info.etapas[etapaIndex];
-  var pct = Math.round((etapaIndex / totalEtapas) * 100);
-  var respostaSalva = respostas[String(etapaIndex)] || null;
-
-  box.innerHTML =
-    '<div class="trein-aula">' +
-    '<button class="btn-icon" id="treinBtnVoltar">← Voltar</button>' +
-    (etapaIndex > 0 ? '<button class="btn-icon" id="treinBtnEtapaAnterior">← Etapa anterior</button>' : '') +
-    '<div class="trein-aula-dia">' + trEsc(trilha.nome.toUpperCase()) + ' — DIA ' + dia + ' / ' + trilha.dias.length + '</div>' +
-    (etapaIndex === 0 ? trAvisoSequencia(trilha, dia) : '') +
-    '<div class="trein-progresso-wrap">' +
-    '<div class="trein-progresso-label">Etapa ' + (etapaIndex + 1) + ' de ' + totalEtapas + '</div>' +
-    '<div class="trein-progresso-barra"><div class="trein-progresso-fill" style="width:' + pct + '%"></div></div>' +
-    '</div>' +
-    '<div id="treinCorpo"></div>' +
-    '</div>';
-
-  box.querySelector('#treinBtnVoltar').onclick = function() { T.view = 'inicio'; T.diaAberto = null; treinoRender(); };
-  var btnAnterior = box.querySelector('#treinBtnEtapaAnterior');
-  if (btnAnterior) btnAnterior.onclick = function() { treinoRenderEtapaAtual(box, trilha, dia, info, etapaIndex - 1, respostas); };
-
-  var corpo = box.querySelector('#treinCorpo');
-
-  function avancar() {
-    var proximoIndex = etapaIndex + 1;
-    if (proximoIndex >= totalEtapas) {
-      trSalvar(dia, totalEtapas, {}, 'concluido', function(ok) {
-        if (ok) { toast('✓ Dia ' + dia + ' concluído!'); T.view = 'inicio'; T.diaAberto = null; treinoRender(); }
-      });
-      return;
+function treinoRenderEtapaAtual(box,trilha,dia,info,etapaIndex,respostas,revisao) {
+  if(typeof ValenteApoio!=='undefined')ValenteApoio.parar();
+  var tela=(T._tela||0)+1;T._tela=tela;
+  if(revisao)respostas=JSON.parse(JSON.stringify(respostas));
+  var total=info.etapas.length,etapa=info.etapas[etapaIndex],salva=respostas[String(etapaIndex)]||null,ocupado=false;
+  box.innerHTML='<div class="trein-aula"><button class="btn-icon" id="treinBtnVoltar">Voltar às aulas</button>'+
+    (etapaIndex>0?'<button class="btn-icon" id="treinBtnAnterior">Rever etapa anterior</button>':'')+
+    (revisao?'<button class="btn-icon" id="treinBtnRetomar">Voltar ao meu progresso</button>':'')+
+    '<div class="trein-aula-dia">'+trEsc(trilha.nome)+' — aula '+dia+(revisao?' · revisão sem alterar progresso':'')+'</div>'+
+    '<h2>'+trEsc(info.titulo)+'</h2><p>Etapa '+(etapaIndex+1)+' de '+total+'</p>'+
+    (etapaIndex===0?trAvisoSequencia(trilha,dia):'')+'<div id="treinAudio"></div><div id="treinCorpo"></div></div>';
+  box.querySelector('#treinBtnVoltar').onclick=function(){T._etapaViva=null;T.view='inicio';T.diaAberto=null;treinoRender();};
+  var anterior=box.querySelector('#treinBtnAnterior');
+  if(anterior)anterior.onclick=function(){if(!revisao)T._etapaViva=etapaIndex;treinoRenderEtapaAtual(box,trilha,dia,info,etapaIndex-1,respostas,true);};
+  var retomar=box.querySelector('#treinBtnRetomar');
+  if(retomar)retomar.onclick=function(){if(T._etapaViva!==null&&T._etapaViva!==undefined){var idx=T._etapaViva;T._etapaViva=null;treinoRenderEtapaAtual(box,trilha,dia,info,idx,(trFindRow(dia)||{}).respostas||respostas,false);}else{T.view='inicio';treinoRender();}};
+  function avancar(){
+    if(ocupado)return;
+    var proximo=etapaIndex+1;
+    if(revisao){
+      if(T._etapaViva!==null&&T._etapaViva!==undefined&&proximo>=T._etapaViva){var vivo=T._etapaViva;T._etapaViva=null;treinoRenderEtapaAtual(box,trilha,dia,info,vivo,(trFindRow(dia)||{}).respostas||respostas,false);return;}
+      if(proximo>=total){T.view='inicio';treinoRender();return;}
+      treinoRenderEtapaAtual(box,trilha,dia,info,proximo,respostas,true);return;
     }
-    trSalvar(dia, proximoIndex, {}, null, function(ok) {
-      if (ok) {
-        var rowAtual = trFindRow(dia);
-        treinoRenderEtapaAtual(box, trilha, dia, info, proximoIndex, (rowAtual && rowAtual.respostas) || {});
-      }
+    ocupado=true;
+    trSalvar(dia,proximo,{},proximo>=total?'concluido':null,function(ok){ocupado=false;if(!ok||T._tela!==tela)return;
+      if(proximo>=total){T.view='inicio';T.diaAberto=null;treinoRender();}
+      else treinoRenderEtapaAtual(box,trilha,dia,info,proximo,(trFindRow(dia)||{}).respostas||{},false);
     });
   }
-
-  /* grava campos da resposta desta etapa (mescla com o que já existir nela) e,
-     opcionalmente, chama cb(ok) depois de recarregar o progresso */
-  function salvarCampos(campos, cb) {
-    var patch = {};
-    var existenteEtapa = respostas[String(etapaIndex)] || {};
-    var mesclado = {};
-    for (var k in existenteEtapa) mesclado[k] = existenteEtapa[k];
-    for (var k2 in campos) mesclado[k2] = campos[k2];
-    mesclado.competencia = etapa.competencia || existenteEtapa.competencia || null;
-    mesclado.tipo = etapa.tipo;
-    patch[String(etapaIndex)] = mesclado;
-    trSalvar(dia, etapaIndex, patch, null, cb);
+  function salvar(campos,cb){
+    if(ocupado)return;ocupado=true;
+    var controles=box.querySelectorAll('#treinCorpo button, #treinCorpo input, #treinCorpo textarea'),desabilitados=[];
+    for(var ci=0;ci<controles.length;ci++){desabilitados.push(controles[ci].disabled);controles[ci].disabled=true;}
+    var antes=respostas[String(etapaIndex)]||{},novo={},k,avaliacao=typeof campos.acertou==='boolean'&&etapa.tipo!=='checklist';
+    for(k in antes)if(antes.hasOwnProperty(k))novo[k]=antes[k];
+    for(k in campos)if(campos.hasOwnProperty(k)&&k!=='_aoFalhar')novo[k]=(campos[k]&&typeof campos[k]==='object')?JSON.parse(JSON.stringify(campos[k])):campos[k];
+    novo.tipo=etapa.tipo;novo.competencia=etapa.competencia||antes.competencia||null;
+    novo.erroCritico=!!(antes.erroCritico||campos.erroCritico);
+    novo.tentativas=(antes.tentativas||0)+(avaliacao?1:0);
+    if(avaliacao)novo.primeiraTentativaCorreta=typeof antes.primeiraTentativaCorreta==='boolean'?antes.primeiraTentativaCorreta:(typeof antes.acertou==='boolean'?antes.acertou:campos.acertou);
+    function terminou(ok){ocupado=false;for(var ci=0;ci<controles.length;ci++)controles[ci].disabled=desabilitados[ci];if(T._tela!==tela)return;if(!ok){if(campos._aoFalhar)campos._aoFalhar();return;}respostas[String(etapaIndex)]=novo;if(cb)cb(true,novo);}
+    if(revisao){terminou(true);return;}
+    var patch={};patch[String(etapaIndex)]=novo;trSalvar(dia,etapaIndex,patch,null,terminou);
   }
-
-  function registrarResposta(acertou, respostaEscolhida, erroCritico, cb) {
-    salvarCampos({ acertou: acertou, ultimaResposta: respostaEscolhida, erroCritico: !!erroCritico }, cb);
-  }
-
-  treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarResposta, salvarCampos);
+  function registrar(acertou,valor,critico,cb){salvar({acertou:acertou,ultimaResposta:valor,erroCritico:!!critico},cb);}
+  var apoio={info:info,indice:etapaIndex,dia:dia,trilha:trilha,salvar:salvar,revisao:revisao,
+    revisar:function(idx){if(!revisao)T._etapaViva=etapaIndex;treinoRenderEtapaAtual(box,trilha,dia,info,idx,respostas,true);},
+    voltar:function(){treinoRenderEtapaAtual(box,trilha,dia,info,etapaIndex,respostas,revisao);}};
+  treinoRenderCorpoEtapa(box.querySelector('#treinCorpo'),etapa,salva,avancar,registrar,salvar,apoio);
+  ValenteApoio.voz(box.querySelector('#treinAudio'),etapa.tipo==='cenario'?box.querySelector('#treinCorpo').textContent:ValenteApoio.narracao(etapa),ValenteApoio.arquivo(trilha.id,dia,etapaIndex));
+  box.scrollTop=0;
 }
 
-function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarResposta, salvar) {
+function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarResposta, salvar, apoio) {
   if (etapa.tipo === 'conteudo') {
     corpo.innerHTML =
       '<div class="trein-placeholder trein-etapa-conteudo">' +
@@ -433,7 +392,7 @@ function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarR
     for (var i1 = 0; i1 < etapa.opcoes.length; i1++) {
       opcoesMe.push({ label: etapa.opcoes[i1], valor: i1, erroCritico: etapa.erroCriticoOpcoes ? trIndexOf(etapa.erroCriticoOpcoes, i1) !== -1 : false });
     }
-    treinoRenderPergunta(corpo, {
+    treinoRenderPergunta(corpo, { apoio: apoio,
       enunciado: etapa.pergunta,
       opcoes: opcoesMe,
       ehCorreta: function(valor) { return valor === etapa.correta; },
@@ -444,7 +403,7 @@ function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarR
   }
 
   if (etapa.tipo === 'verdadeiro_falso') {
-    treinoRenderPergunta(corpo, {
+    treinoRenderPergunta(corpo, { apoio: apoio,
       enunciado: etapa.afirmacao,
       opcoes: [{ label: 'Verdadeiro', valor: true }, { label: 'Falso', valor: false }],
       ehCorreta: function(valor) { return valor === etapa.correta; },
@@ -459,7 +418,7 @@ function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarR
     for (var i2 = 0; i2 < etapa.opcoes.length; i2++) {
       opcoesRc.push({ label: etapa.opcoes[i2].label, valor: i2, erroCritico: !!etapa.opcoes[i2].erroCritico });
     }
-    treinoRenderPergunta(corpo, {
+    treinoRenderPergunta(corpo, { apoio: apoio,
       enunciadoCliente: etapa.cliente,
       opcoes: opcoesRc,
       ehCorreta: function(valor) { return !!etapa.opcoes[valor].correta; },
@@ -470,67 +429,38 @@ function treinoRenderCorpoEtapa(corpo, etapa, respostaSalva, avancar, registrarR
     return;
   }
 
-  if (etapa.tipo === 'selecionar_itens') { treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar); return; }
-  if (etapa.tipo === 'ordenar') { treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar); return; }
-  if (etapa.tipo === 'cenario') { treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar); return; }
+  if (etapa.tipo === 'selecionar_itens') { treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar, apoio); return; }
+  if (etapa.tipo === 'ordenar') { treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar, apoio); return; }
+  if (etapa.tipo === 'cenario') { treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar, apoio); return; }
   if (etapa.tipo === 'checklist') { treinoEtapaChecklist(corpo, etapa, respostaSalva, avancar, salvar); return; }
   if (etapa.tipo === 'missao') { treinoEtapaMissao(corpo, etapa, respostaSalva, avancar, salvar); return; }
   if (etapa.tipo === 'confirmacao_pratica') { treinoEtapaConfirmacaoPratica(corpo, etapa, respostaSalva, avancar, salvar); return; }
   if (etapa.tipo === 'texto_livre') { treinoEtapaTextoLivre(corpo, etapa, respostaSalva, avancar, salvar); return; }
 
-  corpo.innerHTML =
-    '<div class="trein-placeholder"><p>🚧 Etapa do tipo "' + trEsc(etapa.tipo) + '" ainda não tem tela própria nesta versão.</p></div>' +
-    '<button class="btn-primary" id="treinBtnContinuar">Continuar</button>';
-  corpo.querySelector('#treinBtnContinuar').onclick = avancar;
+  corpo.innerHTML = '<p>Esta etapa está indisponível. Avise o responsável antes de continuar.</p>';
 }
 
 /* pergunta genérica (multipla_escolha / verdadeiro_falso / resposta_cliente) */
-function treinoRenderPergunta(corpo, cfg, respostaSalva, avancar, registrarResposta) {
-  var jaAcertou = !!(respostaSalva && respostaSalva.acertou);
-
-  function desenhar(feedback) {
-    var opcoesHtml = '';
-    for (var i = 0; i < cfg.opcoes.length; i++) {
-      opcoesHtml += '<button class="trein-opcao-btn" data-i="' + i + '">' + trEsc(cfg.opcoes[i].label) + '</button>';
-    }
-    corpo.innerHTML =
-      '<div class="trein-etapa-pergunta">' +
-      (cfg.enunciadoCliente
-        ? '<div class="trein-balao-cliente"><span class="trein-balao-tag">CLIENTE</span>' + trEsc(cfg.enunciadoCliente) + '</div>'
-        : '<p class="trein-pergunta-enunciado">' + trEsc(cfg.enunciado) + '</p>') +
-      '<div class="trein-opcoes">' + opcoesHtml + '</div>' +
-      (feedback ? '<div class="trein-feedback trein-feedback--' + (feedback.ok ? 'ok' : 'erro') + '">' + trEsc(feedback.texto) + '</div>' : '') +
-      (jaAcertou ? '<button class="btn-primary" id="treinBtnContinuar">Continuar</button>' : '') +
-      '</div>';
-
-    var btns = corpo.querySelectorAll('.trein-opcao-btn');
-    for (var b = 0; b < btns.length; b++) {
-      (function(btn) {
-        btn.onclick = function() {
-          var i = parseInt(btn.getAttribute('data-i'), 10);
-          var opcao = cfg.opcoes[i];
-          var valor = opcao.valor;
-          var acertou = cfg.ehCorreta(valor);
-          registrarResposta(acertou, valor, opcao.erroCritico, function() {
-            if (acertou) jaAcertou = true;
-            var texto = acertou
-              ? (cfg.feedbackCertoPara ? cfg.feedbackCertoPara(valor) : cfg.feedbackCerto)
-              : cfg.feedbackErradoPara(valor);
-            desenhar({ ok: acertou, texto: texto });
-          });
-        };
-      })(btns[b]);
-    }
-    var btnContinuar = corpo.querySelector('#treinBtnContinuar');
-    if (btnContinuar) btnContinuar.onclick = avancar;
+function treinoRenderPergunta(corpo,cfg,salva,avancar,registrar) {
+  var registro=salva,jaAcertou=!!(salva&&salva.acertou);
+  function desenhar(feedback){
+    var opcoes='';for(var i=0;i<cfg.opcoes.length;i++)opcoes+='<button class="trein-opcao-btn" data-i="'+i+'">'+trEsc(cfg.opcoes[i].label)+'</button>';
+    corpo.innerHTML='<div class="trein-etapa-pergunta"><p class="trein-pergunta-enunciado">'+trEsc(cfg.enunciadoCliente||cfg.enunciado)+'</p><div class="trein-opcoes">'+opcoes+'</div>'+
+      (feedback?'<p class="trein-feedback trein-feedback--'+(feedback.ok?'ok':'erro')+'">'+trEsc(feedback.texto)+'</p>':'')+(jaAcertou?'<button class="btn-primary" id="treinBtnContinuar">Continuar</button>':'')+'</div>';
+    var btns=corpo.querySelectorAll('[data-i]');for(var b=0;b<btns.length;b++)btns[b].onclick=function(){
+      var op=cfg.opcoes[Number(this.getAttribute('data-i'))],certo=cfg.ehCorreta(op.valor);
+      registrar(certo,op.valor,op.erroCritico,function(ok,novo){if(!ok)return;registro=novo;jaAcertou=certo;
+        desenhar({ok:certo,texto:certo?(cfg.feedbackCertoPara?cfg.feedbackCertoPara(op.valor):cfg.feedbackCerto):cfg.feedbackErradoPara(op.valor)});
+      });
+    };
+    var continuar=corpo.querySelector('#treinBtnContinuar');if(continuar)continuar.onclick=avancar;
+    if(cfg.apoio&&!jaAcertou)trOferecerReforco(corpo,cfg.apoio,registro);
   }
-
-  var textoInicial = (cfg.feedbackCertoPara && respostaSalva) ? cfg.feedbackCertoPara(respostaSalva.ultimaResposta) : cfg.feedbackCerto;
-  desenhar(jaAcertou ? { ok: true, texto: textoInicial } : null);
+  desenhar(jaAcertou?{ok:true,texto:cfg.feedbackCertoPara?cfg.feedbackCertoPara(salva.ultimaResposta):cfg.feedbackCerto}:null);
 }
 
 /* selecionar_itens */
-function treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar) {
+function treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar, apoio) {
   var marcados = (respostaSalva && respostaSalva.itensMarcados) ? respostaSalva.itensMarcados.slice() : [];
   var concluido = !!(respostaSalva && respostaSalva.acertou);
 
@@ -557,6 +487,7 @@ function treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar
           var pos = trIndexOf(marcados, i);
           if (cb.checked) { if (pos === -1) marcados.push(i); }
           else { if (pos !== -1) marcados.splice(pos, 1); }
+          concluido=false; desenhar(null);
         };
       })(cbs[c]);
     }
@@ -564,26 +495,25 @@ function treinoEtapaSelecionarItens(corpo, etapa, respostaSalva, avancar, salvar
     corpo.querySelector('#treinBtnConfirmar').onclick = function() {
       var ok = marcados.length === etapa.corretos.length;
       if (ok) { for (var j = 0; j < marcados.length; j++) { if (trIndexOf(etapa.corretos, marcados[j]) === -1) { ok = false; break; } } }
-      concluido = ok;
-      salvar({ acertou: ok, itensMarcados: marcados }, function() {
+
+      salvar({ acertou: ok, itensMarcados: marcados }, function() { concluido=ok;
         desenhar({ ok: ok, texto: ok ? etapa.feedbackCerto : (etapa.feedbackErrado || 'A seleção não bateu com o esperado — revise e tente de novo.') });
       });
     };
     var btnContinuar = corpo.querySelector('#treinBtnContinuar');
     if (btnContinuar) btnContinuar.onclick = avancar;
+    if(apoio){var linhaReforco=trFindRow(apoio.dia);trOferecerReforco(corpo,apoio,(linhaReforco&&linhaReforco.respostas&&linhaReforco.respostas[String(apoio.indice)])||respostaSalva);}
   }
 
   desenhar(concluido ? { ok: true, texto: etapa.feedbackCerto } : null);
 }
 
 /* ordenar */
-function treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar) {
+function treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar, apoio) {
   var total = etapa.itens.length;
   var ordemEscolhida = (respostaSalva && respostaSalva.ordemEscolhida) ? respostaSalva.ordemEscolhida.slice() : [];
   var concluido = !!(respostaSalva && respostaSalva.acertou);
-  var ordemExibicao = [];
-  for (var oi = 0; oi < total; oi++) ordemExibicao.push(oi);
-  ordemExibicao.sort(function(a, b) { return ((a * 7 + 3) % total) - ((b * 7 + 3) % total); });
+  var ordemExibicao = ValenteApoio.ordemApresentacao(total);
 
   function desenhar(feedback) {
     var escolhidosHtml;
@@ -626,8 +556,8 @@ function treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar) {
       btnConferir.onclick = function() {
         var ok = true;
         for (var v = 0; v < ordemEscolhida.length; v++) { if (ordemEscolhida[v] !== v) { ok = false; break; } }
-        concluido = ok;
-        salvar({ acertou: ok, ordemEscolhida: ordemEscolhida }, function() {
+
+        salvar({ acertou: ok, ordemEscolhida: ordemEscolhida }, function() { concluido=ok;
           if (!ok) ordemEscolhida = [];
           desenhar({ ok: ok, texto: ok ? etapa.feedbackCerto : (etapa.feedbackErrado || 'Ainda não ficou na ordem certa — tente de novo.') });
         });
@@ -635,13 +565,14 @@ function treinoEtapaOrdenar(corpo, etapa, respostaSalva, avancar, salvar) {
     }
     var btnContinuar = corpo.querySelector('#treinBtnContinuar');
     if (btnContinuar) btnContinuar.onclick = avancar;
+    if(apoio){var linhaReforco=trFindRow(apoio.dia);trOferecerReforco(corpo,apoio,(linhaReforco&&linhaReforco.respostas&&linhaReforco.respostas[String(apoio.indice)])||respostaSalva);}
   }
 
   desenhar(concluido ? { ok: true, texto: etapa.feedbackCerto } : null);
 }
 
 /* cenario */
-function treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar) {
+function treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar, apoio) {
   var noAtual = (respostaSalva && respostaSalva.noCenarioAtual) || etapa.noInicial;
   var historico = (respostaSalva && respostaSalva.historico) ? respostaSalva.historico.slice() : [];
   var ultimaEscolha = historico.length > 0 ? historico[historico.length - 1] : null;
@@ -668,13 +599,14 @@ function treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar) {
         btn.onclick = function() {
           var i = parseInt(btn.getAttribute('data-i'), 10);
           var op = etapa.nos[noAtual].opcoes[i];
+          var noAnterior=noAtual,historicoAnterior=historico.slice(),aguardava=aguardandoContinuar;
           historico.push({ no: noAtual, escolha: i, acertou: !!op.correta, erroCritico: !!op.erroCritico, feedback: op.feedback });
           var proximo = op.proximo || null;
           noAtual = proximo || noAtual;
           var algumErroCritico = false;
           for (var h = 0; h < historico.length; h++) { if (historico[h].erroCritico) { algumErroCritico = true; break; } }
           aguardandoContinuar = !proximo;
-          salvar({ noCenarioAtual: noAtual, historico: historico, acertou: !algumErroCritico && !!op.correta, erroCritico: algumErroCritico }, function() {
+          salvar({ noCenarioAtual: noAtual, historico: historico.slice(), _aoFalhar:function(){noAtual=noAnterior;historico=historicoAnterior;aguardandoContinuar=aguardava;}, acertou: !algumErroCritico && !!op.correta, erroCritico: algumErroCritico }, function() {
             desenhar({ ok: !op.erroCritico, texto: op.feedback });
           });
         };
@@ -682,6 +614,7 @@ function treinoEtapaCenario(corpo, etapa, respostaSalva, avancar, salvar) {
     }
     var btnContinuar = corpo.querySelector('#treinBtnContinuar');
     if (btnContinuar) btnContinuar.onclick = avancar;
+    if(apoio){var falaCenario=aguardandoContinuar?(feedback?feedback.texto:''):(no?no.cliente+'. '+no.opcoes.map(function(op){return op.label;}).join('. '):'');ValenteApoio.voz(trBox().querySelector('#treinAudio'),falaCenario,null);var linhaReforco=trFindRow(apoio.dia);trOferecerReforco(corpo,apoio,(linhaReforco&&linhaReforco.respostas&&linhaReforco.respostas[String(apoio.indice)])||respostaSalva);}
   }
 
   desenhar(aguardandoContinuar ? { ok: !ultimaEscolha.erroCritico, texto: ultimaEscolha.feedback } : null);
@@ -709,11 +642,12 @@ function treinoEtapaChecklist(corpo, etapa, respostaSalva, avancar, salvar) {
     for (var c = 0; c < cbs.length; c++) {
       (function(cb) {
         cb.onchange = function() {
+          var continuarAtual=corpo.querySelector('#treinBtnContinuar');if(continuarAtual)continuarAtual.disabled=true;
           var i = parseInt(cb.getAttribute('data-i'), 10);
           var pos = trIndexOf(marcados, i);
           if (cb.checked) { if (pos === -1) marcados.push(i); }
           else { if (pos !== -1) marcados.splice(pos, 1); }
-          salvar({ itensMarcados: marcados, acertou: marcados.length === etapa.itens.length }, function() { desenhar(); });
+          salvar({ itensMarcados: marcados, realizado: marcados.length === etapa.itens.length, acertou: null }, function() { desenhar(); });
         };
       })(cbs[c]);
     }
@@ -769,7 +703,7 @@ function treinoEtapaMissao(corpo, etapa, respostaSalva, avancar, salvar) {
       (!iniciada ? '<button class="btn-primary" id="treinBtnIniciar">Iniciar missão</button>' : '') +
       (iniciada && !concluida
         ? '<p class="trein-pergunta-enunciado">Registre sua resposta (obrigatório pra concluir):</p>' + caixasHtml +
-          '<button class="btn-primary" id="treinBtnConcluirMissao"' + (todasPreenchidas() ? '' : ' disabled') + '>Concluir missão</button>'
+          '<button class="btn-icon" id="treinSalvarMissao">Salvar rascunho</button><button class="btn-primary" id="treinBtnConcluirMissao"' + (todasPreenchidas() ? '' : ' disabled') + '>Concluir missão</button>'
         : '') +
       (concluida
         ? '<div class="trein-placeholder"><p><strong>O que você registrou:</strong></p>' + (function() { var h = ''; for (var a = 0; a < anotacoes.length; a++) h += '<p>' + trEsc(anotacoes[a]) + '</p>'; return h; })() + '</div>' +
@@ -778,8 +712,9 @@ function treinoEtapaMissao(corpo, etapa, respostaSalva, avancar, salvar) {
       '</div>';
 
     var btnIniciar = corpo.querySelector('#treinBtnIniciar');
-    if (btnIniciar) btnIniciar.onclick = function() { iniciada = true; salvar({ missaoIniciadaEm: new Date().toISOString() }, function() { desenhar(); }); };
+    if (btnIniciar) btnIniciar.onclick = function() { salvar({ missaoIniciadaEm: new Date().toISOString() }, function() { iniciada=true; desenhar(); }); };
 
+    var salvarMissao=corpo.querySelector('#treinSalvarMissao');if(salvarMissao)salvarMissao.onclick=function(){salvar({anotacoes:anotacoes.slice()},function(){toast('Rascunho da missão salvo.');});};
     var btnConcluirMissao = corpo.querySelector('#treinBtnConcluirMissao');
     var tas = corpo.querySelectorAll('.trein-missao-anotacao textarea');
     for (var ta = 0; ta < tas.length; ta++) {
@@ -793,10 +728,10 @@ function treinoEtapaMissao(corpo, etapa, respostaSalva, avancar, salvar) {
     if (btnConcluirMissao) {
       btnConcluirMissao.onclick = function() {
         if (!todasPreenchidas()) return;
-        concluida = true;
+
         var limpas = [];
         for (var a2 = 0; a2 < anotacoes.length; a2++) limpas.push(((anotacoes[a2] || '') + '').replace(/^\s+|\s+$/g, ''));
-        salvar({ missaoConcluidaEm: new Date().toISOString(), acertou: true, anotacoes: limpas }, function() { desenhar(); });
+        salvar({ missaoConcluidaEm: new Date().toISOString(), realizado: true, acertou: null, anotacoes: limpas }, function() { concluida=true; desenhar(); });
       };
     }
     var btnContinuar = corpo.querySelector('#treinBtnContinuar');
@@ -819,8 +754,8 @@ function treinoEtapaConfirmacaoPratica(corpo, etapa, respostaSalva, avancar, sal
 
     var btn = corpo.querySelector('#treinBtnConcluiAtividade');
     if (btn) btn.onclick = function() {
-      concluido = true;
-      salvar({ concluidoEm: new Date().toISOString(), validadoPorInstrutor: null, acertou: true }, function() { desenhar(); });
+
+      salvar({ concluidoEm: new Date().toISOString(), validadoPorInstrutor: null, realizado: true, acertou: null }, function() { concluido=true; desenhar(); });
     };
     var btnContinuar = corpo.querySelector('#treinBtnContinuar');
     if (btnContinuar) btnContinuar.onclick = avancar;
@@ -830,44 +765,27 @@ function treinoEtapaConfirmacaoPratica(corpo, etapa, respostaSalva, avancar, sal
 }
 
 /* texto_livre */
-function treinoEtapaTextoLivre(corpo, etapa, respostaSalva, avancar, salvar) {
-  var enviado = !!(respostaSalva && respostaSalva.textoResposta);
-  var textoAtual = (respostaSalva && respostaSalva.textoResposta) || '';
-
-  function desenhar() {
-    var pontosHtml = '';
-    var pts = etapa.pontosEsperados || [];
-    for (var p = 0; p < pts.length; p++) pontosHtml += '<li>' + trEsc(pts[p]) + '</li>';
-
-    corpo.innerHTML =
-      '<div class="trein-etapa-texto-livre">' +
-      '<p class="trein-pergunta-enunciado">' + trEsc(etapa.pergunta) + '</p>' +
-      (!enviado
-        ? '<textarea id="treinTextoLivre" class="trein-textarea" rows="4" placeholder="Escreva sua resposta...">' + trEsc(textoAtual) + '</textarea>' +
-          '<button class="btn-primary" id="treinBtnEnviarTexto">Enviar resposta</button>'
-        : '<div class="trein-placeholder"><p><strong>Sua resposta:</strong></p><p>' + trEsc(textoAtual) + '</p></div>' +
-          '<div class="trein-feedback trein-feedback--ok"><p><strong>Pontos que uma boa resposta deveria conter:</strong></p><ul>' + pontosHtml + '</ul></div>' +
-          '<button class="btn-primary" id="treinBtnContinuar">Continuar</button>') +
-      '</div>';
-
-    var btnEnviar = corpo.querySelector('#treinBtnEnviarTexto');
-    if (btnEnviar) btnEnviar.onclick = function() {
-      var campo = corpo.querySelector('#treinTextoLivre');
-      textoAtual = (campo.value || '').replace(/^\s+|\s+$/g, '');
-      if (!textoAtual) { toast('Escreva alguma coisa antes de enviar.', true); return; }
-      enviado = true;
-      salvar({ textoResposta: textoAtual, acertou: true }, function() { desenhar(); });
-    };
-    var btnContinuar = corpo.querySelector('#treinBtnContinuar');
-    if (btnContinuar) btnContinuar.onclick = avancar;
+function treinoEtapaTextoLivre(corpo,etapa,salva,avancar,salvar) {
+  var enviado=!!(salva&&salva.textoResposta),texto=(salva&&(salva.textoResposta||salva.rascunho))||'';
+  function desenhar(){
+    var pontos='';for(var i=0;i<(etapa.pontosEsperados||[]).length;i++)pontos+='<li>'+trEsc(etapa.pontosEsperados[i])+'</li>';
+    corpo.innerHTML='<p>'+trEsc(etapa.pergunta)+'</p>'+(!enviado?'<textarea id="treinTextoLivre" class="trein-textarea" rows="4">'+trEsc(texto)+'</textarea><button id="treinSalvarRascunho" class="btn-icon">Salvar rascunho</button><button id="treinBtnEnviarTexto" class="btn-primary">Enviar e comparar</button>':'<p>'+trEsc(texto)+'</p><p>Resposta registrada; a qualidade não foi corrigida automaticamente.</p><h3>Compare com os critérios</h3><ul>'+pontos+'</ul><button id="treinReescrever" class="btn-icon">Reescrever</button><button id="treinBtnContinuar" class="btn-primary">Continuar</button>');
+    var r=corpo.querySelector('#treinSalvarRascunho');if(r)r.onclick=function(){texto=corpo.querySelector('#treinTextoLivre').value;salvar({rascunho:texto},function(){toast('Rascunho salvo.');});};
+    var enviar=corpo.querySelector('#treinBtnEnviarTexto');if(enviar)enviar.onclick=function(){texto=corpo.querySelector('#treinTextoLivre').value.replace(/^\s+|\s+$/g,'');if(!texto){toast('Escreva sua resposta antes de comparar.',true);return;}salvar({textoResposta:texto,realizado:true,acertou:null},function(){enviado=true;desenhar();});};
+    var reescrever=corpo.querySelector('#treinReescrever');if(reescrever)reescrever.onclick=function(){salvar({textoResposta:'',rascunho:texto,realizado:false,acertou:null},function(){enviado=false;desenhar();});};
+    var continuar=corpo.querySelector('#treinBtnContinuar');if(continuar)continuar.onclick=avancar;
   }
-
   desenhar();
 }
 
 /* ── resultado por competência ── */
 function treinoClassificarTrilha(trilha, progresso) {
   var porCompetencia = {};
+  var tiposAvaliativos=['multipla_escolha','verdadeiro_falso','resposta_cliente','selecionar_itens','ordenar','cenario'];
+  for(var de=0;de<trilha.dias.length;de++)for(var ee=0;ee<(trilha.dias[de].etapas||[]).length;ee++){
+    var etapaEsperada=trilha.dias[de].etapas[ee];
+    if(etapaEsperada.competencia&&trIndexOf(tiposAvaliativos,etapaEsperada.tipo)!==-1){var competenciasEsperadas=etapaEsperada.competencia instanceof Array?etapaEsperada.competencia:[etapaEsperada.competencia];for(var ce=0;ce<competenciasEsperadas.length;ce++)porCompetencia[competenciasEsperadas[ce]]=porCompetencia[competenciasEsperadas[ce]]||{acertos:0,total:0};}
+  }
   var errosCriticosTotal = 0;
   var errosCriticosDiaFinal = 0;
   var ultimoDia = trilha.dias[trilha.dias.length - 1].dia;
@@ -881,13 +799,13 @@ function treinoClassificarTrilha(trilha, progresso) {
     for (var idx in respostas) {
       var resp = respostas[idx];
       if (resp.erroCritico) { errosCriticosTotal++; if (diaInfo.dia === ultimoDia) errosCriticosDiaFinal++; }
-      if (resp.competencia && typeof resp.acertou === 'boolean') {
+      if (trIndexOf(tiposAvaliativos,resp.tipo)!==-1 && resp.competencia && typeof resp.acertou === 'boolean') {
         var nomes = (resp.competencia instanceof Array) ? resp.competencia : [resp.competencia];
         for (var n = 0; n < nomes.length; n++) {
           var nome = nomes[n];
           if (!porCompetencia[nome]) porCompetencia[nome] = { acertos: 0, total: 0 };
           porCompetencia[nome].total++;
-          if (resp.acertou) porCompetencia[nome].acertos++;
+          if (resp.primeiraTentativaCorreta===true || (resp.primeiraTentativaCorreta===undefined && resp.acertou)) porCompetencia[nome].acertos++;
         }
       }
     }
@@ -922,7 +840,7 @@ function treinoClassificarTrilha(trilha, progresso) {
       var todosVerde = tiersSemDados.length > 0;
       for (var t3 = 0; t3 < tiersSemDados.length; t3++) { if (tiersSemDados[t3] !== 'verde') { todosVerde = false; break; } }
       var temVermelho = trIndexOf(tiersSemDados, 'vermelho') !== -1;
-      if (todosVerde) classificacao = 'liberado';
+      if (todosVerde && resultadoCompetencias.length===tiersSemDados.length) classificacao = 'liberado';
       else if (temVermelho) classificacao = 'precisa_acompanhamento';
       else classificacao = 'funcional_supervisao';
     }
@@ -987,4 +905,32 @@ function treinoRenderCentral(box) {
       card.onclick = function() { T.diaAberto = parseInt(card.getAttribute('data-dia'), 10); T.view = 'aula'; treinoRender(); };
     })(cards[c]);
   }
+}
+
+
+function trPodeAcessar() {
+  var t=TREINAMENTO_TRILHAS[T.trilha],c=T.colaborador;
+  return !!(T.ativo && t && c && c.id && (!t.cargosPermitidos || trIndexOf(t.cargosPermitidos,c.cargo)!==-1));
+}
+
+function trOferecerReforco(corpo,apoio,registro) {
+  var sugestao=ValenteApoio.sugestao(apoio.info.etapas,apoio.indice,registro);if(!sugestao)return;
+  var plano=apoio.trilha.id==='academia_gestao'&&apoio.indice===5?ValenteApoio.planos[apoio.dia-1]:null;
+  var alvo=plano?plano.etapa:sugestao.etapa,assunto=plano?plano.assunto:(alvo>=0?apoio.info.etapas[alvo].titulo:'este assunto');
+  corpo.insertAdjacentHTML('beforeend','<div class="trein-reforco"><h3>Vamos reforçar '+trEsc(assunto)+'?</h3><p>'+(sugestao.repetido?'Você teve dificuldade em mais de uma tentativa. Sugiro retomarmos a explicação.':'Podemos rever este assunto com outro exemplo, sem perder o progresso.')+'</p>'+(alvo>=0?'<button id="treinReverAssunto" class="btn-icon">Rever a explicação</button>':'')+(plano?'<button id="treinNovaPratica" class="btn-primary">Outro exemplo e nova pergunta</button>':'')+'</div>');
+  var rever=corpo.querySelector('#treinReverAssunto');if(rever)rever.onclick=function(){apoio.revisar(alvo);};
+  var praticar=corpo.querySelector('#treinNovaPratica');if(praticar)praticar.onclick=function(){trPraticarReforco(corpo,apoio,plano,registro);};
+}
+
+function trPraticarReforco(corpo,apoio,plano,registro) {
+  var estado=registro.reforco||{},primeiraTela=true;
+  function desenhar(feedback){
+    var opcoes='';for(var i=0;i<plano.opcoes.length;i++)opcoes+='<button class="trein-opcao-btn" data-reforco="'+i+'">'+trEsc(plano.opcoes[i])+'</button>';
+    corpo.innerHTML='<div class="trein-reforco"><h3>Reforço: '+trEsc(plano.assunto)+'</h3><p>'+trEsc(plano.explicacao)+'</p><h3>Uma situação diferente</h3><p>'+trEsc(plano.pergunta)+'</p><div class="trein-opcoes">'+opcoes+'</div>'+(feedback?'<p class="trein-feedback">'+trEsc(feedback)+'</p>':'')+'<p class="hint">O reforço fica separado da primeira tentativa. Não concede autorização operacional.</p><button id="treinVoltarPergunta" class="btn-icon">Voltar à atividade da aula</button></div>';
+    var btns=corpo.querySelectorAll('[data-reforco]');for(var b=0;b<btns.length;b++)btns[b].onclick=function(){var n=Number(this.getAttribute('data-reforco')),novo={tentativas:(estado.tentativas||0)+1,acertou:n===plano.correta,ultimaResposta:n,versao:1,atualizadoEm:new Date().toISOString()};apoio.salvar({reforco:novo},function(ok){if(!ok)return;estado=novo;desenhar(plano.feedbacks[n]);});};
+    corpo.querySelector('#treinVoltarPergunta').onclick=apoio.voltar;
+    ValenteApoio.voz(trBox().querySelector('#treinAudio'),plano.explicacao+'. '+ValenteApoio.narracao({tipo:'multipla_escolha',pergunta:plano.pergunta,opcoes:plano.opcoes}),null);
+    if(primeiraTela){trBox().scrollTop=0;primeiraTela=false;}
+  }
+  desenhar(estado.acertou?'Você já acertou esta nova situação. Pode rever ou retornar à atividade.':null);
 }

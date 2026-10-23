@@ -38,6 +38,7 @@ import java.io.File;
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private LessonVoice lessonVoice;
 
     // v2 — HTML SIMPLIFICADO (ES5), igual ao Positivo: o WebView deste tablet
     // trava no app completo (fica preso na capa / não responde ao toque).
@@ -86,6 +87,8 @@ public class MainActivity extends Activity {
 
         // Bridge para impressao (ValenteOS_Terminal.html chama SamsungBridge.imprimirHTML/imprimirPagina)
         webView.addJavascriptInterface(new PrintBridge(this, webView), "SamsungBridge");
+        lessonVoice = new LessonVoice(this, webView);
+        webView.addJavascriptInterface(lessonVoice, "ValenteVoice");
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -361,5 +364,6 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onResume() { super.onResume(); webView.onResume(); }
-    @Override protected void onPause()  { super.onPause();  webView.onPause();  }
+    @Override protected void onPause()  { super.onPause();  if (lessonVoice != null) lessonVoice.stop(); webView.onPause();  }
+    @Override protected void onDestroy() { if (lessonVoice != null) lessonVoice.shutdown(); super.onDestroy(); }
 }
