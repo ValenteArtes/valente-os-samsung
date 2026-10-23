@@ -89,6 +89,7 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new PrintBridge(this, webView), "SamsungBridge");
         lessonVoice = new LessonVoice(this, webView);
         webView.addJavascriptInterface(lessonVoice, "ValenteVoice");
+        webView.addJavascriptInterface(new ThermalPrinter(this, webView), "ValentePrinter");
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
