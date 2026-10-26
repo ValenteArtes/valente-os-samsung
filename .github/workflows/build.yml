@@ -38,7 +38,7 @@ jobs:
           BUILD_TOOLS=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
           UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
           ALIGNED="/tmp/app-release-aligned.apk"
-          SIGNED="ValenteOS_Samsung_s7.apk"
+          SIGNED="ValenteOS_Samsung_s9.apk"
           $ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign -v 4 $UNSIGNED $ALIGNED
           echo "$KEYSTORE_B64" | base64 -d > /tmp/valente.keystore
           $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign \
@@ -53,6 +53,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ValenteOS-Samsung-APK
-          path: ValenteOS_Samsung_s7.apk
+          path: ValenteOS_Samsung_s9.apk
           retention-days: 30
 

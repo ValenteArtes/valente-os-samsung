@@ -678,7 +678,7 @@ function carregarOTs(silencioso) {
   var params =
     'status=not.in.' + encodeURIComponent('(concluida,cancelada)') +
     '&select=id,codigo_publico,titulo,status,quantidade,tipo_ot_id,' +
-    'responsavel_id,quantidade_concluida,ordem_execucao,disponivel_em' +
+    'responsavel_id,quantidade_concluida,ordem_execucao,disponivel_em,plano_id' +
     '&order=ordem_execucao';
 
   sbGet('ordens_trabalho', params, function(err, data) {
@@ -754,9 +754,17 @@ function listaDaModalidade(mod) {
 }
 
 function cardModHtml(ot) {
-  var conc = ot.quantidade_concluida || 0, total = ot.quantidade || 0;
+  var conc = ot.quantidade_concluida || 0, total = ot.quantidade || 0, trv = bloqueioOT(ot);
   var t = tipoDe(ot);
   var meta = (conc > 0 ? conc + '/' + total + ' · ' : '') + (ot.codigo_publico || '');
+  if (trv) {
+    return '<div class="ot-card" style="opacity:.6" onclick="abrirDetalhe(\'' + ot.id + '\')">' +
+      '<div class="ot-row"><div class="ot-icone">🔒</div>' +
+      '<div style="flex:1;-webkit-flex:1"><div class="ot-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
+      '<div class="ot-meta">' + esc(t.nome) + ' · ' + esc(meta) + '</div>' +
+      '<div class="ot-meta" style="color:#fbbf24">Aguardando: ' + esc(trv.titulo || 'etapa anterior') + '</div>' +
+      '</div></div></div>';
+  }
   return '<div class="ot-card" onclick="abrirDetalhe(\'' + ot.id + '\')">' +
     '<div class="ot-row"><div class="ot-icone">' + icoTipo(t) + '</div>' +
     '<div style="flex:1;-webkit-flex:1"><div class="ot-titulo">' + esc(ot.titulo || 'Sem título') + '</div>' +
@@ -792,7 +800,14 @@ function filaHtml(nav) {
   var items = [];
   for (j = 0; j < lista.length; j++) { if (!nav.sub || tipoDe(lista[j]).codigo === nav.sub) { items.push(lista[j]); } }
   if (!items.length) { return h + '<div class="vazio"><div class="vazio-titulo">Nada por aqui</div><div class="vazio-sub">Sem tarefas nesta fila no momento.</div></div>'; }
-  h += '<button class="btn btn-ini" onclick="abrirDetalhe(\'' + items[0].id + '\')" style="margin-bottom:12px">▶ Próxima da fila<br><span style="font-size:.8rem;font-weight:400">' + esc(items[0].titulo || '') + '</span></button>';
+  var livres = [], travadas = [];
+  for (j = 0; j < items.length; j++) { if (bloqueioOT(items[j])) { travadas.push(items[j]); } else { livres.push(items[j]); } }
+  items = livres.concat(travadas);
+  if (livres.length) {
+    h += '<button class="btn btn-ini" onclick="abrirDetalhe(\'' + livres[0].id + '\')" style="margin-bottom:12px">▶ Próxima da fila<br><span style="font-size:.8rem;font-weight:400">' + esc(livres[0].titulo || '') + '</span></button>';
+  } else {
+    h += '<div class="card" style="border:2px solid #f59e0b"><div class="card-label" style="color:#fbbf24">🔒 Todas aguardando a etapa anterior</div><div class="ot-meta">Nenhuma tarefa desta fila está liberada agora.</div></div>';
+  }
   for (j = 0; j < items.length && j < nav.lim; j++) { h += cardModHtml(items[j]); }
   if (items.length > nav.lim) { h += '<button class="mais-btn" onclick="navMais()">Mostrar mais (' + (items.length - nav.lim) + ')</button>'; }
   return h;
@@ -953,6 +968,7 @@ function prepararContexto(cb) {
 ───────────────────────────────────────── */
 function abrirDetalhe(otId) {
   pararTimer();
+  S.travaOt = null; S.trava = null;
   S.view = 'detalhe';
   S.ot = null; S.tipo = null; S.peca = null; S.roteiros = []; S.pedido = null; S.pecaViaPlano = false;
   S.checklist = []; S.fotoOk = false;
@@ -1007,7 +1023,78 @@ function abrirDetalhe(otId) {
   );
 }
 
+/* ─────────────────────────────────────────
+   FILA OBRIGATÓRIA: só inicia/conclui uma etapa quando as anteriores do mesmo pedido estiverem concluídas
+───────────────────────────────────────── */
+function tipoIsentoFila(ot) {
+  var c = (S.tipo && S.ot && S.ot.id === ot.id) ? S.tipo.codigo : tipoDe(ot).codigo;
+  return BAIXA_URGENCIA.indexOf(c) >= 0;
+}
+/* versão síncrona (usa a lista já carregada): devolve a etapa anterior pendente, ou null */
+function bloqueioOT(ot) {
+  if (!ot || !ot.plano_id || ot.ordem_execucao == null || tipoIsentoFila(ot)) { return null; }
+  var lista = S.ots || [], i, o, b = null;
+  for (i = 0; i < lista.length; i++) {
+    o = lista[i];
+    if (o.id === ot.id || o.plano_id !== ot.plano_id || o.ordem_execucao == null) { continue; }
+    if (o.status === 'concluida' || o.status === 'cancelada') { continue; }
+    if (o.ordem_execucao < ot.ordem_execucao && (!b || o.ordem_execucao < b.ordem_execucao)) { b = o; }
+  }
+  return b;
+}
+/* versão que consulta o servidor (fonte da verdade) */
+function buscarTrava(ot, cb) {
+  if (!ot || !ot.plano_id || ot.ordem_execucao == null || tipoIsentoFila(ot)) { cb(null); return; }
+  sbGet('ordens_trabalho', 'plano_id=eq.' + ot.plano_id + '&ordem_execucao=lt.' + ot.ordem_execucao +
+    '&status=not.in.' + encodeURIComponent('(concluida,cancelada)') + '&select=id,titulo,status,ordem_execucao&order=ordem_execucao&limit=1',
+    function(err, d) { cb((!err && d && d.length) ? d[0] : null); });
+}
+function msgTrava(p) { return 'Siga a fila: antes, conclua "' + (p.titulo || 'etapa anterior') + '".'; }
+function aplicarTrava() {
+  var cont = document.getElementById('cont');
+  if (!cont || !S.trava) { return; }
+  var rm = cont.querySelectorAll('.btn-ini, .btn-conc, .btn-ret'), i, box;
+  for (i = 0; i < rm.length; i++) { rm[i].parentNode.removeChild(rm[i]); }
+  box = document.createElement('div');
+  box.className = 'card';
+  box.style.cssText = 'border:2px solid #f59e0b;background:#1c1405';
+  box.innerHTML = '<div class="card-label" style="color:#fbbf24">🔒 Aguardando a etapa anterior</div>' +
+    '<div style="font-size:1rem;margin:4px 0 6px">Antes desta tarefa, conclua:<br><b>' + esc(S.trava.titulo || 'etapa anterior') + '</b></div>' +
+    '<div class="ot-meta">Siga a fila do pedido para as peças não se misturarem. Esta tarefa libera sozinha quando a anterior for concluída.</div>';
+  cont.insertBefore(box, cont.firstChild);
+}
 function renderDetalhe() {
+  var ot = S.ot;
+  if (!ot || ot.status === 'concluida' || ot.status === 'cancelada' || S.travaOt === ot.id) {
+    renderDetalheBase();
+    if (ot && S.travaOt === ot.id && S.trava) { aplicarTrava(); }
+    return;
+  }
+  var id = ot.id, cont = document.getElementById('cont');
+  if (cont) { cont.innerHTML = '<div class="loading"><div class="spin"></div>Verificando a fila…</div>'; }
+  buscarTrava(ot, function(p) {
+    if (!S.ot || S.ot.id !== id) { return; }
+    S.travaOt = id; S.trava = p;
+    renderDetalheBase();
+    if (p) { aplicarTrava(); }
+  });
+}
+function acaoOT(novoStatus, tipoEvento) {
+  if (!S.ot || novoStatus === 'pausada') { acaoOTBase(novoStatus, tipoEvento); return; }
+  buscarTrava(S.ot, function(p) {
+    if (p) { S.travaOt = S.ot.id; S.trava = p; toast(msgTrava(p), true); renderDetalhe(); return; }
+    acaoOTBase(novoStatus, tipoEvento);
+  });
+}
+function fecharOT(resultado, qtdBoa, qtdPerd, obs) {
+  if (!S.ot || resultado === 'cancelada') { fecharOTBase(resultado, qtdBoa, qtdPerd, obs); return; }
+  buscarTrava(S.ot, function(p) {
+    if (p) { S.travaOt = S.ot.id; S.trava = p; toast(msgTrava(p), true); renderDetalhe(); return; }
+    fecharOTBase(resultado, qtdBoa, qtdPerd, obs);
+  });
+}
+
+function renderDetalheBase() {
   var cont = document.getElementById('cont');
   if (!cont) return;
 
@@ -1162,7 +1249,7 @@ function imprimirDetalhe() {
 /* ─────────────────────────────────────────
    AÇÕES
 ───────────────────────────────────────── */
-function acaoOT(novoStatus, tipoEvento) {
+function acaoOTBase(novoStatus, tipoEvento) {
   if (!S.ot) return;
   var ot      = S.ot;
   var colabId = S.colaborador ? S.colaborador.id : null;
@@ -1792,7 +1879,7 @@ function confirmarConcluir() {
   };
 }
 
-function fecharOT(resultado, qtdBoa, qtdPerd, obs) {
+function fecharOTBase(resultado, qtdBoa, qtdPerd, obs) {
   var ot      = S.ot;
   var colabId = S.colaborador ? S.colaborador.id : null;
   if (!ot) return;
