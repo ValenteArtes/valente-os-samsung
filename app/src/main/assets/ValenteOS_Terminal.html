@@ -440,7 +440,7 @@ var S = {
 /* ─────────────────────────────────────────
    HTTP — XMLHttpRequest ES5
 ───────────────────────────────────────── */
-function xhr(method, table, qs, body, cb) {
+function xhrRaw(method, table, qs, body, cb, tk) {
   var url = SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : '');
 
   /* ── Bridge nativa: resolve TLS 1.2 no Android 4.x ── */
@@ -458,11 +458,9 @@ function xhr(method, table, qs, body, cb) {
         cb(new Error(msg), null);
       }
     };
-    NativeBridge.request(
-      method, url, SUPABASE_KEY,
-      body !== null ? JSON.stringify(body) : '',
-      cbId
-    );
+    var bodyStr = body !== null ? JSON.stringify(body) : '';
+    if (tk && NativeBridge.requestAuth !== undefined) { NativeBridge.requestAuth(method, url, SUPABASE_KEY, tk, bodyStr, cbId); }
+    else { NativeBridge.request(method, url, SUPABASE_KEY, bodyStr, cbId); }
     return;
   }
 
@@ -470,7 +468,7 @@ function xhr(method, table, qs, body, cb) {
   var req = new XMLHttpRequest();
   req.open(method, url, true);
   req.setRequestHeader('apikey', SUPABASE_KEY);
-  req.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+  req.setRequestHeader('Authorization', 'Bearer ' + (tk || SUPABASE_KEY));
   req.setRequestHeader('Accept', 'application/json');
   if (body !== null) {
     req.setRequestHeader('Content-Type', 'application/json');
@@ -491,6 +489,94 @@ function xhr(method, table, qs, body, cb) {
   };
   req.onerror = function() { cb(new Error('Sem conexão'), null); };
   req.send(body !== null ? JSON.stringify(body) : null);
+}
+
+/* ─────────────────────────────────────────
+   LOGIN DO APARELHO (Supabase Auth) — o banco só responde a quem está autenticado.
+   A conta (e-mail/senha) é digitada uma vez em "🔐 Conta" na tela de PIN e fica só neste aparelho.
+───────────────────────────────────────── */
+var AUTH = { token: null, exp: 0, refresh: null, fila: null };
+(function() { try { var j = JSON.parse(localStorage.getItem('valente_auth') || 'null'); if (j) { AUTH.token = j.t; AUTH.exp = j.e; AUTH.refresh = j.r; } } catch (e) {} })();
+function authSalvar() { try { localStorage.setItem('valente_auth', JSON.stringify({ t: AUTH.token, e: AUTH.exp, r: AUTH.refresh })); } catch (e) {} }
+function authCred() { try { return JSON.parse(localStorage.getItem('valente_cred') || 'null'); } catch (e) { return null; } }
+function authPost(grant, body, cb) {
+  var url = SUPABASE_URL + '/auth/v1/token?grant_type=' + grant, txt = JSON.stringify(body);
+  function fim(status, resp) {
+    var d = null;
+    try { d = JSON.parse(resp); } catch (e) {}
+    if (status >= 200 && status < 300 && d && d.access_token) {
+      AUTH.token = d.access_token; AUTH.refresh = d.refresh_token || AUTH.refresh;
+      AUTH.exp = d.expires_at || (Math.floor(new Date().getTime() / 1000) + (d.expires_in || 3600));
+      authSalvar(); cb(null);
+    } else {
+      cb(new Error((d && (d.error_description || d.msg || d.message)) || (status === 0 ? 'Sem conexão' : 'Erro ' + status)));
+    }
+  }
+  if (window.NativeBridge) {
+    var id = 'au' + new Date().getTime() + Math.floor(Math.random() * 9999);
+    window['__nb_' + id] = fim;
+    NativeBridge.request('POST', url, SUPABASE_KEY, txt, id);
+    return;
+  }
+  var r = new XMLHttpRequest();
+  r.open('POST', url, true);
+  r.setRequestHeader('apikey', SUPABASE_KEY);
+  r.setRequestHeader('Content-Type', 'application/json');
+  r.onreadystatechange = function() { if (r.readyState === 4) { fim(r.status, r.responseText); } };
+  r.onerror = function() { cb(new Error('Sem conexão')); };
+  r.send(txt);
+}
+/* devolve um token válido (renova sozinho) ou null se o aparelho não tem conta configurada */
+function authToken(cb) {
+  var cred = authCred();
+  if (!AUTH.token && !cred) { cb(null); return; }
+  var agora = Math.floor(new Date().getTime() / 1000);
+  if (AUTH.token && AUTH.exp - 60 > agora) { cb(AUTH.token); return; }
+  if (AUTH.fila) { AUTH.fila.push(cb); return; }
+  AUTH.fila = [cb];
+  function fim(ok) { var f = AUTH.fila, i; AUTH.fila = null; for (i = 0; i < f.length; i++) { f[i](ok ? AUTH.token : null); } }
+  function porSenha() {
+    if (!cred) { fim(false); return; }
+    authPost('password', { email: cred.e, password: cred.p }, function(err) { fim(!err); });
+  }
+  if (AUTH.refresh) {
+    authPost('refresh_token', { refresh_token: AUTH.refresh }, function(err) { if (err) { porSenha(); } else { fim(true); } });
+  } else { porSenha(); }
+}
+function xhr(method, table, qs, body, cb) {
+  authToken(function(tk) { xhrRaw(method, table, qs, body, cb, tk); });
+}
+function configConta() {
+  var doc = document, ov = doc.createElement('div'), cred = authCred();
+  ov.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:100002;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;padding:14px';
+  ov.innerHTML = '<div style="background:#fff;color:#111;border-radius:12px;padding:18px;max-width:380px;width:100%;font:15px sans-serif">' +
+    '<b style="font-size:17px">🔐 Conta do aparelho</b>' +
+    '<p style="margin:8px 0;color:#444;font-size:13px">' + (AUTH.token ? 'Conectado como <b>' + esc(cred ? cred.e : '') + '</b>.' : 'Entre com a conta deste aparelho (criada no Supabase).') + '</p>' +
+    '<input id="cEm" type="email" placeholder="e-mail" value="' + esc(cred ? cred.e : '') + '" style="width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border:1px solid #ccc;border-radius:8px;font-size:15px">' +
+    '<input id="cPw" type="password" placeholder="senha" style="width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border:1px solid #ccc;border-radius:8px;font-size:15px">' +
+    '<div id="cMsg" style="color:#b91c1c;font-size:13px;min-height:18px"></div>' +
+    '<div style="text-align:right;margin-top:8px"><button id="cX" style="padding:10px 14px;border:0;background:#e5e7eb;border-radius:8px;font-size:15px">Fechar</button> ' +
+    (AUTH.token ? '<button id="cSair" style="padding:10px 14px;border:0;background:#fecaca;border-radius:8px;font-size:15px">Sair da conta</button> ' : '') +
+    '<button id="cOk" style="padding:10px 14px;border:0;background:#f97316;color:#fff;border-radius:8px;font-size:15px;font-weight:700">Entrar</button></div></div>';
+  doc.body.appendChild(ov);
+  ov.querySelector('#cX').onclick = function() { ov.parentNode.removeChild(ov); };
+  if (ov.querySelector('#cSair')) {
+    ov.querySelector('#cSair').onclick = function() {
+      try { localStorage.removeItem('valente_cred'); localStorage.removeItem('valente_auth'); } catch (e) {}
+      AUTH.token = null; AUTH.refresh = null; AUTH.exp = 0;
+      ov.parentNode.removeChild(ov); toast('Conta removida deste aparelho.'); render();
+    };
+  }
+  ov.querySelector('#cOk').onclick = function() {
+    var em = ov.querySelector('#cEm').value.replace(/^\s+|\s+$/g, ''), pw = ov.querySelector('#cPw').value, msg = ov.querySelector('#cMsg');
+    if (!em || !pw) { msg.textContent = 'Informe e-mail e senha.'; return; }
+    msg.style.color = '#444'; msg.textContent = 'Entrando…';
+    authPost('password', { email: em, password: pw }, function(err) {
+      if (err) { msg.style.color = '#b91c1c'; msg.textContent = 'Não entrou: ' + err.message; return; }
+      try { localStorage.setItem('valente_cred', JSON.stringify({ e: em, p: pw })); } catch (e) {}
+      ov.parentNode.removeChild(ov); toast('Aparelho conectado. ✓'); render();
+    });
+  };
 }
 
 function sbGet(t, qs, cb)      { xhr('GET',   t, qs, null, cb); }
@@ -616,7 +702,7 @@ function renderPin(app) {
     '<button class="pin-btn" onclick="dPin(0)">0</button>' +
     '<button class="pin-btn del" onclick="delPin()">⌫</button>' +
     '</div>' +
-    '<div style="text-align:center;margin-top:10px"><a onclick="configImpressora()" style="color:#64748b;font-size:.9rem;padding:12px;display:inline-block">🖨 Impressora</a></div>' +
+    '<div style="text-align:center;margin-top:10px"><a onclick="configImpressora()" style="color:#64748b;font-size:.9rem;padding:12px;display:inline-block">🖨 Impressora</a> <a onclick="configConta()" style="color:' + (AUTH.token ? '#64748b' : '#fbbf24') + ';font-size:.9rem;padding:12px;display:inline-block">' + (AUTH.token ? '🔐 Conta ✓' : '🔐 Conta (não configurada)') + '</a></div>' +
     '</div>';
 }
 
