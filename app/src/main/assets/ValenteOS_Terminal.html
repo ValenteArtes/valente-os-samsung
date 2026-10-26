@@ -2365,7 +2365,7 @@ function salvarFechouT(p, inst) {
     if (err) { toast('Erro ao salvar o pedido: ' + err.message + ' (rodou o SQL do passo 5?)', true); return; }
     var k; for (k in upd) { p[k] = upd[k]; }
     var fim = function() {
-      concluirCom('Contato: pedido fechado — ' + resumo + (acordo ? '. Combinado: ' + acordo : '') + ' (terminal)', 'Libere o pedido no Kanban do computador.');
+      concluirCom('Contato: pedido fechado — ' + resumo + (acordo ? '. Combinado: ' + acordo : '') + ' (terminal)', 'Pedido movido para Pago no Kanban. Libere a produção no computador.');
     };
     if (pos === 'cobrar_empenho') { criarOTCom('cobrar_empenho', p, diaMais(7), '', function() { fim(); }); }
     else if (pos === 'confirmacao_pagamento') { criarOTCom('confirmacao_pagamento', p, new Date(upd.pagamento_previsto + 'T08:00:00'), '', function() { fim(); }); }
@@ -2456,7 +2456,7 @@ function abrirCobrarEmpenhoT(p) {
     if (num) {
       sbPatch('pedidos', 'id=eq.' + p.id, { numero_empenho: num }, function(err) {
         if (err) { toast('Erro: ' + err.message, true); return; }
-        concluirCom('Empenho ' + num + ' registrado — produção pode ser liberada (terminal)', 'Libere o pedido no Kanban do computador.');
+        concluirCom('Empenho ' + num + ' registrado — produção pode ser liberada (terminal)', 'Pedido movido para Pago no Kanban. Libere a produção no computador.');
       });
       return;
     }
@@ -2472,14 +2472,16 @@ function abrirCobrarEmpenhoT(p) {
 function abrirPagamentoT(p, cobr) {
   var sug = p ? ((parseFloat(p.valor_entrada) || 0) || ((parseFloat(p.valor_total) || 0) / 2)) : 0;
   menuT(cobr ? 'COBRANÇA' : 'CONFIRMAR PAGAMENTO', subT(p), [
-    { t: 'Pagamento recebido', s: 'Registra o valor e libera a produção', fn: function() {
+    { t: 'Pagamento recebido', s: 'Registra o valor e move o pedido para Pago', fn: function() {
       var v = parseFloat(String(jfVal('pg-v')).replace(',', '.')) || 0;
       if (v <= 0) { toast('Informe o valor recebido.', true); return; }
       var antes = parseFloat(p.valor_entrada) || 0, delta = Math.max(0, v - antes);
-      sbPatch('pedidos', 'id=eq.' + p.id, { valor_entrada: v }, function(err) {
+      var up = { valor_entrada: v }, aguardaEmp = (p.forma_pagamento === 'empenho' && !p.numero_empenho);
+      if (p.status === 'negociacao' && !aguardaEmp) { up.status = 'pago'; up.ultimo_editor = 'Terminal'; }
+      sbPatch('pedidos', 'id=eq.' + p.id, up, function(err) {
         if (err) { toast('Erro: ' + err.message, true); return; }
-        p.valor_entrada = v;
-        npAlocarEntrada(delta, function() { concluirCom('Pagamento recebido: ' + fmtMoeda(v) + ' (terminal)', 'Libere o pedido no Kanban do computador.'); });
+        p.valor_entrada = v; if (up.status) { p.status = 'pago'; }
+        npAlocarEntrada(delta, function() { concluirCom('Pagamento recebido: ' + fmtMoeda(v) + ' (terminal)', 'Pedido movido para Pago no Kanban. Libere a produção no computador.'); });
       });
     } },
     { t: cobr ? 'Cliente prometeu pagar numa data' : 'Ainda não caiu', s: cobr ? 'Escolha a data abaixo' : 'A tarefa volta em 2 dias', fn: function() {
